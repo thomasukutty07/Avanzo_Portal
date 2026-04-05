@@ -1,0 +1,235 @@
+@import "tailwindcss";
+/* Ensure design mock HTML classes are included in the production CSS bundle */
+@source "./design/**/*.html";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+
+@custom-variant dark (&:is(.dark *));
+
+/* Product theme: neutral surfaces (#F8F9FA) + purple primary (#6200EE), secondary (#8166C9) — design reference */
+:root {
+  --background: #f8f9fa;
+  --foreground: #1c1b1f;
+  --card: #ffffff;
+  --card-foreground: #1c1b1f;
+  --popover: #ffffff;
+  --popover-foreground: #1c1b1f;
+  --primary: #6200ee;
+  --primary-foreground: #ffffff;
+  --secondary: #f0ebf9;
+  --secondary-foreground: #4a4458;
+  --muted: #ece6f4;
+  --muted-foreground: #625b71;
+  --accent: #ede7f6;
+  --accent-foreground: #6200ee;
+  --destructive: #dc2626;
+  --border: #e7e0ef;
+  --input: #d3c9e3;
+  --ring: #6200ee;
+  --success: #16a34a;
+  --warning: #963200;
+  --chart-1: #6200ee;
+  --chart-2: #8166c9;
+  --chart-3: #963200;
+  --chart-4: #16a34a;
+  --chart-5: #ca8a04;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1c1b1f;
+  --sidebar-primary: #6200ee;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f0ebf9;
+  --sidebar-accent-foreground: #1c1b1f;
+  --sidebar-border: #e7e0ef;
+  --sidebar-ring: #6200ee;
+  --radius: 0.625rem;
+}
+
+.dark {
+  --background: #14101c;
+  --foreground: #f8f9fa;
+  --card: #1f1a28;
+  --card-foreground: #f8f9fa;
+  --popover: #1f1a28;
+  --popover-foreground: #f8f9fa;
+  --primary: #b388ff;
+  --primary-foreground: #1a1428;
+  --secondary: #2d2640;
+  --secondary-foreground: #e8e0f5;
+  --muted: #2d2640;
+  --muted-foreground: #b4a8c9;
+  --accent: #2d2640;
+  --accent-foreground: #d4c4f7;
+  --destructive: #f87171;
+  --border: #3d3552;
+  --input: #3d3552;
+  --ring: #b388ff;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --chart-1: #b388ff;
+  --chart-2: #9c7dd8;
+  --chart-3: #c08457;
+  --chart-4: #4ade80;
+  --chart-5: #fbbf24;
+  --sidebar: #1a1524;
+  --sidebar-foreground: #e8e0f5;
+  --sidebar-primary: #b388ff;
+  --sidebar-primary-foreground: #1a1428;
+  --sidebar-accent: #2d2640;
+  --sidebar-accent-foreground: #f8f9fa;
+  --sidebar-border: #3d3552;
+  --sidebar-ring: #b388ff;
+}
+
+@theme inline {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Design HTML mocks: shared brand scale */
+  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-family-display: var(--font-display);
+  --color-brand-purple: #6200ee;
+  --color-brand-secondary: #8166c9;
+  --color-brand-light: #f8f9fa;
+  --color-brand-border: #e7e0ef;
+  --color-brand-card: #ffffff;
+  --color-severity-critical: #ef4444;
+  --color-severity-high: #f97316;
+  --color-severity-medium: #eab308;
+  --color-severity-low: #22c55e;
+  --color-primary-50: #f3e8ff;
+  --color-primary-100: #ede7f6;
+  --color-primary-500: #6200ee;
+  --color-primary-600: #5600d0;
+  --color-primary-700: #4b00b8;
+  --color-primary-800: #3d0099;
+  --color-primary-900: #2f0075;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    box-sizing: border-box;
+  }
+  body {
+    @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+  }
+  html {
+    @apply font-display;
+    line-height: 1.6;
+  }
+  .material-symbols-outlined {
+    font-family: "Material Symbols Outlined", sans-serif;
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+  }
+  .design-portal-light {
+    color-scheme: light;
+  }
+}
+
+@layer components {
+  /**
+   * Design HTML injects only <body> inner markup — `body` flex/h-screen classes are lost.
+   * Technical portal may include a fixed global `header` + row shell; security often uses
+   * `aside` + `main` only or an inner `div.flex.h-screen` wrapper.
+   */
+  .design-portal {
+    display: flex;
+    min-height: 100dvh;
+    min-height: 100vh;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  /* Technical: fixed top bar + sidebar row (dashboard + subpages with injected header) */
+  .design-portal:has(> header.fixed) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .design-portal:has(> header.fixed) > div.flex {
+    flex: 1 1 0%;
+    min-height: 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .design-portal:has(> header.fixed) > div.flex > aside {
+    flex-shrink: 0;
+  }
+
+  .design-portal:has(> header.fixed) > div.flex > main {
+    flex: 1 1 0%;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  /* No global header: aside + main as direct children (e.g. cybersecurity) */
+  .design-portal:not(:has(> header)) {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .design-portal:not(:has(> header)) > aside {
+    flex-shrink: 0;
+  }
+
+  .design-portal:not(:has(> header)) > main {
+    flex: 1 1 0%;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .design-portal:not(:has(> header)) > div.flex.h-screen {
+    flex: 1 1 0%;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  /* Super Admin pending: full-bleed TSX page — no left sidebar column */
+  .super-admin-pending-root aside {
+    display: none !important;
+  }
+}

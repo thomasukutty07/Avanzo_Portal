@@ -1,0 +1,21 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.5
+    hooks:
+      # Run the linter first, auto-fix what it can
+      - id: ruff
+        args: [--fix]
+      # Then run the formatter
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      # Prevent committing large files accidentally
+      - id: check-added-large-files
+      # Ensure files end with a newline
+      - id: end-of-file-fixer
+      # Remove trailing whitespace
+      - id: trailing-whitespace
+      # Validate YAML syntax (catches broken docker-compose, CI files)
+      - id: check-yaml

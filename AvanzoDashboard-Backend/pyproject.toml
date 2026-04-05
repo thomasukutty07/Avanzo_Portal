@@ -1,0 +1,58 @@
+[project]
+name = "avanzo-dashboard-backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "django>=6.0.3",
+    "django-auditlog>=3.4.1",
+    "django-cors-headers>=4.9.0",
+    "django-environ>=0.13.0",
+    "djangorestframework>=3.16.1",
+    "djangorestframework-simplejwt>=5.5.1",
+    "drf-spectacular>=0.29.0",
+    "gunicorn>=25.1.0",
+    "mysqlclient>=2.2.8",
+    "psycopg[binary]>=3.3.3",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort (automatically sorts your imports alphabetically!)
+    "B",  # flake8-bugbear (finds common bugs)
+    "UP", # pyupgrade (suggests modern python syntax)
+]
+ignore = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[dependency-groups]
+dev = [
+    "django-stubs>=5.2.9",
+    "mypy>=1.19.1",
+    "pre-commit>=4.5.1",
+    "ruff>=0.15.5",
+]
+
+[tool.mypy]
+strict = false
+plugins = ["mypy_django_plugin.main"]
+ignore_missing_imports = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.django-stubs]
+django_settings_module = "config.settings"
+
+[tool.ruff.lint.per-file-ignores]
+"**/migrations/*.py" = ["E501"]

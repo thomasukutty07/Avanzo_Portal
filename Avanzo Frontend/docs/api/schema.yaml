@@ -1,0 +1,4608 @@
+openapi: 3.0.3
+info:
+  title: Avanzo Dashboard API
+  version: 0.1.0
+  description: Internal company dashboard REST API
+paths:
+  /api/admin/velocity/:
+    get:
+      operationId: admin_velocity_retrieve
+      description: Returns "Tasks Completed per Hours Logged" over the last 12 weeks,
+        broken down by department.
+      summary: Get Velocity Metrics
+      parameters:
+      - in: query
+        name: department_id
+        schema:
+          type: string
+          format: uuid
+        description: Filter by department UUID
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/attendance/:
+    get:
+      operationId: attendance_list
+      description: |-
+        Attendance Triad API.
+
+        Employees:
+          GET  /api/attendance/          → personal attendance history
+          GET  /api/attendance/{id}/     → single day detail
+          POST /api/attendance/clock-in/ → morning gate (structured entries)
+          PATCH /api/attendance/clock-out/ → evening gate (update entries)
+          GET  /api/attendance/today/    → today's record
+
+        Team Leads:
+          GET  /api/attendance/team-feed/ → today's intent feed for direct reports
+
+        Admins:
+          GET  /api/attendance/pulse/    → org-wide attendance status
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - attendance
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDailyLogList'
+          description: ''
+  /api/attendance/{id}/:
+    get:
+      operationId: attendance_retrieve
+      description: |-
+        Attendance Triad API.
+
+        Employees:
+          GET  /api/attendance/          → personal attendance history
+          GET  /api/attendance/{id}/     → single day detail
+          POST /api/attendance/clock-in/ → morning gate (structured entries)
+          PATCH /api/attendance/clock-out/ → evening gate (update entries)
+          GET  /api/attendance/today/    → today's record
+
+        Team Leads:
+          GET  /api/attendance/team-feed/ → today's intent feed for direct reports
+
+        Admins:
+          GET  /api/attendance/pulse/    → org-wide attendance status
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this daily log.
+        required: true
+      tags:
+      - attendance
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyLog'
+          description: ''
+  /api/attendance/clock-in/:
+    post:
+      operationId: attendance_clock_in_create
+      description: |-
+        POST /api/attendance/clock-in/
+
+        Morning Gate — the employee must submit structured work items
+        before they can start their day.
+
+        Payload:
+        {
+            "entries": [
+                {"project": "uuid", "intent_text": "Finish auth PR"},
+                {"project": "uuid", "intent_text": "Start task modal"},
+                {"custom_label": "Code Reviews", "intent_text": "Review 3 PRs"}
+            ],
+            "general_notes": "Team standup at 10am"
+        }
+      tags:
+      - attendance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DailyLog'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DailyLog'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DailyLog'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyLog'
+          description: ''
+  /api/attendance/clock-out/:
+    patch:
+      operationId: attendance_clock_out_partial_update
+      description: |-
+        PATCH /api/attendance/clock-out/
+
+        Evening Gate — the employee updates each morning entry with what
+        actually happened and a completion outcome.
+
+        Payload:
+        {
+            "entries": [
+                {
+                    "entry_id": "uuid",
+                    "output_text": "Finished the auth middleware PR",
+                    "outcome": "completed"
+                },
+                {
+                    "entry_id": "uuid",
+                    "output_text": "Reviewed 2 of 3 PRs",
+                    "outcome": "partial"
+                }
+            ],
+            "general_notes": "Updated sprint board"
+        }
+      tags:
+      - attendance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDailyLog'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDailyLog'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedDailyLog'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyLog'
+          description: ''
+  /api/attendance/pulse/:
+    get:
+      operationId: attendance_pulse_retrieve
+      description: |-
+        GET /api/attendance/pulse/?department_id=uuid
+
+        The CEO's morning view — org-wide attendance status at a glance.
+        Color-coded: green (on-time), yellow (late), red (missing).
+      tags:
+      - attendance
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyLog'
+          description: ''
+  /api/attendance/reports/:
+    get:
+      operationId: attendance_reports_retrieve
+      description: |-
+        GET /api/attendance/reports/
+
+        Generates an attendance report for a date range.
+
+        Query Parameters:
+            from_date (required): Start date, e.g., 2026-01-01
+            to_date (required): End date, e.g., 2026-03-30
+            department_id (optional): Filter by department UUID
+            employee_id (optional): Filter to a single employee
+            format (optional): "csv" for downloadable CSV, default is JSON
+
+        Access: HR and Admin only.
+
+        Example:
+            GET /api/attendance/reports/?from_date=2026-03-01&to_date=2026-03-30
+            GET /api/attendance/reports/?from_date=2026-03-01&to_date=2026-03-30&department_id=uuid
+            GET /api/attendance/reports/?from_date=2026-03-01&to_date=2026-03-30&format=csv
+      summary: Generate Attendance Report
+      parameters:
+      - in: query
+        name: department_id
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: employee_id
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: format
+        schema:
+          type: string
+          enum:
+          - csv
+          - json
+        description: Output format
+      - in: query
+        name: from_date
+        schema:
+          type: string
+          format: date
+        required: true
+      - in: query
+        name: to_date
+        schema:
+          type: string
+          format: date
+        required: true
+      tags:
+      - attendance
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/attendance/team-feed/:
+    get:
+      operationId: attendance_team_feed_retrieve
+      description: |-
+        GET /api/attendance/team-feed/
+
+        The TL's morning view — shows today's attendance and intent
+        for every direct report. The TL can see at 9:30 AM who is
+        working on what, who is late, and who hasn't shown up.
+      tags:
+      - attendance
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyLog'
+          description: ''
+  /api/attendance/today/:
+    get:
+      operationId: attendance_today_retrieve
+      description: |-
+        GET /api/attendance/today/
+
+        Returns today's attendance record with all entries.
+        If no record exists yet, returns a fresh empty one so the
+        frontend can render the clock-in form.
+      tags:
+      - attendance
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyLog'
+          description: ''
+  /api/auth/employees/:
+    get:
+      operationId: auth_employees_list
+      description: |-
+        ViewSet for viewing and editing employee instances.
+        Restricted to Admin and HR via custom permissions.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedEmployeeList'
+          description: ''
+    post:
+      operationId: auth_employees_create
+      description: |-
+        ViewSet for viewing and editing employee instances.
+        Restricted to Admin and HR via custom permissions.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Employee'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Employee'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Employee'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+          description: ''
+  /api/auth/employees/{id}/:
+    get:
+      operationId: auth_employees_retrieve
+      description: |-
+        ViewSet for viewing and editing employee instances.
+        Restricted to Admin and HR via custom permissions.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Employee.
+        required: true
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+          description: ''
+    put:
+      operationId: auth_employees_update
+      description: |-
+        ViewSet for viewing and editing employee instances.
+        Restricted to Admin and HR via custom permissions.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Employee.
+        required: true
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Employee'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Employee'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Employee'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+          description: ''
+    patch:
+      operationId: auth_employees_partial_update
+      description: |-
+        ViewSet for viewing and editing employee instances.
+        Restricted to Admin and HR via custom permissions.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Employee.
+        required: true
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedEmployee'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedEmployee'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedEmployee'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+          description: ''
+    delete:
+      operationId: auth_employees_destroy
+      description: |-
+        ViewSet for viewing and editing employee instances.
+        Restricted to Admin and HR via custom permissions.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Employee.
+        required: true
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/auth/login/:
+    post:
+      operationId: auth_login_create
+      description: Login endpoint that returns JWT tokens with embedded role claims.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomTokenObtainPair'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CustomTokenObtainPair'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CustomTokenObtainPair'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomTokenObtainPair'
+          description: ''
+  /api/auth/logout/:
+    post:
+      operationId: auth_logout_create
+      description: Invalidates the provided refresh token to securely terminate a
+        session.
+      summary: Logout the current user
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Successfully logged out.
+  /api/auth/me/:
+    get:
+      operationId: auth_me_retrieve
+      summary: Get current authenticated user profile
+      tags:
+      - Accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+          description: ''
+    patch:
+      operationId: auth_me_partial_update
+      summary: Update current authenticated user profile
+      tags:
+      - Accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMe'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMe'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMe'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+          description: ''
+  /api/auth/refresh/:
+    post:
+      operationId: auth_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /api/auth/roles/:
+    get:
+      operationId: auth_roles_list
+      description: ViewSet for viewing access roles (usually for populating UI dropdowns).
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAccessRoleList'
+          description: ''
+  /api/auth/roles/{id}/:
+    get:
+      operationId: auth_roles_retrieve
+      description: ViewSet for viewing access roles (usually for populating UI dropdowns).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Access Role.
+        required: true
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessRole'
+          description: ''
+  /api/leaves/requests/:
+    get:
+      operationId: leaves_requests_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - leaves
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLeaveRequestList'
+          description: ''
+    post:
+      operationId: leaves_requests_create
+      tags:
+      - leaves
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveApply'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveApply'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveApply'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveApply'
+          description: ''
+  /api/leaves/requests/{id}/:
+    get:
+      operationId: leaves_requests_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this leave request.
+        required: true
+      tags:
+      - leaves
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+          description: ''
+    put:
+      operationId: leaves_requests_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this leave request.
+        required: true
+      tags:
+      - leaves
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+          description: ''
+    patch:
+      operationId: leaves_requests_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this leave request.
+        required: true
+      tags:
+      - leaves
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+          description: ''
+    delete:
+      operationId: leaves_requests_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this leave request.
+        required: true
+      tags:
+      - leaves
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/leaves/requests/{id}/hr_approve/:
+    patch:
+      operationId: leaves_requests_hr_approve_partial_update
+      description: 'Tier 2 Approval: HR gives final system approval.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this leave request.
+        required: true
+      tags:
+      - leaves
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+          description: ''
+  /api/leaves/requests/{id}/reject/:
+    patch:
+      operationId: leaves_requests_reject_partial_update
+      description: 'Rejection: Can be done by either TL or HR at any stage.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this leave request.
+        required: true
+      tags:
+      - leaves
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+          description: ''
+  /api/leaves/requests/{id}/tl_approve/:
+    patch:
+      operationId: leaves_requests_tl_approve_partial_update
+      description: 'Tier 1 Approval: Team Lead signs off.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this leave request.
+        required: true
+      tags:
+      - leaves
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+          description: ''
+  /api/leaves/requests/history/:
+    get:
+      operationId: leaves_requests_history_retrieve
+      description: HR/Admin endpoint to view the full history of all leave requests.
+      tags:
+      - leaves
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+          description: ''
+  /api/notifications/broadcasts/:
+    get:
+      operationId: notifications_broadcasts_list
+      description: |-
+        Handles company-wide announcements.
+        - HR/Admins create broadcasts.
+        - Employees view and acknowledge them.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBroadcastList'
+          description: ''
+    post:
+      operationId: notifications_broadcasts_create
+      description: |-
+        Handles company-wide announcements.
+        - HR/Admins create broadcasts.
+        - Employees view and acknowledge them.
+      tags:
+      - notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BroadcastCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BroadcastCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BroadcastCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BroadcastCreate'
+          description: ''
+  /api/notifications/broadcasts/{id}/:
+    get:
+      operationId: notifications_broadcasts_retrieve
+      description: |-
+        Handles company-wide announcements.
+        - HR/Admins create broadcasts.
+        - Employees view and acknowledge them.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this broadcast.
+        required: true
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Broadcast'
+          description: ''
+    put:
+      operationId: notifications_broadcasts_update
+      description: |-
+        Handles company-wide announcements.
+        - HR/Admins create broadcasts.
+        - Employees view and acknowledge them.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this broadcast.
+        required: true
+      tags:
+      - notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Broadcast'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Broadcast'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Broadcast'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Broadcast'
+          description: ''
+    patch:
+      operationId: notifications_broadcasts_partial_update
+      description: |-
+        Handles company-wide announcements.
+        - HR/Admins create broadcasts.
+        - Employees view and acknowledge them.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this broadcast.
+        required: true
+      tags:
+      - notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBroadcast'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBroadcast'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBroadcast'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Broadcast'
+          description: ''
+    delete:
+      operationId: notifications_broadcasts_destroy
+      description: |-
+        Handles company-wide announcements.
+        - HR/Admins create broadcasts.
+        - Employees view and acknowledge them.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this broadcast.
+        required: true
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/notifications/broadcasts/{id}/acknowledge/:
+    post:
+      operationId: notifications_broadcasts_acknowledge_create
+      description: Allows an employee to mark a critical broadcast as read.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this broadcast.
+        required: true
+      tags:
+      - notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Broadcast'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Broadcast'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Broadcast'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Broadcast'
+          description: ''
+  /api/notifications/broadcasts/{id}/stats/:
+    get:
+      operationId: notifications_broadcasts_stats_retrieve
+      description: Allows Admin/HR to see who has acknowledged a broadcast.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this broadcast.
+        required: true
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Broadcast'
+          description: ''
+  /api/notifications/notifications/:
+    get:
+      operationId: notifications_notifications_list
+      description: Allows users to view their notifications and mark them as read.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedNotificationList'
+          description: ''
+  /api/notifications/notifications/{id}/:
+    get:
+      operationId: notifications_notifications_retrieve
+      description: Allows users to view their notifications and mark them as read.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this notification.
+        required: true
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+          description: ''
+  /api/notifications/notifications/{id}/read/:
+    patch:
+      operationId: notifications_notifications_read_partial_update
+      description: Marks a single notification as read.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this notification.
+        required: true
+      tags:
+      - notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedNotification'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedNotification'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedNotification'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+          description: ''
+  /api/notifications/notifications/read-all/:
+    patch:
+      operationId: notifications_notifications_read_all_partial_update
+      description: Bulk updates all unread notifications for the user.
+      tags:
+      - notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedNotification'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedNotification'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedNotification'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+          description: ''
+  /api/organization/departments/:
+    get:
+      operationId: organization_departments_list
+      description: |-
+        CRUD API for Departments.
+        Only users with the 'Admin' role can modify or create departments.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - organization
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDepartmentList'
+          description: ''
+    post:
+      operationId: organization_departments_create
+      description: |-
+        CRUD API for Departments.
+        Only users with the 'Admin' role can modify or create departments.
+      tags:
+      - organization
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Department'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Department'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Department'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
+  /api/organization/departments/{id}/:
+    get:
+      operationId: organization_departments_retrieve
+      description: |-
+        CRUD API for Departments.
+        Only users with the 'Admin' role can modify or create departments.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this department.
+        required: true
+      tags:
+      - organization
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
+    put:
+      operationId: organization_departments_update
+      description: |-
+        CRUD API for Departments.
+        Only users with the 'Admin' role can modify or create departments.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this department.
+        required: true
+      tags:
+      - organization
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Department'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Department'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Department'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
+    patch:
+      operationId: organization_departments_partial_update
+      description: |-
+        CRUD API for Departments.
+        Only users with the 'Admin' role can modify or create departments.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this department.
+        required: true
+      tags:
+      - organization
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDepartment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDepartment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedDepartment'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
+    delete:
+      operationId: organization_departments_destroy
+      description: |-
+        CRUD API for Departments.
+        Only users with the 'Admin' role can modify or create departments.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this department.
+        required: true
+      tags:
+      - organization
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/organization/designations/:
+    get:
+      operationId: organization_designations_list
+      description: |-
+        CRUD API for Designations.
+        Only users with the 'Admin' role can modify or create designations.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - organization
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDesignationList'
+          description: ''
+    post:
+      operationId: organization_designations_create
+      description: |-
+        CRUD API for Designations.
+        Only users with the 'Admin' role can modify or create designations.
+      tags:
+      - organization
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Designation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Designation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Designation'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Designation'
+          description: ''
+  /api/organization/designations/{id}/:
+    get:
+      operationId: organization_designations_retrieve
+      description: |-
+        CRUD API for Designations.
+        Only users with the 'Admin' role can modify or create designations.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this designation.
+        required: true
+      tags:
+      - organization
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Designation'
+          description: ''
+    put:
+      operationId: organization_designations_update
+      description: |-
+        CRUD API for Designations.
+        Only users with the 'Admin' role can modify or create designations.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this designation.
+        required: true
+      tags:
+      - organization
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Designation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Designation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Designation'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Designation'
+          description: ''
+    patch:
+      operationId: organization_designations_partial_update
+      description: |-
+        CRUD API for Designations.
+        Only users with the 'Admin' role can modify or create designations.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this designation.
+        required: true
+      tags:
+      - organization
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDesignation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDesignation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedDesignation'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Designation'
+          description: ''
+    delete:
+      operationId: organization_designations_destroy
+      description: |-
+        CRUD API for Designations.
+        Only users with the 'Admin' role can modify or create designations.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this designation.
+        required: true
+      tags:
+      - organization
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/projects/clients/:
+    get:
+      operationId: projects_clients_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - projects
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedExternalClientList'
+          description: ''
+    post:
+      operationId: projects_clients_create
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExternalClient'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ExternalClient'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ExternalClient'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalClient'
+          description: ''
+  /api/projects/clients/{id}/:
+    get:
+      operationId: projects_clients_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this External Client.
+        required: true
+      tags:
+      - projects
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalClient'
+          description: ''
+    put:
+      operationId: projects_clients_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this External Client.
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExternalClient'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ExternalClient'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ExternalClient'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalClient'
+          description: ''
+    patch:
+      operationId: projects_clients_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this External Client.
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedExternalClient'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedExternalClient'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedExternalClient'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalClient'
+          description: ''
+    delete:
+      operationId: projects_clients_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this External Client.
+        required: true
+      tags:
+      - projects
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/projects/projects/:
+    get:
+      operationId: projects_projects_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - projects
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProjectList'
+          description: ''
+    post:
+      operationId: projects_projects_create
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Project'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Project'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Project'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+  /api/projects/projects/{id}/:
+    get:
+      operationId: projects_projects_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this project.
+        required: true
+      tags:
+      - projects
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+    put:
+      operationId: projects_projects_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this project.
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Project'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Project'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Project'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+    patch:
+      operationId: projects_projects_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this project.
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProject'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProject'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProject'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+    delete:
+      operationId: projects_projects_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this project.
+        required: true
+      tags:
+      - projects
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/projects/projects/{id}/progress/:
+    get:
+      operationId: projects_projects_progress_retrieve
+      description: |-
+        GET /api/projects/projects/{id}/progress/
+
+        Returns the weighted progress breakdown for a project.
+        Powers the TL's "Am I on track?" dashboard widget.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this project.
+        required: true
+      tags:
+      - projects
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+  /api/projects/services/:
+    get:
+      operationId: projects_services_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - projects
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedServiceList'
+          description: ''
+    post:
+      operationId: projects_services_create
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Service'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Service'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Service'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Service'
+          description: ''
+  /api/projects/services/{id}/:
+    get:
+      operationId: projects_services_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this service.
+        required: true
+      tags:
+      - projects
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Service'
+          description: ''
+    put:
+      operationId: projects_services_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this service.
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Service'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Service'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Service'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Service'
+          description: ''
+    patch:
+      operationId: projects_services_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this service.
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedService'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedService'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedService'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Service'
+          description: ''
+    delete:
+      operationId: projects_services_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this service.
+        required: true
+      tags:
+      - projects
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/projects/tasks/:
+    get:
+      operationId: projects_tasks_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - projects
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTaskList'
+          description: ''
+    post:
+      operationId: projects_tasks_create
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Task'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Task'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+          description: ''
+  /api/projects/tasks/{id}/:
+    get:
+      operationId: projects_tasks_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this task.
+        required: true
+      tags:
+      - projects
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+          description: ''
+    put:
+      operationId: projects_tasks_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this task.
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Task'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Task'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+          description: ''
+    patch:
+      operationId: projects_tasks_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this task.
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTask'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTask'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTask'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+          description: ''
+    delete:
+      operationId: projects_tasks_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this task.
+        required: true
+      tags:
+      - projects
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/projects/tasks/{id}/progress/:
+    patch:
+      operationId: projects_tasks_progress_partial_update
+      description: |-
+        PATCH /api/projects/tasks/{id}/progress/
+
+        Allows the assigned employee to update their completion percentage.
+
+        On the FIRST progress update (0 → anything > 0):
+        - complexity_locked is set to True
+        - complexity_locked_at is set to the current timestamp
+        - After this, complexity can never be changed
+
+        Payload:
+            { "completion_pct": 75 }
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this task.
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTask'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTask'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTask'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+          description: ''
+  /api/tickets/:
+    get:
+      operationId: tickets_list
+      description: |-
+        Main ticket API.
+
+        - Any authenticated user can CREATE a ticket
+        - Users see tickets they created OR are assigned to
+        - Only the assignee (or Admin) can resolve a ticket
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - tickets
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTicketList'
+          description: ''
+    post:
+      operationId: tickets_create
+      description: |-
+        Main ticket API.
+
+        - Any authenticated user can CREATE a ticket
+        - Users see tickets they created OR are assigned to
+        - Only the assignee (or Admin) can resolve a ticket
+      tags:
+      - tickets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TicketCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TicketCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketCreate'
+          description: ''
+  /api/tickets/{id}/:
+    get:
+      operationId: tickets_retrieve
+      description: |-
+        Main ticket API.
+
+        - Any authenticated user can CREATE a ticket
+        - Users see tickets they created OR are assigned to
+        - Only the assignee (or Admin) can resolve a ticket
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this ticket.
+        required: true
+      tags:
+      - tickets
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+          description: ''
+    put:
+      operationId: tickets_update
+      description: |-
+        Main ticket API.
+
+        - Any authenticated user can CREATE a ticket
+        - Users see tickets they created OR are assigned to
+        - Only the assignee (or Admin) can resolve a ticket
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this ticket.
+        required: true
+      tags:
+      - tickets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Ticket'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Ticket'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Ticket'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+          description: ''
+    patch:
+      operationId: tickets_partial_update
+      description: |-
+        Main ticket API.
+
+        - Any authenticated user can CREATE a ticket
+        - Users see tickets they created OR are assigned to
+        - Only the assignee (or Admin) can resolve a ticket
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this ticket.
+        required: true
+      tags:
+      - tickets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTicket'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTicket'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTicket'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+          description: ''
+    delete:
+      operationId: tickets_destroy
+      description: |-
+        Main ticket API.
+
+        - Any authenticated user can CREATE a ticket
+        - Users see tickets they created OR are assigned to
+        - Only the assignee (or Admin) can resolve a ticket
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this ticket.
+        required: true
+      tags:
+      - tickets
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/tickets/{id}/resolve/:
+    patch:
+      operationId: tickets_resolve_partial_update
+      description: |-
+        PATCH /api/tickets/{id}/resolve/
+        Closes the ticket. Requires a resolution_note explaining what was done.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this ticket.
+        required: true
+      tags:
+      - tickets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTicketResolve'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTicketResolve'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTicketResolve'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketResolve'
+          description: ''
+  /api/tickets/{id}/review/:
+    patch:
+      operationId: tickets_review_partial_update
+      description: |-
+        PATCH /api/tickets/{id}/review/
+        Acknowledges that someone is looking at the ticket.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this ticket.
+        required: true
+      tags:
+      - tickets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTicket'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTicket'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTicket'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+          description: ''
+  /api/tickets/assigned/:
+    get:
+      operationId: tickets_assigned_retrieve
+      description: GET /api/tickets/assigned/ — tickets I need to handle.
+      tags:
+      - tickets
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+          description: ''
+  /api/tickets/mine/:
+    get:
+      operationId: tickets_mine_retrieve
+      description: GET /api/tickets/mine/ — tickets I created.
+      tags:
+      - tickets
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+          description: ''
+components:
+  schemas:
+    AccessRole:
+      type: object
+      description: Used for populating dropdowns and UI selection.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          $ref: '#/components/schemas/NameEnum'
+        description:
+          type: string
+      required:
+      - id
+      - name
+    Broadcast:
+      type: object
+      description: Used for displaying broadcasts to employees.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        severity:
+          allOf:
+          - $ref: '#/components/schemas/SeverityEnum'
+          readOnly: true
+        target_scope:
+          allOf:
+          - $ref: '#/components/schemas/TargetScopeEnum'
+          readOnly: true
+        department:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+          description: Only required if target_scope is 'department'.
+        department_name:
+          type: string
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        message:
+          type: string
+          readOnly: true
+        created_by:
+          type: string
+          format: uuid
+          readOnly: true
+        created_by_name:
+          type: string
+          readOnly: true
+        is_active:
+          type: boolean
+          readOnly: true
+          description: Uncheck to manually hide this broadcast.
+        is_acknowledged:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - created_by
+      - created_by_name
+      - department
+      - department_name
+      - id
+      - is_acknowledged
+      - is_active
+      - message
+      - severity
+      - target_scope
+      - title
+    BroadcastCreate:
+      type: object
+      description: Used by Admin/HR to create a new broadcast.
+      properties:
+        severity:
+          $ref: '#/components/schemas/SeverityEnum'
+        target_scope:
+          $ref: '#/components/schemas/TargetScopeEnum'
+        department:
+          type: string
+          format: uuid
+          nullable: true
+          description: Only required if target_scope is 'department'.
+        title:
+          type: string
+          maxLength: 255
+        message:
+          type: string
+      required:
+      - message
+      - title
+    CustomTokenObtainPair:
+      type: object
+      description: |-
+        Embeds user role and profile data into the JWT so the frontend
+        can hydrate RoleContext immediately after login without a second API call.
+      properties:
+        email:
+          type: string
+          writeOnly: true
+        password:
+          type: string
+          writeOnly: true
+      required:
+      - email
+      - password
+    DailyLog:
+      type: object
+      description: |-
+        Read-only serializer for the full daily attendance record.
+        Nests the structured project entries so the frontend gets
+        everything in a single API call.
+
+        Example response:
+        {
+            "id": "uuid",
+            "date": "2026-03-30",
+            "status": "clocked_in",
+            "clock_in_time": "2026-03-30T09:00:00Z",
+            "is_late": false,
+            "general_notes": "Team standup at 10am",
+            "entries": [
+                {
+                    "project": "uuid",
+                    "project_name": "Avanzo Dashboard",
+                    "intent_text": "Finish the auth middleware PR",
+                    "output_text": "",
+                    "outcome": "",
+                },
+                {
+                    "project": null,
+                    "custom_label": "Code Reviews",
+                    "intent_text": "Review 3 pending PRs from the team",
+                    "output_text": "",
+                    "outcome": "",
+                }
+            ]
+        }
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        employee:
+          type: string
+          format: uuid
+          readOnly: true
+        employee_name:
+          type: string
+          readOnly: true
+        date:
+          type: string
+          format: date
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/DailyLogStatusEnum'
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        clock_in_time:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        clock_out_time:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        is_late:
+          type: boolean
+          readOnly: true
+          description: Auto-set to True if clock-in is after the org's threshold.
+        total_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+          description: Hours worked, computed at clock-out.
+        general_notes:
+          type: string
+          readOnly: true
+          description: Optional free-text for non-project activities like meetings,
+            training, etc.
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyLogEntryRead'
+          readOnly: true
+        has_clocked_in:
+          type: boolean
+          readOnly: true
+        has_clocked_out:
+          type: boolean
+          readOnly: true
+      required:
+      - clock_in_time
+      - clock_out_time
+      - date
+      - employee
+      - employee_name
+      - entries
+      - general_notes
+      - has_clocked_in
+      - has_clocked_out
+      - id
+      - is_late
+      - status
+      - status_display
+      - total_hours
+    DailyLogEntryRead:
+      type: object
+      description: |-
+        Read-only serializer for a single project work entry.
+        The frontend uses this to render structured intent/output cards.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        project:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+          description: The project this work item is about. Leave blank for general/misc
+            work.
+        project_name:
+          type: string
+          readOnly: true
+        custom_label:
+          type: string
+          readOnly: true
+          description: Used when no project is selected. E.g., 'Team Meetings', 'Code
+            Review'.
+        display_label:
+          type: string
+          readOnly: true
+        intent_text:
+          type: string
+          readOnly: true
+          description: What the employee plans to accomplish on this project today.
+        output_text:
+          type: string
+          readOnly: true
+          description: What was actually accomplished. Filled during clock-out.
+        outcome:
+          allOf:
+          - $ref: '#/components/schemas/OutcomeEnum'
+          readOnly: true
+          description: |-
+            How did this work item end up? Set during clock-out.
+
+            * `completed` - Completed as planned
+            * `partial` - Partially completed
+            * `blocked` - Blocked by dependency
+            * `carried_over` - Carried over to tomorrow
+            * `not_started` - Not started
+        outcome_display:
+          type: string
+          readOnly: true
+          default: ''
+        has_output:
+          type: boolean
+          readOnly: true
+        priority_order:
+          type: integer
+          readOnly: true
+          description: Display order. Lower number = higher priority.
+      required:
+      - custom_label
+      - display_label
+      - has_output
+      - id
+      - intent_text
+      - outcome
+      - outcome_display
+      - output_text
+      - priority_order
+      - project
+      - project_name
+    DailyLogStatusEnum:
+      enum:
+      - pending
+      - clocked_in
+      - clocked_out
+      - missing
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `clocked_in` - Clocked In
+        * `clocked_out` - Clocked Out
+        * `missing` - Missing
+    Department:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - updated_at
+    Designation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - updated_at
+    Employee:
+      type: object
+      description: Used by Admin and HR for managing users.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        email:
+          type: string
+          format: email
+          title: Work email
+          maxLength: 254
+        password:
+          type: string
+          writeOnly: true
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        phone:
+          type: string
+          maxLength: 20
+        employee_id:
+          type: string
+          nullable: true
+          description: Internal employee ID, e.g., AVZ-001
+          maxLength: 20
+        access_role:
+          type: string
+          format: uuid
+          nullable: true
+          description: 'Determines UI permissions: Employee, Team Lead, HR, Admin'
+        department:
+          type: string
+          format: uuid
+          nullable: true
+        designation:
+          type: string
+          format: uuid
+          nullable: true
+        team_lead:
+          type: string
+          format: uuid
+          nullable: true
+          description: The manager this employee reports to.
+        status:
+          $ref: '#/components/schemas/EmployeeStatusEnum'
+        date_of_joining:
+          type: string
+          format: date
+          nullable: true
+      required:
+      - email
+      - id
+    EmployeeStatusEnum:
+      enum:
+      - active
+      - on_leave
+      - offboarding
+      type: string
+      description: |-
+        * `active` - Active
+        * `on_leave` - On Leave
+        * `offboarding` - Offboarding
+    ExternalClient:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        contact_email:
+          type: string
+          format: email
+          nullable: true
+          maxLength: 254
+        industry:
+          type: string
+          maxLength: 100
+        is_active:
+          type: boolean
+      required:
+      - created_at
+      - id
+      - name
+      - updated_at
+    LeaveApply:
+      type: object
+      description: Serializer used by Employees to submit a new request.
+      properties:
+        leave_type:
+          $ref: '#/components/schemas/LeaveTypeEnum'
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        is_half_day:
+          type: boolean
+        reason:
+          type: string
+      required:
+      - end_date
+      - reason
+      - start_date
+    LeaveRequest:
+      type: object
+      description: |-
+        Main serializer for viewing leave requests.
+        Includes nested employee details for HR/Admin views.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        employee:
+          type: string
+          format: uuid
+          readOnly: true
+        employee_name:
+          type: string
+          readOnly: true
+        leave_type:
+          $ref: '#/components/schemas/LeaveTypeEnum'
+        leave_type_display:
+          type: string
+          readOnly: true
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        is_half_day:
+          type: boolean
+        total_days:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,1})?$
+          description: Calculated duration. 0.5 for half days.
+        reason:
+          type: string
+        status:
+          allOf:
+          - $ref: '#/components/schemas/LeaveRequestStatusEnum'
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        tl_reviewer:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+          description: The Team Lead who first cleared the leave.
+        tl_reviewer_name:
+          type: string
+          readOnly: true
+        hr_reviewer:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+          description: The HR manager who gave final system approval.
+        hr_reviewer_name:
+          type: string
+          readOnly: true
+        tl_comment:
+          type: string
+          nullable: true
+          description: Comments from the Team Lead.
+        hr_comment:
+          type: string
+          nullable: true
+          description: Comments from HR.
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - employee
+      - employee_name
+      - end_date
+      - hr_reviewer
+      - hr_reviewer_name
+      - id
+      - leave_type_display
+      - reason
+      - start_date
+      - status
+      - status_display
+      - tl_reviewer
+      - tl_reviewer_name
+    LeaveRequestStatusEnum:
+      enum:
+      - pending
+      - tl_approved
+      - approved
+      - rejected
+      type: string
+      description: |-
+        * `pending` - Pending Team Lead Approval
+        * `tl_approved` - Approved by Team Lead
+        * `approved` - Fully Approved (HR)
+        * `rejected` - Rejected
+    LeaveTypeEnum:
+      enum:
+      - sick
+      - casual
+      - earned
+      - unpaid
+      type: string
+      description: |-
+        * `sick` - Sick Leave
+        * `casual` - Casual Leave
+        * `earned` - Earned Leave
+        * `unpaid` - Unpaid Leave
+    LogoutRequest:
+      type: object
+      properties:
+        refresh:
+          type: string
+      required:
+      - refresh
+    Me:
+      type: object
+      description: |-
+        Serializer for the /api/auth/me/ endpoint — returns the authenticated
+        user's full profile including role, department, and designation.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+          title: Work email
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        phone:
+          type: string
+          maxLength: 20
+        avatar:
+          type: string
+          format: uri
+          readOnly: true
+        employee_id:
+          type: string
+          readOnly: true
+          nullable: true
+          description: Internal employee ID, e.g., AVZ-001
+        role:
+          type: string
+          readOnly: true
+        department_name:
+          type: string
+          readOnly: true
+        designation_name:
+          type: string
+          readOnly: true
+        team_lead_name:
+          type: string
+          nullable: true
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/EmployeeStatusEnum'
+          readOnly: true
+        date_of_joining:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+      required:
+      - avatar
+      - date_of_joining
+      - department_name
+      - designation_name
+      - email
+      - employee_id
+      - id
+      - role
+      - status
+      - team_lead_name
+    NameEnum:
+      enum:
+      - Employee
+      - Team Lead
+      - HR
+      - Admin
+      type: string
+      description: |-
+        * `Employee` - Employee
+        * `Team Lead` - Team Lead
+        * `HR` - HR
+        * `Admin` - Admin
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        message:
+          type: string
+          readOnly: true
+        notification_type:
+          allOf:
+          - $ref: '#/components/schemas/NotificationTypeEnum'
+          readOnly: true
+        action_url:
+          type: string
+          readOnly: true
+          nullable: true
+        is_read:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - action_url
+      - created_at
+      - id
+      - is_read
+      - message
+      - notification_type
+      - title
+    NotificationTypeEnum:
+      enum:
+      - info
+      - warning
+      - urgent
+      - success
+      type: string
+      description: |-
+        * `info` - Information
+        * `warning` - Warning
+        * `urgent` - Urgent/Action Required
+        * `success` - Success
+    OutcomeEnum:
+      enum:
+      - completed
+      - partial
+      - blocked
+      - carried_over
+      - not_started
+      type: string
+      description: |-
+        * `completed` - Completed as planned
+        * `partial` - Partially completed
+        * `blocked` - Blocked by dependency
+        * `carried_over` - Carried over to tomorrow
+        * `not_started` - Not started
+    PaginatedAccessRoleList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccessRole'
+    PaginatedBroadcastList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Broadcast'
+    PaginatedDailyLogList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyLog'
+    PaginatedDepartmentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Department'
+    PaginatedDesignationList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Designation'
+    PaginatedEmployeeList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Employee'
+    PaginatedExternalClientList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalClient'
+    PaginatedLeaveRequestList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaveRequest'
+    PaginatedNotificationList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+    PaginatedProjectList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Project'
+    PaginatedServiceList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Service'
+    PaginatedTaskList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+    PaginatedTicketList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ticket'
+    PatchedBroadcast:
+      type: object
+      description: Used for displaying broadcasts to employees.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        severity:
+          allOf:
+          - $ref: '#/components/schemas/SeverityEnum'
+          readOnly: true
+        target_scope:
+          allOf:
+          - $ref: '#/components/schemas/TargetScopeEnum'
+          readOnly: true
+        department:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+          description: Only required if target_scope is 'department'.
+        department_name:
+          type: string
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        message:
+          type: string
+          readOnly: true
+        created_by:
+          type: string
+          format: uuid
+          readOnly: true
+        created_by_name:
+          type: string
+          readOnly: true
+        is_active:
+          type: boolean
+          readOnly: true
+          description: Uncheck to manually hide this broadcast.
+        is_acknowledged:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedDailyLog:
+      type: object
+      description: |-
+        Read-only serializer for the full daily attendance record.
+        Nests the structured project entries so the frontend gets
+        everything in a single API call.
+
+        Example response:
+        {
+            "id": "uuid",
+            "date": "2026-03-30",
+            "status": "clocked_in",
+            "clock_in_time": "2026-03-30T09:00:00Z",
+            "is_late": false,
+            "general_notes": "Team standup at 10am",
+            "entries": [
+                {
+                    "project": "uuid",
+                    "project_name": "Avanzo Dashboard",
+                    "intent_text": "Finish the auth middleware PR",
+                    "output_text": "",
+                    "outcome": "",
+                },
+                {
+                    "project": null,
+                    "custom_label": "Code Reviews",
+                    "intent_text": "Review 3 pending PRs from the team",
+                    "output_text": "",
+                    "outcome": "",
+                }
+            ]
+        }
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        employee:
+          type: string
+          format: uuid
+          readOnly: true
+        employee_name:
+          type: string
+          readOnly: true
+        date:
+          type: string
+          format: date
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/DailyLogStatusEnum'
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        clock_in_time:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        clock_out_time:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        is_late:
+          type: boolean
+          readOnly: true
+          description: Auto-set to True if clock-in is after the org's threshold.
+        total_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+          description: Hours worked, computed at clock-out.
+        general_notes:
+          type: string
+          readOnly: true
+          description: Optional free-text for non-project activities like meetings,
+            training, etc.
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyLogEntryRead'
+          readOnly: true
+        has_clocked_in:
+          type: boolean
+          readOnly: true
+        has_clocked_out:
+          type: boolean
+          readOnly: true
+    PatchedDepartment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedDesignation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedEmployee:
+      type: object
+      description: Used by Admin and HR for managing users.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        email:
+          type: string
+          format: email
+          title: Work email
+          maxLength: 254
+        password:
+          type: string
+          writeOnly: true
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        phone:
+          type: string
+          maxLength: 20
+        employee_id:
+          type: string
+          nullable: true
+          description: Internal employee ID, e.g., AVZ-001
+          maxLength: 20
+        access_role:
+          type: string
+          format: uuid
+          nullable: true
+          description: 'Determines UI permissions: Employee, Team Lead, HR, Admin'
+        department:
+          type: string
+          format: uuid
+          nullable: true
+        designation:
+          type: string
+          format: uuid
+          nullable: true
+        team_lead:
+          type: string
+          format: uuid
+          nullable: true
+          description: The manager this employee reports to.
+        status:
+          $ref: '#/components/schemas/EmployeeStatusEnum'
+        date_of_joining:
+          type: string
+          format: date
+          nullable: true
+    PatchedExternalClient:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        contact_email:
+          type: string
+          format: email
+          nullable: true
+          maxLength: 254
+        industry:
+          type: string
+          maxLength: 100
+        is_active:
+          type: boolean
+    PatchedLeaveRequest:
+      type: object
+      description: |-
+        Main serializer for viewing leave requests.
+        Includes nested employee details for HR/Admin views.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        employee:
+          type: string
+          format: uuid
+          readOnly: true
+        employee_name:
+          type: string
+          readOnly: true
+        leave_type:
+          $ref: '#/components/schemas/LeaveTypeEnum'
+        leave_type_display:
+          type: string
+          readOnly: true
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        is_half_day:
+          type: boolean
+        total_days:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,1})?$
+          description: Calculated duration. 0.5 for half days.
+        reason:
+          type: string
+        status:
+          allOf:
+          - $ref: '#/components/schemas/LeaveRequestStatusEnum'
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        tl_reviewer:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+          description: The Team Lead who first cleared the leave.
+        tl_reviewer_name:
+          type: string
+          readOnly: true
+        hr_reviewer:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+          description: The HR manager who gave final system approval.
+        hr_reviewer_name:
+          type: string
+          readOnly: true
+        tl_comment:
+          type: string
+          nullable: true
+          description: Comments from the Team Lead.
+        hr_comment:
+          type: string
+          nullable: true
+          description: Comments from HR.
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedMe:
+      type: object
+      description: |-
+        Serializer for the /api/auth/me/ endpoint — returns the authenticated
+        user's full profile including role, department, and designation.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+          title: Work email
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        phone:
+          type: string
+          maxLength: 20
+        avatar:
+          type: string
+          format: uri
+          readOnly: true
+        employee_id:
+          type: string
+          readOnly: true
+          nullable: true
+          description: Internal employee ID, e.g., AVZ-001
+        role:
+          type: string
+          readOnly: true
+        department_name:
+          type: string
+          readOnly: true
+        designation_name:
+          type: string
+          readOnly: true
+        team_lead_name:
+          type: string
+          nullable: true
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/EmployeeStatusEnum'
+          readOnly: true
+        date_of_joining:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+    PatchedNotification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        message:
+          type: string
+          readOnly: true
+        notification_type:
+          allOf:
+          - $ref: '#/components/schemas/NotificationTypeEnum'
+          readOnly: true
+        action_url:
+          type: string
+          readOnly: true
+          nullable: true
+        is_read:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedProject:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        is_internal:
+          type: boolean
+          description: Is this an internal Avanzo project?
+        client:
+          type: string
+          format: uuid
+          nullable: true
+        client_name:
+          type: string
+          readOnly: true
+        service:
+          type: string
+          format: uuid
+          nullable: true
+        service_name:
+          type: string
+          readOnly: true
+        owning_department:
+          type: string
+          format: uuid
+          readOnly: true
+        department_name:
+          type: string
+          readOnly: true
+        manager:
+          type: string
+          format: uuid
+          readOnly: true
+        team:
+          type: array
+          items:
+            type: string
+            format: uuid
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ProjectStatusEnum'
+          readOnly: true
+        start_date:
+          type: string
+          format: date
+          nullable: true
+        target_end_date:
+          type: string
+          format: date
+          nullable: true
+        progress:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedService:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        is_active:
+          type: boolean
+    PatchedTask:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        project:
+          type: string
+          format: uuid
+        project_name:
+          type: string
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        assignee:
+          type: string
+          format: uuid
+        assignee_name:
+          type: string
+          readOnly: true
+        priority:
+          $ref: '#/components/schemas/PriorityEnum'
+        status:
+          $ref: '#/components/schemas/TaskStatusEnum'
+        complexity:
+          type: integer
+          maximum: 10
+          minimum: 1
+          description: Difficulty rating 1–10. Set by TL at task creation.
+        complexity_locked:
+          type: boolean
+          readOnly: true
+          description: Once True, complexity can never be changed.
+        complexity_locked_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          description: Timestamp of when complexity was locked.
+        completion_pct:
+          type: integer
+          maximum: 100
+          minimum: 0
+          description: Completion percentage 0–100. Updated by the assignee.
+        start_date:
+          type: string
+          format: date
+        due_date:
+          type: string
+          format: date
+        force_assign:
+          type: boolean
+          writeOnly: true
+          default: false
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedTicket:
+      type: object
+      description: Read serializer — used when listing or retrieving tickets.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        ticket_type:
+          allOf:
+          - $ref: '#/components/schemas/TicketTypeEnum'
+          readOnly: true
+        ticket_type_display:
+          type: string
+          readOnly: true
+        created_by:
+          type: string
+          format: uuid
+          readOnly: true
+          description: The employee who raised this ticket.
+        created_by_name:
+          type: string
+          readOnly: true
+        assigned_to:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+          description: Auto-assigned based on ticket type routing rules.
+        assigned_to_name:
+          type: string
+          nullable: true
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        description:
+          type: string
+          readOnly: true
+        task_snapshot:
+          readOnly: true
+          nullable: true
+          description: Auto-captured snapshot of employee's current tasks. Only populated
+            for CAPACITY tickets.
+        status:
+          allOf:
+          - $ref: '#/components/schemas/TicketStatusEnum'
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        resolution_note:
+          type: string
+          readOnly: true
+          nullable: true
+          description: How the issue was resolved. Required when resolving.
+        resolved_by:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        resolved_by_name:
+          type: string
+          nullable: true
+          readOnly: true
+        resolved_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedTicketResolve:
+      type: object
+      description: Used when someone resolves a ticket. resolution_note is mandatory.
+      properties:
+        resolution_note:
+          type: string
+          description: Explain how the issue was resolved.
+          minLength: 10
+    PriorityEnum:
+      enum:
+      - low
+      - medium
+      - high
+      - critical
+      type: string
+      description: |-
+        * `low` - Low
+        * `medium` - Medium
+        * `high` - High
+        * `critical` - Critical
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        is_internal:
+          type: boolean
+          description: Is this an internal Avanzo project?
+        client:
+          type: string
+          format: uuid
+          nullable: true
+        client_name:
+          type: string
+          readOnly: true
+        service:
+          type: string
+          format: uuid
+          nullable: true
+        service_name:
+          type: string
+          readOnly: true
+        owning_department:
+          type: string
+          format: uuid
+          readOnly: true
+        department_name:
+          type: string
+          readOnly: true
+        manager:
+          type: string
+          format: uuid
+          readOnly: true
+        team:
+          type: array
+          items:
+            type: string
+            format: uuid
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ProjectStatusEnum'
+          readOnly: true
+        start_date:
+          type: string
+          format: date
+          nullable: true
+        target_end_date:
+          type: string
+          format: date
+          nullable: true
+        progress:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - client_name
+      - created_at
+      - department_name
+      - id
+      - manager
+      - owning_department
+      - progress
+      - service_name
+      - status
+      - title
+    ProjectStatusEnum:
+      enum:
+      - draft
+      - active
+      - on_hold
+      - completed
+      type: string
+      description: |-
+        * `draft` - Draft
+        * `active` - Active
+        * `on_hold` - On Hold
+        * `completed` - Completed
+    Service:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        is_active:
+          type: boolean
+      required:
+      - created_at
+      - id
+      - name
+      - updated_at
+    SeverityEnum:
+      enum:
+      - info
+      - critical
+      type: string
+      description: |-
+        * `info` - Information
+        * `critical` - Critical
+    TargetScopeEnum:
+      enum:
+      - org_wide
+      - department
+      type: string
+      description: |-
+        * `org_wide` - Entire Organization
+        * `department` - Specific Department
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        project:
+          type: string
+          format: uuid
+        project_name:
+          type: string
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        assignee:
+          type: string
+          format: uuid
+        assignee_name:
+          type: string
+          readOnly: true
+        priority:
+          $ref: '#/components/schemas/PriorityEnum'
+        status:
+          $ref: '#/components/schemas/TaskStatusEnum'
+        complexity:
+          type: integer
+          maximum: 10
+          minimum: 1
+          description: Difficulty rating 1–10. Set by TL at task creation.
+        complexity_locked:
+          type: boolean
+          readOnly: true
+          description: Once True, complexity can never be changed.
+        complexity_locked_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          description: Timestamp of when complexity was locked.
+        completion_pct:
+          type: integer
+          maximum: 100
+          minimum: 0
+          description: Completion percentage 0–100. Updated by the assignee.
+        start_date:
+          type: string
+          format: date
+        due_date:
+          type: string
+          format: date
+        force_assign:
+          type: boolean
+          writeOnly: true
+          default: false
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - assignee
+      - assignee_name
+      - complexity_locked
+      - complexity_locked_at
+      - created_at
+      - due_date
+      - id
+      - project
+      - project_name
+      - start_date
+      - title
+    TaskStatusEnum:
+      enum:
+      - open
+      - progress
+      - resolved
+      type: string
+      description: |-
+        * `open` - Open
+        * `progress` - In Progress
+        * `resolved` - Resolved
+    Ticket:
+      type: object
+      description: Read serializer — used when listing or retrieving tickets.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        ticket_type:
+          allOf:
+          - $ref: '#/components/schemas/TicketTypeEnum'
+          readOnly: true
+        ticket_type_display:
+          type: string
+          readOnly: true
+        created_by:
+          type: string
+          format: uuid
+          readOnly: true
+          description: The employee who raised this ticket.
+        created_by_name:
+          type: string
+          readOnly: true
+        assigned_to:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+          description: Auto-assigned based on ticket type routing rules.
+        assigned_to_name:
+          type: string
+          nullable: true
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        description:
+          type: string
+          readOnly: true
+        task_snapshot:
+          readOnly: true
+          nullable: true
+          description: Auto-captured snapshot of employee's current tasks. Only populated
+            for CAPACITY tickets.
+        status:
+          allOf:
+          - $ref: '#/components/schemas/TicketStatusEnum'
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        resolution_note:
+          type: string
+          readOnly: true
+          nullable: true
+          description: How the issue was resolved. Required when resolving.
+        resolved_by:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        resolved_by_name:
+          type: string
+          nullable: true
+          readOnly: true
+        resolved_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - assigned_to
+      - assigned_to_name
+      - created_at
+      - created_by
+      - created_by_name
+      - description
+      - id
+      - resolution_note
+      - resolved_at
+      - resolved_by
+      - resolved_by_name
+      - status
+      - status_display
+      - task_snapshot
+      - ticket_type
+      - ticket_type_display
+      - title
+    TicketCreate:
+      type: object
+      description: |-
+        Write serializer — used when an employee files a new ticket.
+
+        The employee only provides ticket_type, title, description.
+        Everything else (created_by, assigned_to, task_snapshot) is
+        set automatically by the view.
+      properties:
+        ticket_type:
+          $ref: '#/components/schemas/TicketTypeEnum'
+        title:
+          type: string
+          maxLength: 500
+        description:
+          type: string
+      required:
+      - description
+      - ticket_type
+      - title
+    TicketResolve:
+      type: object
+      description: Used when someone resolves a ticket. resolution_note is mandatory.
+      properties:
+        resolution_note:
+          type: string
+          description: Explain how the issue was resolved.
+          minLength: 10
+      required:
+      - resolution_note
+    TicketStatusEnum:
+      enum:
+      - open
+      - in_review
+      - resolved
+      type: string
+      description: |-
+        * `open` - Open
+        * `in_review` - In Review
+        * `resolved` - Resolved
+    TicketTypeEnum:
+      enum:
+      - capacity
+      - compliance
+      - general
+      - tech
+      type: string
+      description: |-
+        * `capacity` - Capacity Overload
+        * `compliance` - Compliance Report
+        * `general` - General Issue
+        * `tech` - Technical / Infrastructure
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+      required:
+      - access
+      - refresh
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
