@@ -9,7 +9,7 @@ import { Menu, X } from "lucide-react"
  * Technical department portal: fixed header + sidebar + main outlet.
  * Child routes render only page body (no raw HTML).
  */
-export function TechnicalPortalLayout() {
+export function TechnicalPortalLayout({ children }: { children?: React.ReactNode }) {
   useDesignPortalLightTheme()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
@@ -46,7 +46,7 @@ export function TechnicalPortalLayout() {
           </button>
         </aside>
         <main className="min-h-0 flex-1 overflow-y-auto p-4 md:p-8">
-          <Outlet />
+          {children || <Outlet />}
         </main>
       </div>
     </div>

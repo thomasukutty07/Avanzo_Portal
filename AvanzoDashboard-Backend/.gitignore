@@ -12,11 +12,8 @@ wheels/
 # Environment
 .env
 
-# Database (local SQLite — never commit real data)
+# Database
 db.sqlite3
-db.dev.sqlite3
-db.*.sqlite3
-*.sqlite3-journal
 
 # IDE
 .vscode/

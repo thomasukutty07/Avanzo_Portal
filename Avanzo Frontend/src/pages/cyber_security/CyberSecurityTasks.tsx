@@ -73,12 +73,15 @@ const TASKS = [
 
 export default function CyberSecurityTasksPage() {
   return (
-    <div className="space-y-8 pt-4 pb-12 min-h-screen font-display">
+    <div className="space-y-10 pt-4 pb-12 min-h-screen font-display bg-[#fcfcfc]">
       {/* Header Area */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-2">
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none uppercase italic font-headline">My Tasks</h1>
-          <p className="text-slate-500 mt-2 font-medium italic">Manage and track your assigned CyberSecurity operations tasks.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-2 font-headline">
+        <div className="space-y-1">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-600">
+            SECURITY OPERATIONS • MONITORING
+          </p>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none uppercase">Operation Tasks</h1>
+          <p className="text-slate-500 mt-2 text-sm font-medium">Execute and track high-priority security directives.</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="relative group">
@@ -92,7 +95,7 @@ export default function CyberSecurityTasksPage() {
           <Button variant="outline" className="h-12 w-12 p-0 border-slate-100 bg-white hover:bg-slate-50 rounded-xl">
              <Filter className="size-4 text-slate-400" />
           </Button>
-          <Button className="bg-violet-600 hover:bg-violet-700 text-white font-black h-12 px-6 rounded-xl shadow-lg shadow-violet-600/20 active:scale-95 transition-all text-sm uppercase tracking-widest">
+          <Button className="bg-violet-600 hover:bg-violet-700 text-white font-black h-12 px-6 rounded-xl shadow-lg shadow-violet-600/20 active:scale-95 transition-all text-[11px] uppercase tracking-widest font-headline">
              <Plus className="size-4 mr-2" />
              Create Task
           </Button>
@@ -103,12 +106,12 @@ export default function CyberSecurityTasksPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {STATS.map((s, i) => (
           <Card key={i} className="border-none shadow-sm shadow-slate-100 rounded-2xl overflow-hidden bg-white">
-            <CardContent className="p-7">
+            <CardContent className="p-7 font-headline">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 leading-none">{s.label}</p>
               <div className="flex items-baseline gap-2">
-                <h3 className={`text-4xl font-black ${s.color} tracking-tight font-headline`}>{s.value}</h3>
+                <h3 className={`text-4xl font-black ${s.color} tracking-tight font-headline uppercase italic`}>{s.value}</h3>
               </div>
-              <p className="text-[10px] font-bold text-slate-300 mt-2 uppercase tracking-tight italic">{s.sub}</p>
+              <p className="text-[10px] font-black text-slate-300 mt-2 uppercase tracking-tight italic">{s.sub}</p>
             </CardContent>
           </Card>
         ))}
@@ -146,23 +149,23 @@ export default function CyberSecurityTasksPage() {
                 
                 {/* Title and Badge */}
                 <div className="lg:col-span-5 space-y-3">
-                  <div className="flex items-center gap-3">
-                     <span className={`px-2 py-0.5 rounded text-[8px] font-black tracking-widest border ${task.priorityColor}`}>
-                       {task.priority}
-                     </span>
-                     <span className="text-[10px] font-bold text-slate-300 tabular-nums uppercase">{task.id}</span>
-                  </div>
-                  <h3 className="text-xl font-black text-slate-900 group-hover:text-violet-700 transition-colors tracking-tight leading-none uppercase italic font-headline">{task.title}</h3>
-                  <p className="text-[12px] text-slate-500 font-medium line-clamp-1 italic">{task.description}</p>
+                   <div className="flex items-center gap-3 font-headline">
+                      <span className={`px-2 py-1 rounded-[6px] text-[8px] font-black tracking-widest border ${task.priorityColor} uppercase italic shadow-sm`}>
+                        {task.priority}
+                      </span>
+                      <span className="text-[10px] font-black text-slate-300 tabular-nums uppercase">{task.id} Unit</span>
+                   </div>
+                   <h3 className="text-xl font-black text-slate-900 group-hover:text-violet-700 transition-colors tracking-tight leading-none uppercase italic font-headline">{task.title}</h3>
+                   <p className="text-[12px] text-slate-500 font-bold line-clamp-1 italic font-headline uppercase tracking-tight">{task.description}</p>
                 </div>
 
                 {/* Status and Progress */}
                 <div className="lg:col-span-4 flex items-center gap-12">
-                   <div className="space-y-3 min-w-[120px]">
-                      <div className="flex items-center gap-2">
-                        <task.statusIcon className={`size-4 ${task.status === 'In Progress' ? 'text-violet-600 animate-pulse' : task.status === 'Completed' ? 'text-emerald-500' : 'text-slate-300'}`} />
-                        <span className={`text-[11px] font-black uppercase tracking-widest ${task.status === 'In Progress' ? 'text-violet-700' : 'text-slate-500'}`}>{task.status}</span>
-                      </div>
+                    <div className="space-y-3 min-w-[120px] font-headline">
+                       <div className="flex items-center gap-2">
+                         <task.statusIcon className={`size-4 ${task.status === 'In Progress' ? 'text-violet-600 animate-pulse' : task.status === 'Completed' ? 'text-emerald-500' : 'text-slate-300'}`} />
+                         <span className={`text-[11px] font-black uppercase tracking-widest ${task.status === 'In Progress' ? 'text-violet-700' : 'text-slate-500'}`}>{task.status}</span>
+                       </div>
                       <div className="h-1.5 w-full bg-slate-50 rounded-full overflow-hidden">
                         <div 
                           className={`h-full ${task.status === 'Completed' ? 'bg-emerald-500' : 'bg-violet-600'} transition-all duration-1000`} 
@@ -172,20 +175,20 @@ export default function CyberSecurityTasksPage() {
                    </div>
                    <div className="text-right">
                       <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none mb-1">Due Date</p>
-                      <p className="text-[12px] font-black text-slate-900 group-hover:text-violet-700 transition-colors uppercase tracking-tight italic font-headline">{task.dueDate}</p>
+                      <p className="text-[12px] font-black text-slate-900 group-hover:text-violet-700 transition-colors uppercase tracking-tight font-headline">{task.dueDate}</p>
                    </div>
                 </div>
 
                 {/* Assignee and Action */}
                 <div className="lg:col-span-3 flex items-center justify-between pl-6 border-l border-slate-50">
                    <div className="flex items-center gap-3">
-                      <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-[11px] font-black text-slate-400 border border-slate-100 group-hover:border-violet-100 group-hover:bg-violet-50 group-hover:text-violet-600 transition-colors uppercase italic shadow-sm">
-                        {task.assignee.split(' ').map(n => n[0]).join('')}
-                      </div>
-                      <div>
-                        <p className="text-[12px] font-black text-slate-900 leading-none group-hover:text-violet-700 transition-colors uppercase italic font-headline">{task.assignee}</p>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase mt-1 tracking-widest">Assigned Analyst</p>
-                      </div>
+                       <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-[10px] font-black text-slate-400 border border-slate-100 group-hover:border-violet-100 group-hover:bg-violet-50 group-hover:text-violet-600 transition-colors uppercase shadow-sm">
+                         {task.assignee.split(' ').map(n => n[0]).join('')}
+                       </div>
+                       <div>
+                         <p className="text-[12px] font-black text-slate-900 leading-none group-hover:text-violet-700 transition-colors uppercase font-headline">{task.assignee}</p>
+                         <p className="text-[9px] font-black text-slate-400 uppercase mt-1 tracking-widest font-headline">Assigned Analyst</p>
+                       </div>
                    </div>
                    <Button variant="ghost" className="text-slate-200 hover:text-slate-400 group-hover:text-slate-700">
                      <MoreVertical className="size-5" />

@@ -7,6 +7,7 @@ import {
   Megaphone,
   AlertCircle,
   Umbrella,
+  User
 } from "lucide-react"
 
 export type TechnicalNavItem = {
@@ -25,4 +26,5 @@ export const TECHNICAL_NAV_ITEMS: TechnicalNavItem[] = [
   { to: "/technical/bugs", label: "Bug Tracking", icon: Bug },
   { to: "/technical/announcements", label: "Announcements", icon: Megaphone },
   { to: "/technical/reports", label: "Reports", icon: BarChart3 },
+  { to: "/technical/profile", label: "My Profile", icon: User },
 ]

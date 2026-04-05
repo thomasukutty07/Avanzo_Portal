@@ -1,3 +1,4 @@
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from accounts.models import Employee
@@ -5,11 +6,20 @@ from core.models import TimeStampedModel
 from organization.models import Department
 
 
-class Client(TimeStampedModel):
+class ExternalClient(TimeStampedModel):
+    """
+    An external customer/organization that Avanzo provides services to.
+    Renamed from 'Client' to avoid collision with clients.Client (tenant model).
+    """
+
     name = models.CharField(max_length=255, unique=True)
     contact_email = models.EmailField(blank=True, null=True)
     industry = models.CharField(max_length=100, blank=True)
     is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "projects_client"  # keep the same table name for backward compat
+        verbose_name = "External Client"
 
     def __str__(self):
         return self.name
@@ -40,7 +50,7 @@ class Project(TimeStampedModel):
         default=False, help_text="Is this an internal Avanzo project?"
     )
     client = models.ForeignKey(
-        Client, on_delete=models.PROTECT, null=True, blank=True, related_name="projects"
+        ExternalClient, on_delete=models.PROTECT, null=True, blank=True, related_name="projects"
     )
     service = models.ForeignKey(
         Service, on_delete=models.SET_NULL, null=True, blank=True, related_name="projects"
@@ -61,13 +71,44 @@ class Project(TimeStampedModel):
     target_end_date = models.DateField(null=True, blank=True)
 
     @property
-    def mathematical_progress(self) -> int:
-        """Dynamically calculates exact percentage of resolved tasks."""
-        total_tasks = self.tasks.count()
+    def weighted_progress(self) -> int:
+        """
+        Complexity-weighted progress formula.
+
+        Formula:
+            Progress = Σ(complexity × completion_pct) / Σ(complexity × 100) × 100
+
+        Example:
+            Task A: complexity=8, completion_pct=50  → contributes 400
+            Task B: complexity=2, completion_pct=100 → contributes 200
+            Total potential: (8×100) + (2×100) = 1000
+            Progress = 600 / 1000 × 100 = 60%
+
+        Falls back to simple count-based progress if no complexity data exists.
+        """
+        tasks = self.tasks.all()
+        total_tasks = tasks.count()
+
         if total_tasks == 0:
             return 0
-        resolved_tasks = self.tasks.filter(status=Task.Status.RESOLVED).count()
-        return int((resolved_tasks / total_tasks) * 100)
+
+        total_weighted = 0
+        total_potential = 0
+
+        for task in tasks:
+            complexity = task.complexity or 1  # default to 1 if not set
+            total_weighted += complexity * task.completion_pct
+            total_potential += complexity * 100
+
+        if total_potential == 0:
+            return 0
+
+        return int((total_weighted / total_potential) * 100)
+
+    # Keep backward compatibility
+    @property
+    def mathematical_progress(self) -> int:
+        return self.weighted_progress
 
     def __str__(self):
         return self.title
@@ -96,6 +137,27 @@ class Task(TimeStampedModel):
     )
     status = models.CharField(
         max_length=20, choices=Status.choices, default=Status.OPEN, db_index=True
+    )
+
+    # ── Complexity & Progress (A-11) ──────────────────────────
+    complexity = models.SmallIntegerField(
+        default=1,
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
+        help_text="Difficulty rating 1–10. Set by TL at task creation.",
+    )
+    complexity_locked = models.BooleanField(
+        default=False,
+        help_text="Once True, complexity can never be changed.",
+    )
+    complexity_locked_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp of when complexity was locked.",
+    )
+    completion_pct = models.SmallIntegerField(
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text="Completion percentage 0–100. Updated by the assignee.",
     )
 
     start_date = models.DateField(db_index=True)

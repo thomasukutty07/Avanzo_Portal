@@ -12,6 +12,9 @@ export type UserStatus = "active" | "on_leave" | "offboarding"
 export type LeaveType = "full_day" | "half_day"
 export type LeaveStatus = "pending" | "tl_approved" | "approved" | "rejected"
 export type NotificationType = "info" | "warning" | "urgent" | "success"
+export type BroadcastSeverity = "info" | "critical"
+export type TicketType = "capacity" | "compliance" | "general" | "tech"
+export type TicketStatus = "open" | "in_review" | "resolved"
 
 // ─── Auth ────────────────────────────────────────────────
 export interface User {
@@ -109,6 +112,42 @@ export interface Notification {
   notification_type: NotificationType
   action_url?: string | null
   is_read: boolean
+  created_at: string
+}
+
+// ─── Broadcasts ──────────────────────────────────────────
+export interface Broadcast {
+  id: string
+  severity: BroadcastSeverity
+  target_scope: "org_wide" | "department"
+  department?: string | null
+  department_name?: string
+  title: string
+  message: string
+  created_by: string
+  created_by_name: string
+  is_active: boolean
+  is_acknowledged: boolean
+  created_at: string
+}
+
+// ─── Ticketing ───────────────────────────────────────────
+export interface Ticket {
+  id: string
+  ticket_type: TicketType
+  ticket_type_display: string
+  created_by: string
+  created_by_name: string
+  assigned_to?: string | null
+  assigned_to_name?: string | null
+  title: string
+  description: string
+  status: TicketStatus
+  status_display: string
+  resolution_note?: string | null
+  resolved_by?: string | null
+  resolved_by_name?: string | null
+  resolved_at?: string | null
   created_at: string
 }
 

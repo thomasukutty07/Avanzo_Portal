@@ -2,12 +2,12 @@ from rest_framework import serializers
 
 from leaves.models import LeaveRequest
 
-from .models import Client, Project, Service, Task
+from .models import ExternalClient, Project, Service, Task
 
 
-class ClientSerializer(serializers.ModelSerializer):
+class ExternalClientSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Client
+        model = ExternalClient
         fields = "__all__"
 
 
@@ -21,7 +21,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     client_name = serializers.CharField(source="client.name", read_only=True, default=None)
     service_name = serializers.CharField(source="service.name", read_only=True, default=None)
     department_name = serializers.CharField(source="owning_department.name", read_only=True)
-    progress = serializers.IntegerField(source="mathematical_progress", read_only=True)
+    progress = serializers.IntegerField(source="weighted_progress", read_only=True)
 
     class Meta:
         model = Project
@@ -43,12 +43,20 @@ class ProjectSerializer(serializers.ModelSerializer):
             "progress",
             "created_at",
         ]
+        read_only_fields = ["owning_department", "manager", "status"]
 
     def validate(self, data):
-        is_internal = data.get("is_internal", False)
-        client = data.get("client")
-        department = data.get("owning_department")
-        service = data.get("service")
+        is_internal = data.get("is_internal", getattr(self.instance, "is_internal", False))
+        client = data.get("client", getattr(self.instance, "client", None))
+
+        if self.instance:
+            department = self.instance.owning_department
+        else:
+            department = (
+                self.context["request"].user.department if "request" in self.context else None
+            )
+
+        service = data.get("service", getattr(self.instance, "service", None))
 
         if is_internal and client:
             raise serializers.ValidationError({"client": "Internal projects cannot have a client."})
@@ -79,18 +87,32 @@ class TaskSerializer(serializers.ModelSerializer):
             "assignee_name",
             "priority",
             "status",
+            "complexity",
+            "complexity_locked",
+            "complexity_locked_at",
+            "completion_pct",
             "start_date",
             "due_date",
             "force_assign",
             "created_at",
         ]
+        read_only_fields = ["complexity_locked", "complexity_locked_at"]
+
+    def validate_complexity(self, value):
+        """Reject complexity changes once locked."""
+        if self.instance and self.instance.complexity_locked:
+            if value != self.instance.complexity:
+                raise serializers.ValidationError(
+                    "Complexity is locked and cannot be changed after the first progress update."
+                )
+        return value
 
     def validate(self, data):
-        project = data.get("project")
-        assignee = data.get("assignee")
-        start_date = data.get("start_date")
-        due_date = data.get("due_date")
-        force_assign = data.get("force_assign")
+        project = data.get("project", getattr(self.instance, "project", None))
+        assignee = data.get("assignee", getattr(self.instance, "assignee", None))
+        start_date = data.get("start_date", getattr(self.instance, "start_date", None))
+        due_date = data.get("due_date", getattr(self.instance, "due_date", None))
+        force_assign = data.get("force_assign", False)
 
         if start_date and due_date and start_date > due_date:
             raise serializers.ValidationError({"due_date": "Due date cannot be before start date."})
@@ -122,3 +144,22 @@ class TaskSerializer(serializers.ModelSerializer):
                 )
 
         return data
+
+
+class TaskProgressSerializer(serializers.Serializer):
+    """Used for the PATCH /tasks/{id}/progress/ endpoint."""
+
+    completion_pct = serializers.IntegerField(min_value=0, max_value=100)
+
+
+class ProjectProgressSerializer(serializers.Serializer):
+    """Read-only serializer for the GET /projects/{id}/progress/ endpoint."""
+
+    project_id = serializers.UUIDField()
+    project_name = serializers.CharField()
+    weighted_progress = serializers.IntegerField()
+    total_tasks = serializers.IntegerField()
+    completed_tasks = serializers.IntegerField()
+    total_complexity_points = serializers.IntegerField()
+    earned_points = serializers.IntegerField()
+    formula = serializers.CharField()

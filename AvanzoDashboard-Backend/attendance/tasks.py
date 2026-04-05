@@ -1,3 +1,19 @@
+"""
+Celery tasks for attendance automation.
+
+These tasks are auto-discovered by Celery and scheduled via Celery Beat
+(see config/celery.py for the schedule).
+
+They can also be run manually as management commands:
+    python manage.py check_morning_missing
+    python manage.py check_evening_missing
+    python manage.py mark_missing_attendance
+
+Architecture note:
+    Both Celery tasks and management commands call the same core logic
+    in attendance.services to avoid code duplication.
+"""
+
 import logging
 from datetime import date
 
@@ -10,41 +26,96 @@ from .models import DailyLog
 logger = logging.getLogger(__name__)
 
 
-@shared_task
-def ping_missing_morning_standups():
+@shared_task(name="attendance.tasks.check_morning_missing")
+def check_morning_missing():
     """
-    Runs every 5 mins between 9:30 AM - 9:45 AM local time.
-    Finds active employees who haven't submitted their morning intent today.
+    Runs at 9:30 AM and 9:45 AM (Mon–Fri).
+
+    Finds active employees who haven't submitted their morning intent
+    today. Logs their names for now — notification integration will
+    be added when the notification channel supports push delivery.
     """
     today = date.today()
 
-    # Find active employees
     active_employees = Employee.objects.filter(is_active=True, status="active")
 
-    # Find employees who ALREADY logged in today
-    logged_in_ids = DailyLog.objects.filter(date=today, clock_in_time__isnull=False).values_list(
-        "employee_id", flat=True
+    clocked_in_ids = set(
+        DailyLog.objects.filter(
+            date=today,
+            clock_in_time__isnull=False,
+        ).values_list("employee_id", flat=True)
     )
 
-    # Exclude the ones who logged in, leaving the ones who forgot
-    slackers = active_employees.exclude(id__in=logged_in_ids)
+    missing = active_employees.exclude(id__in=clocked_in_ids)
+    count = missing.count()
 
-    for employee in slackers:
-        logger.info(f"Triggering morning nudge notification for {employee.email}")
+    if count == 0:
+        logger.info("All employees have clocked in for %s.", today)
+        return f"All clear for {today}"
 
-    @shared_task
-    def ping_missing_evening_summaries():
-        """
-        Runs every 5 mins between 5:35 PM - 5:50 PM local time.
-        Finds active employees who clocked in, but haven't clocked out.
-        """
-        today = date.today()
+    for emp in missing:
+        logger.warning("Morning clock-in missing: %s (%s)", emp.get_full_name(), emp.email)
 
-        # Find logs from today where morning is done, but evening is missing
+    return f"{count} employees have not clocked in for {today}"
 
-        missing_evening_logs = DailyLog.objects.filter(
-            date=today, clock_in_time__isnull=False, clock_out_time__isnull=True
-        ).select_related("employee")
 
-        for log in missing_evening_logs:
-            logger.info(f"Triggering evening nudge notification for {log.employee.email}")
+@shared_task(name="attendance.tasks.check_evening_missing")
+def check_evening_missing():
+    """
+    Runs at 5:35 PM and 5:50 PM (Mon–Fri).
+
+    Finds employees who clocked in today but haven't clocked out.
+    These are the people who might forget their evening summary.
+    """
+    today = date.today()
+
+    missing_evening = DailyLog.objects.filter(
+        date=today,
+        clock_in_time__isnull=False,
+        clock_out_time__isnull=True,
+    ).select_related("employee")
+
+    count = missing_evening.count()
+
+    if count == 0:
+        logger.info("All clocked-in employees have clocked out for %s.", today)
+        return f"All clear for {today}"
+
+    for log in missing_evening:
+        logger.warning(
+            "Evening clock-out missing: %s (%s)",
+            log.employee.get_full_name(),
+            log.employee.email,
+        )
+
+    return f"{count} employees haven't clocked out for {today}"
+
+
+@shared_task(name="attendance.tasks.mark_missing_attendance")
+def mark_missing_attendance():
+    """
+    Runs at 11:55 PM (Mon–Fri).
+
+    Creates a MISSING attendance record for every active employee
+    who has no DailyLog for today. This ensures there are zero gaps
+    in attendance data — every employee has exactly one record per day.
+    """
+    today = date.today()
+
+    active_employees = Employee.objects.filter(is_active=True, status="active")
+
+    has_record_ids = set(DailyLog.objects.filter(date=today).values_list("employee_id", flat=True))
+
+    missing_employees = active_employees.exclude(id__in=has_record_ids)
+    created_count = 0
+
+    for emp in missing_employees:
+        DailyLog.objects.create(
+            employee=emp,
+            date=today,
+            status=DailyLog.Status.MISSING,
+        )
+        created_count += 1
+
+    logger.info("Created %d MISSING attendance records for %s.", created_count, today)
+    return f"Created {created_count} MISSING records for {today}"

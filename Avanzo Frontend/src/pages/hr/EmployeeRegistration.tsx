@@ -4,6 +4,9 @@ import { HRPortalChrome } from "@/components/portal/hr/HRPortalChrome"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { toast } from "sonner"
+import { api } from "@/lib/axios"
+import { extractResults } from "@/lib/apiResults"
+import { useEffect } from "react"
 import { 
   Camera, 
   Lock, 
@@ -22,27 +25,54 @@ export default function EmployeeRegistrationPage() {
   const [step, setStep] = useState<Step>('personal')
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [departments, setDepartments] = useState<any[]>([])
+  const [designations, setDesignations] = useState<any[]>([])
+  const [roles, setRoles] = useState<any[]>([])
+  const [leads, setLeads] = useState<any[]>([])
+  const [loadingForm, setLoadingForm] = useState(false)
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [r, d, g, empRes] = await Promise.all([
+          api.get("/api/auth/roles/"),
+          api.get("/api/organization/departments/"),
+          api.get("/api/organization/designations/"),
+          api.get("/api/auth/employees/")
+        ])
+        setRoles(extractResults(r.data))
+        setDepartments(extractResults(d.data))
+        setDesignations(extractResults(g.data))
+        const emps = extractResults<any>(empRes.data)
+        setLeads(emps.filter(e => e.role === "Team Lead" || String(e.role).includes("Lead")))
+      } catch (e) {
+        console.error(e)
+      }
+    }
+    loadData()
+  }, [])
 
   // Centralized form state
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
-    phone: "+91 ",
+    phone: "",
     dob: "",
-    gender: "",
+    gender: "Male",
     address: "",
     employeeId: "",
-    department: "Engineering",
-    jobTitle: "",
+    department: "",
+    jobTitle: "", // maps to designation
     employmentType: "Full-time",
     workEmail: "",
     hireDate: "",
     salary: "",
-    manager: "Sarah Jenkins (Senior Dev)",
+    manager: "", // maps to team_lead
     loginId: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
+    accessRole: ""
   })
 
   const updateForm = (field: string, value: string) => {
@@ -72,15 +102,16 @@ export default function EmployeeRegistrationPage() {
     } 
     else if (currentStep === 'job') {
         if (!formData.employeeId) newErrors.employeeId = "Required"
+        if (!formData.department) newErrors.department = "Required"
         if (!formData.jobTitle) newErrors.jobTitle = "Required"
         if (!formData.workEmail) newErrors.workEmail = "Required"
         else if (!/\S+@\S+\.\S+/.test(formData.workEmail)) newErrors.workEmail = "Invalid email"
         if (!formData.hireDate) newErrors.hireDate = "Required"
     }
     else if (currentStep === 'credentials') {
-        if (!formData.loginId) newErrors.loginId = "Required"
+        if (!formData.accessRole) newErrors.accessRole = "Required"
         if (!formData.password) newErrors.password = "Required"
-        else if (formData.password.length < 6) newErrors.password = "Min 6 chars"
+        else if (formData.password.length < 10) newErrors.password = "Min 10 chars"
         if (!formData.confirmPassword) newErrors.confirmPassword = "Required"
         else if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = "Mismatch"
     }
@@ -100,16 +131,42 @@ export default function EmployeeRegistrationPage() {
   const currentStepIndex = steps.findIndex(s => s.id === step)
   const progressPercent = ((currentStepIndex + 1) / steps.length) * 100
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (validateStep(step)) {
       const nextStep = steps[currentStepIndex + 1]
       if (nextStep) {
         setStep(nextStep.id as Step)
       } else {
-        toast.success("Employee registered successfully!", {
-          description: `${formData.firstName} ${formData.lastName} has been added to the system.`
-        })
-        navigate("/employees")
+        try {
+          setLoadingForm(true)
+          await api.post("/api/auth/employees/", {
+            email: formData.workEmail,
+            password: formData.password,
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            phone: formData.phone || null,
+            employee_id: formData.employeeId || null,
+            access_role: formData.accessRole || null,
+            department: formData.department || null,
+            designation: formData.jobTitle || null,
+            team_lead: formData.manager || null,
+            status: "active",
+            date_of_joining: formData.hireDate || null
+          })
+          toast.success("Employee registered successfully!", {
+            description: `${formData.firstName} ${formData.lastName} has been added to the system.`
+          })
+          navigate("/employees")
+        } catch (e: any) {
+          console.error("Registration Error:", e.response?.data || e)
+          const data = e.response?.data || {}
+          const errorMsg = data.email?.[0] || data.employee_id?.[0] || data.password?.[0] || data.status?.[0] || "Failed to register employee."
+          toast.error(errorMsg, {
+            description: "Please check the highlighted fields."
+          })
+        } finally {
+          setLoadingForm(false)
+        }
       }
     } else {
       toast.error("Please fill in all required fields correctly.")
@@ -127,7 +184,7 @@ export default function EmployeeRegistrationPage() {
 
   return (
     <HRPortalChrome>
-      <div className="min-h-full bg-slate-50/50 p-6 md:p-10 space-y-10 animate-in fade-in duration-500">
+      <div className="min-h-full bg-slate-50/50 p-6 md:p-10 space-y-10 animate-in fade-in duration-500 font-display">
         {/* Step Header */}
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div>
@@ -239,18 +296,25 @@ export default function EmployeeRegistrationPage() {
                             <div className="space-y-2">
                                 <label className="text-[13px] font-bold text-slate-700 ml-1">Department</label>
                                 <select 
-                                  className="w-full h-12 bg-slate-50 border-transparent rounded-xl px-4 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none appearance-none cursor-pointer"
+                                  className={`w-full h-12 bg-slate-50 border-transparent rounded-xl px-4 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none appearance-none cursor-pointer ${errors.department ? 'ring-2 ring-red-500/20 border-red-200 bg-red-50/10' : ''}`}
                                   value={formData.department}
                                   onChange={(e) => updateForm('department', e.target.value)}
                                 >
-                                    <option>Engineering</option>
-                                    <option>Design</option>
-                                    <option>Marketing</option>
-                                    <option>Sales</option>
-                                    <option>Human Resources</option>
+                                    <option value="">Select Dept</option>
+                                    {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                                 </select>
                             </div>
-                            <FormField label="Job Title" placeholder="e.g. Senior Software Engineer" error={errors.jobTitle} value={formData.jobTitle} onChange={(v) => updateForm('jobTitle', v)} />
+                                                        <div className="space-y-2">
+                                <label className="text-[13px] font-bold text-slate-700 ml-1">Designation</label>
+                                <select 
+                                  className={`w-full h-12 bg-slate-50 border-transparent rounded-xl px-4 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none appearance-none cursor-pointer ${errors.jobTitle ? 'ring-2 ring-red-500/20 border-red-200 bg-red-50/10' : ''}`}
+                                  value={formData.jobTitle}
+                                  onChange={(e) => updateForm('jobTitle', e.target.value)}
+                                >
+                                    <option value="">Select Designation</option>
+                                    {designations.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                                </select>
+                            </div>
                             <div className="space-y-2">
                                 <label className="text-[13px] font-bold text-slate-700 ml-1">Employment Type</label>
                                 <select 
@@ -266,7 +330,7 @@ export default function EmployeeRegistrationPage() {
                             </div>
                             <FormField label="Work Email" placeholder="primary.email@work.com" type="email" error={errors.workEmail} value={formData.workEmail} onChange={(v) => updateForm('workEmail', v)} />
                             <FormField label="Hire Date" placeholder="mm/dd/yyyy" type="date" isDatePicker error={errors.hireDate} value={formData.hireDate} onChange={(v) => updateForm('hireDate', v)} />
-                            <FormField label="Monthly Salary (USD)" placeholder="0.00" error={errors.salary} value={formData.salary} onChange={(v) => updateForm('salary', v)} />
+                            <FormField label="Annual CTC (LPA)" placeholder="e.g. 12.0" error={errors.salary} value={formData.salary} onChange={(v) => updateForm('salary', v)} />
                             <div className="space-y-2">
                                 <label className="text-[13px] font-bold text-slate-700 ml-1">Reporting Manager</label>
                                 <select 
@@ -274,9 +338,8 @@ export default function EmployeeRegistrationPage() {
                                   value={formData.manager}
                                   onChange={(e) => updateForm('manager', e.target.value)}
                                 >
-                                    <option>Sarah Jenkins (Senior Dev)</option>
-                                    <option>Michael Chen (Lead Designer)</option>
-                                    <option>Olivia Garcia (Account Executive)</option>
+                                    <option value="">None / N/A</option>
+                                    {leads.map(l => <option key={l.id} value={l.id}>{l.first_name} {l.last_name} ({l.role})</option>)}
                                 </select>
                             </div>
                         </div>
@@ -293,7 +356,19 @@ export default function EmployeeRegistrationPage() {
                     {step === 'credentials' && (
                         <div className="max-w-xl mx-auto space-y-8 animate-in slide-in-from-right-4 duration-500 text-left">
                             <div className="space-y-6">
-                                <FormField label="Username / Login Email" placeholder="username@avanzo.com" error={errors.loginId} value={formData.loginId} onChange={(v) => updateForm('loginId', v)} />
+                                <FormField label="Login Email" placeholder="primary.email@work.com" error={errors.loginId} value={formData.workEmail} onChange={(v) => updateForm('workEmail', v)} />
+                                <div className="space-y-2">
+                                  <label className="text-[13px] font-bold text-slate-700 ml-1">Portal Access Role</label>
+                                  <select 
+                                    className={`w-full h-12 bg-slate-50 border-transparent rounded-xl px-4 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none appearance-none cursor-pointer ${errors.accessRole ? 'ring-2 ring-red-500/20 border-red-200 bg-red-50/10' : ''}`}
+                                    value={formData.accessRole}
+                                    onChange={(e) => updateForm('accessRole', e.target.value)}
+                                  >
+                                      <option value="">Select Portal Role</option>
+                                      {roles.map(r => <option key={r.id} value={r.id}>{r.name} - {r.description}</option>)}
+                                  </select>
+                                  {errors.accessRole && <p className="text-[10px] font-bold text-red-500 ml-2 mt-1">{errors.accessRole}</p>}
+                                </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2 relative">
                                         <label className="text-[13px] font-bold text-slate-700 ml-1 block">Password</label>
@@ -413,10 +488,20 @@ export default function EmployeeRegistrationPage() {
                             </Button>
                             <Button 
                               onClick={handleNext}
-                              className="w-full sm:w-auto h-12 bg-violet-600 hover:bg-violet-700 text-white font-bold px-8 rounded-xl shadow-lg shadow-violet-200 transition-all hover:-translate-y-0.5 active:translate-y-0 flex gap-2 items-center"
+                              disabled={loadingForm}
+                              className="w-full sm:w-auto h-12 bg-violet-600 hover:bg-violet-700 text-white font-bold px-8 rounded-xl shadow-lg shadow-violet-200 transition-all hover:-translate-y-0.5 active:translate-y-0 flex gap-2 items-center disabled:opacity-70"
                             >
-                                {step === 'review' ? 'Register Employee' : `Continue to ${steps[currentStepIndex + 1]?.label || ''}`}
-                                <ArrowRight className="size-4 stroke-[3px]" />
+                                {loadingForm ? (
+                                  <>
+                                    <div className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    Processing...
+                                  </>
+                                ) : (
+                                  <>
+                                    {step === 'review' ? 'Register Employee' : `Continue to ${steps[currentStepIndex + 1]?.label || ''}`}
+                                    <ArrowRight className="size-4 stroke-[3px]" />
+                                  </>
+                                )}
                             </Button>
                         </div>
                     </div>

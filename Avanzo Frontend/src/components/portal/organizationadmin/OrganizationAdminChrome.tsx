@@ -13,10 +13,10 @@ export function OrganizationAdminChrome({ children }: { children: React.ReactNod
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   const navItemClasses = (isActive: boolean) => 
-    `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition-all group ${
+    `flex items-center gap-3 rounded-xl px-4 py-3 text-[13px] font-bold transition-all duration-200 group ${
       isActive 
-        ? "bg-violet-600 text-white shadow-lg shadow-violet-600/20" 
-        : "text-slate-400 hover:bg-slate-50 hover:text-slate-600"
+        ? "bg-violet-600 text-white shadow-md shadow-violet-600/20" 
+        : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
     }`
 
   return (
@@ -89,8 +89,8 @@ export function OrganizationAdminChrome({ children }: { children: React.ReactNod
             <div className="relative flex-1 group">
               <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 group-focus-within:text-violet-600 transition-colors" />
               <input
-                className="w-full bg-slate-50 border-none rounded-2xl pl-12 pr-4 py-3 text-sm font-medium focus:ring-2 focus:ring-violet-600/5 transition-all outline-none"
-                placeholder="Search tasks, bugs, or projects..."
+                className="w-full bg-[#F1F5F9] border-transparent rounded-xl pl-12 pr-4 py-3 text-[13px] font-bold text-slate-900 focus:ring-4 focus:ring-violet-600/5 focus:bg-white focus:border-violet-200 transition-all placeholder:text-slate-300 tracking-tight"
+                placeholder="Search employees, reports, or tasks..."
                 type="text"
               />
             </div>

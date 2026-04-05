@@ -3,13 +3,10 @@ import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
 import { SuperAdminChrome } from "@/components/layout/SuperAdminChrome"
 import { 
   Check, 
-  X, 
   Search, 
   Filter, 
-  Building2, 
   User, 
   Clock, 
-  ShieldAlert,
   Loader2,
   Trash2
 } from "lucide-react"
@@ -43,27 +40,25 @@ export default function SuperAdminPending() {
 
   return (
     <SuperAdminChrome>
-      <div className="space-y-10 py-8 font-sans text-slate-600">
-        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-               <ShieldAlert className="h-5 w-5 text-amber-500" />
-               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-600">Approval Queue</span>
+      <div className="space-y-6 pb-12 font-display bg-[#fcfcfc] min-h-screen">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-2 font-headline">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-600 mb-1">
+                ACCESS REQUEST TRIAGE
+              </p>
+              <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none uppercase">
+                Pending Authorization
+              </h1>
+              <p className="text-slate-500 mt-2 text-sm font-medium">Verify and authenticate organizational access requests.</p>
             </div>
-            <h1 className="font-display text-3xl font-black tracking-tight text-slate-900 leading-tight">
-              Pending Registrations
-            </h1>
-            <p className="text-slate-500 mt-1 font-medium italic">
-               Review and authorize new organization registration requests.
-            </p>
-          </div>
-        </header>
+        </div>
 
         <div className="bg-white rounded-[40px] border border-slate-50 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
            <div className="p-10 border-b border-slate-50 flex flex-col sm:flex-row items-center justify-between gap-6 bg-slate-50/10">
               <div className="flex items-center gap-4">
                  <div className="size-3 bg-amber-500 rounded-full shadow-lg shadow-amber-500/50 animate-pulse" />
-                 <h3 className="font-display text-xl font-black text-slate-900 leading-none">Application List</h3>
+                 <h3 className="font-headline text-xl font-black text-slate-900 leading-none uppercase italic tracking-tight">Application Registry</h3>
               </div>
               <div className="flex items-center gap-4 w-full sm:w-auto">
                  <div className="relative flex-1 sm:w-80">
@@ -94,10 +89,10 @@ export default function SuperAdminPending() {
                    <tr key={org.id} className="group hover:bg-slate-50/50 transition-all cursor-pointer">
                      <td className="px-10 py-8 font-black text-xs text-slate-300 tracking-widest">{org.id}</td>
                      <td className="px-10 py-8">
-                        <div>
-                           <h4 className="font-display text-base font-black text-slate-900 group-hover:text-violet-700 transition-colors">{org.name}</h4>
-                           <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1.5 flex items-center gap-2">
-                             <Clock className="h-3 w-3" /> Submitted {org.date}
+                        <div className="font-headline">
+                           <h4 className="text-base font-black text-slate-900 group-hover:text-violet-700 transition-colors uppercase italic tracking-tight">{org.name}</h4>
+                           <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-2 flex items-center gap-2">
+                             <Clock className="h-3 w-3 stroke-[2.5px]" /> Submitted {org.date}
                            </p>
                         </div>
                      </td>
@@ -107,11 +102,11 @@ export default function SuperAdminPending() {
                         </span>
                      </td>
                      <td className="px-10 py-8">
-                        <div className="flex items-center gap-3">
-                           <div className="size-8 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 shadow-inner">
-                              <User className="h-4 w-4 text-slate-400" />
+                        <div className="flex items-center gap-3 font-headline">
+                           <div className="size-8 rounded-xl bg-slate-50 flex items-center justify-center border border-slate-100 shadow-inner">
+                              <User className="h-4 w-4 text-slate-400 stroke-[2.5px]" />
                            </div>
-                           <span className="text-sm font-black text-slate-700 tracking-tight">{org.contact}</span>
+                           <span className="text-[11px] font-black text-slate-700 tracking-tight uppercase italic lowercase">{org.contact}</span>
                         </div>
                      </td>
                      <td className="px-10 py-8">

@@ -1,136 +1,169 @@
 import { TeamLeadChrome } from "@/components/portal/teamlead/TeamLeadChrome"
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
-import { useState } from "react"
+import { accountsService } from "@/services/accounts"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
-import { AddMemberModal, CreateDepartmentModal } from "@/components/portal/teamlead/TeamLeadActionForms"
-import { Building2 } from "lucide-react"
 import { 
-  Users, 
-  UserPlus, 
-  MoreVertical, 
-  Search,
-  Filter,
-  CheckCircle2,
-  AlertCircle,
-  Clock
+  Plus, 
+  Search, 
+  Filter, 
+  Mail, 
+  MessageSquare, 
+  MoreHorizontal,
+  ChevronRight,
+  Shield,
+  Zap,
+  Activity,
+  Loader2,
+  Users
 } from "lucide-react"
-
-const TEAM_MEMBERS = [
-  { id: 1, name: "Sarah Miller", role: "UI/UX Designer", email: "sarah.m@avanzo.com", status: "Available", color: "bg-green-500", img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCHKGI4TKnniQXUa6O_I2UiTEBPOSnzJWzfL3YZetsRTBCHSs1iOzf3O7eVZCCKp8MdBtA95rO1d3CiP86nseP7h3lNanxUdtCur6LxBMb_nDiKgSUQSbkx_hnqfGjnsNa9QfNq2RkiRFVkPkb-tUtKNq1-MOu02iQuc8IrK-04ZUVCXEgVv2UWo5nCy1A4gFftfVqLDwlamNVryFcEE_AzDt1b3APrNzc41XmDgpWVPZfyMhlBpODVQH3xXCAN0BCW3Z47Z6-igmE" },
-  { id: 2, name: "James Chen", role: "Lead Developer", email: "james.c@avanzo.com", status: "In Meeting", color: "bg-amber-500", img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBTM-hZ-TaGxo4agsgbQt33_kGRmdMl-t5bbaWSTroBPQ6zP0VfHBGsLaLB3zlGizeBFHoMJlVEGc22qx2I-mtlsmwKybqVvXUOKhmFFii3o1qscQmyMnNZwH90PetxFTpi7SBCPZcL6boNvopI4CCxpLJdNVxSUU8vIBXUD13x-56vltnqWXh-8FIi5tijXwAe5Fg4qUqqmagRAwsHQhWDa3wrjYIbfyo_B2ESYN4NhsDP-x-98UpMNQxillkkzfG2ZLDxeBRIZbA" },
-  { id: 3, name: "Mike Ross", role: "Cloud Architect", email: "mike.r@avanzo.com", status: "Away", color: "bg-slate-400", img: "https://lh3.googleusercontent.com/aida-public/AB6AXuDojy_q_3sli6wsyTGnyhDCYPVFpSjiP5AAY_IatQ5YAcfLO7vu83Rqor5azzhHmRtGRFPGFoYjdq7xcyzrgd7ZYiAJ7Eg5P2_naTitmyebIA29DvgPfvsEH0tj8bOYOy4egnFI-FXxlO-GTVR2bEL_RcYAZGo2nNi6xLQR9qH4WZLmWAxNO0-QoP2acWrpD1QTUnyZj89TgDSOHlB-8bDZKWXa7w-1UZPWgL-OMc_hU8QTq8j3QDpaZCB6gOHTUvTYvCNJkCLsBUA" },
-  { id: 4, name: "Harvey Specter", role: "DevOps Engineer", email: "harvey.s@avanzo.com", status: "Available", color: "bg-green-500", img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCHGI4TKnniQXUa6O_I2UiTEBPOSnzJWzfL3YZetsRTBCHSs1iOzf3O7eVZCCKp8MdBtA95rO1d3CiP86nseP7h3lNanxUdtCur6LxBMb_nDiKgSUQSbkx_hnqfGjnsNa9QfNq2RkiRFVkPkb-tUtKNq1-MOu02iQuc8IrK-04ZUVCXEgVv2UWo5nCy1A4gFftfVqLDwlamNVryFcEE_AzDt1b3APrNzc41XmDgpWVPZfyMhlBpODVQH3xXCAN0BCW3Z47Z6-igmE" },
-]
 
 export default function TeamPage() {
   useDesignPortalLightTheme()
-  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false)
-  const [isCreateDeptOpen, setIsCreateDeptOpen] = useState(false)
+  const [members, setMembers] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
+
+  useEffect(() => {
+    fetchMembers()
+  }, [])
+
+  const fetchMembers = async () => {
+    try {
+      setLoading(true)
+      const data = await accountsService.getEmployees()
+      setMembers(Array.isArray(data) ? data : (data.results || []))
+    } catch (error) {
+      toast.error("Unit directory synchronization failed.")
+      setMembers([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const filteredMembers = members.filter(m => 
+    m.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    m.role?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    m.user?.email?.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const activeUnits = members.filter(m => m.is_active !== false).length
 
   return (
     <TeamLeadChrome>
-      <div className="p-8 space-y-8">
-        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="font-headline text-[1.75rem] font-bold tracking-[-0.02em] text-[#191c1d]">Team Members</h1>
-            <p className="font-body text-[#494456] mt-1 text-sm font-medium">Manage your team members and operational availability.</p>
-          </div>
-          <div className="flex gap-3">
-            <button 
-              onClick={() => setIsCreateDeptOpen(true)}
-              className="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-bold shadow-sm hover:bg-slate-50 transition-all active:scale-95"
+      <div className="p-4 md:p-8 space-y-12 animate-in fade-in duration-700">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-10">
+          <header>
+            <h2 className="text-3xl font-black tracking-tight text-slate-900 font-headline leading-none uppercase">Personnel Directory</h2>
+            <p className="text-sm font-bold text-slate-400 mt-3 uppercase tracking-widest leading-none">Global Sector Roster Synchronization Active</p>
+          </header>
+          <div className="flex gap-4">
+             <button 
+              onClick={() => toast.info("Opening Sector Configuration...")}
+              className="px-7 py-3 bg-white border border-slate-100 text-slate-900 font-black rounded-xl hover:bg-slate-50 transition-all text-[11px] uppercase tracking-widest active:scale-95 shadow-sm"
             >
-              <Building2 className="h-4 w-4 text-violet-600" />
-              New Department
+              Sector Logic
             </button>
             <button 
-              onClick={() => setIsAddMemberOpen(true)}
-              className="flex items-center gap-2 px-6 py-2.5 bg-violet-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-violet-900/10 hover:bg-violet-800 transition-all active:scale-95"
+              onClick={() => toast.info("Initializing Onboarding Sequence...")}
+              className="flex items-center gap-2.5 px-7 py-3 bg-violet-600 text-white font-black rounded-xl hover:bg-violet-700 hover:shadow-xl hover:shadow-violet-600/20 transition-all text-[11px] uppercase tracking-widest active:scale-95 shadow-md shadow-violet-600/10"
             >
-              <UserPlus className="h-4 w-4" />
-              Add Member
+              <Plus className="size-4 stroke-[3px]" />
+              Onboard Member
             </button>
           </div>
-        </header>
+        </div>
 
-        {/* Team Performance Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {[
-            { label: "Active Members", value: "12", icon: Users, color: "text-blue-600 bg-blue-50" },
-            { label: "On Duty", value: "9", icon: CheckCircle2, color: "text-green-600 bg-green-50" },
-            { label: "Critical Support", value: "2", icon: AlertCircle, color: "text-red-600 bg-red-50" },
-            { label: "Upcoming Leave", value: "3", icon: Clock, color: "text-amber-600 bg-amber-50" },
-          ].map((stat, i) => (
-            <div key={i} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 group hover:shadow-md transition-all">
-              <div className={`p-3 rounded-xl ${stat.color}`}>
-                <stat.icon className="h-5 w-5" />
+        {/* Global Registry Bar */}
+        <div className="bg-white p-2 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col md:flex-row gap-4 hover:shadow-xl transition-all duration-500">
+           <div className="relative flex-1 group">
+              <Search className="absolute left-6 top-1/2 -translate-y-1/2 size-5 text-slate-300 group-focus-within:text-violet-600 transition-colors" />
+              <input 
+                type="text" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Synchronize with personnel intelligence..." 
+                className="w-full bg-slate-50/10 border-none rounded-3xl pl-16 pr-6 py-4.5 text-[14px] font-black text-slate-900 focus:ring-0 placeholder:text-slate-200 outline-none uppercase tracking-tight"
+              />
+           </div>
+           <div className="flex gap-2 p-2">
+              <div className="bg-emerald-50 px-6 py-2 rounded-2xl border border-emerald-100 flex items-center gap-3">
+                 <Shield className="size-4 text-emerald-600 shadow-sm" />
+                 <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest tabular-nums">{activeUnits} ACTIVE NODES</span>
               </div>
-              <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">{stat.label}</p>
-                <p className="text-xl font-bold text-slate-900 mt-1">{stat.value}</p>
+              <div className="bg-violet-50 px-6 py-2 rounded-2xl border border-violet-100 flex items-center gap-3">
+                 <Zap className="size-4 text-violet-600 shadow-sm" />
+                 <span className="text-[10px] font-black text-violet-600 uppercase tracking-widest tabular-nums">{members.length} TOTAL UNITS</span>
               </div>
+           </div>
+        </div>
+
+        {/* Members Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          {loading ? (
+             <div className="col-span-full py-32 text-center">
+                <Loader2 className="size-10 animate-spin text-violet-600 mx-auto mb-6" />
+                <p className="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em]">Synchronizing Personnel Registry...</p>
+             </div>
+          ) : filteredMembers.length === 0 ? (
+             <div className="col-span-full py-32 text-center opacity-30">
+                <Users className="size-16 mx-auto mb-6 text-slate-200" />
+                <p className="text-[11px] font-black uppercase tracking-[0.2em]">Sector Directory Empty</p>
+             </div>
+          ) : filteredMembers.map((member, i) => (
+            <div key={i} className="bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-sm group hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 relative flex flex-col items-center text-center">
+              <div className="absolute top-8 right-8">
+                 <button onClick={() => toast.info(`Syncing unit metadata: ${member.full_name}`)} className="p-2 text-slate-300 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all">
+                   <MoreHorizontal className="size-5" />
+                 </button>
+              </div>
+              
+              <div className="relative mb-8">
+                 <div className="size-28 bg-slate-50 rounded-[2.5rem] p-1.5 border border-slate-100 group-hover:border-violet-100 group-hover:rotate-6 transition-all duration-700 shadow-sm group-hover:shadow-xl">
+                    <img src={member.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.full_name)}&background=f5f3ff&color=7c3aed&bold=true`} alt={member.full_name} className="size-full rounded-[2rem] object-cover" />
+                 </div>
+                 <div className="absolute -bottom-2 -right-2 size-8 bg-emerald-500 border-4 border-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform">
+                    <Activity className="size-3.5 text-white animate-pulse" />
+                 </div>
+              </div>
+
+              <div className="space-y-1 mb-8 w-full px-2">
+                 <h3 className="text-[18px] font-black text-slate-900 group-hover:text-violet-600 transition-colors uppercase tracking-tight truncate leading-none">{member.full_name}</h3>
+                 <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] opacity-80">{member.role_display || member.employee_id || 'Tactical Operative'}</p>
+                 <div className="flex items-center justify-center gap-2 text-[10px] font-black text-violet-600 bg-violet-50 px-4 py-1 rounded-lg border border-violet-100 mt-4 mx-auto w-fit shadow-sm">
+                   Sector: {member.address?.split(',').pop() || 'HQ'}
+                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 w-full mb-8">
+                 <button 
+                  onClick={() => toast.info(`Initializing Direct Comms: ${member.user?.email}`)}
+                  className="flex flex-col items-center gap-2 p-4 bg-slate-50 border border-slate-100 rounded-3xl hover:bg-violet-600 hover:text-white hover:border-violet-600 transition-all group/btn"
+                 >
+                    <Mail className="size-5 text-slate-400 group-hover/btn:text-white group-hover/btn:rotate-12 transition-all" />
+                    <span className="text-[9px] font-black uppercase tracking-widest">Interface</span>
+                 </button>
+                 <button 
+                  onClick={() => toast.info(`Inpulse Sync: ${member.full_name}`)}
+                  className="flex flex-col items-center gap-2 p-4 bg-slate-50 border border-slate-100 rounded-3xl hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all group/btn"
+                 >
+                    <MessageSquare className="size-5 text-slate-400 group-hover/btn:text-white group-hover/btn:-rotate-12 transition-all" />
+                    <span className="text-[9px] font-black uppercase tracking-widest">Inpulse</span>
+                 </button>
+              </div>
+
+              <button 
+                onClick={() => toast.info(`Synchronizing ${member.full_name} identity logs...`)}
+                className="w-full py-4.5 bg-white border border-slate-100 text-slate-900 text-[10px] font-black uppercase tracking-[0.2em] rounded-3xl hover:bg-slate-50 transition-all flex items-center justify-center gap-3 active:scale-95 group shadow-sm hover:shadow-xl"
+              >
+                Access Dossier
+                <ChevronRight className="size-4 text-violet-600 group-hover:translate-x-1 transition-transform" />
+              </button>
             </div>
           ))}
         </div>
-
-        {/* Member List */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-          <div className="p-6 border-b border-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/20">
-            <h3 className="font-headline text-lg font-bold text-slate-900 leading-none">Team Roster</h3>
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-               <div className="relative flex-1 sm:w-64">
-                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                 <input 
-                   placeholder="Search members..."
-                   className="w-full bg-white border-slate-200 rounded-xl pl-10 py-2.5 text-xs font-medium focus:ring-violet-700/10 focus:border-violet-700 transition-all"
-                   type="text"
-                 />
-               </div>
-               <button onClick={() => toast.info("Filters operational")} className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-500 hover:bg-slate-50 transition-colors shadow-sm"><Filter className="h-5 w-5" /></button>
-            </div>
-          </div>
-          
-          <div className="p-2 grid grid-cols-1 md:grid-cols-2 gap-2">
-            {TEAM_MEMBERS.map((member) => (
-              <div key={member.id} className="p-4 rounded-xl border border-transparent hover:border-violet-100 hover:bg-violet-50/20 transition-all group relative flex items-center gap-4 cursor-pointer" onClick={() => toast.info(`Viewing ${member.name} profile...`)}>
-                 <div className="relative shrink-0">
-                    <img className="size-14 rounded-2xl object-cover ring-2 ring-white shadow-sm" src={member.img} alt={member.name} />
-                    <div className={`absolute -bottom-1 -right-1 size-4 rounded-full border-2 border-white ${member.color}`} />
-                 </div>
-                 
-                 <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start">
-                       <div>
-                          <h4 className="font-headline font-bold text-slate-900 leading-tight group-hover:text-violet-700 transition-colors">{member.name}</h4>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter mt-1">{member.role}</p>
-                       </div>
-                       <button onClick={(e) => { e.stopPropagation(); toast.info(`Action menu for ${member.name}`); }} className="text-slate-300 hover:text-slate-600 transition-colors"><MoreVertical className="h-4 w-4" /></button>
-                    </div>
-                    
-                    <div className="mt-3 flex items-center justify-between">
-                       <div className="flex items-center gap-4">
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">{member.status}</p>
-                       </div>
-                       
-                       <button 
-                        onClick={(e) => { e.stopPropagation(); toast.info(`Drafting performance review for ${member.name}`); }}
-                        className="text-[10px] font-bold text-slate-400 hover:text-slate-900 transition-colors bg-slate-50 px-2 py-1 rounded shadow-sm"
-                       >
-                         Review
-                       </button>
-                    </div>
-                 </div>
-              </div>
-            ))}
-          </div>
-          
-          <div className="p-4 border-t border-slate-50 bg-slate-50/5 text-center">
-             <button onClick={() => toast.info("No more employees in this view")} className="text-[10px] font-bold text-slate-400 hover:text-violet-700 transition-colors uppercase tracking-widest">View Full Roster</button>
-          </div>
-        </div>
       </div>
-      <AddMemberModal open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen} />
-      <CreateDepartmentModal open={isCreateDeptOpen} onOpenChange={setIsCreateDeptOpen} />
     </TeamLeadChrome>
   )
 }

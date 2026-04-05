@@ -57,14 +57,14 @@ export default function CyberSecurityReportsPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none font-headline">CyberSecurity Performance Reports</h1>
-          <p className="text-slate-500 mt-2 font-medium">Detailed analysis of threat trends and infrastructure health.</p>
+          <p className="text-slate-500 mt-2 font-medium font-headline">Detailed analysis of threat trends and infrastructure health.</p>
         </div>
         <div className="flex items-center gap-3">
-           <Button variant="outline" className="h-12 bg-white border-slate-100 rounded-xl px-5 text-xs font-bold text-slate-600">
+           <Button variant="outline" className="h-12 bg-white border-slate-100 rounded-xl px-5 text-[11px] font-black text-slate-600 font-headline">
              <Calendar className="size-4 mr-2" />
              Jan 01 - Jan 31, 2024
            </Button>
-           <Button className="bg-violet-600 hover:bg-violet-700 text-white font-bold h-12 px-6 rounded-xl shadow-lg shadow-violet-600/20 active:scale-95 transition-all text-sm">
+           <Button className="bg-violet-600 hover:bg-violet-700 text-white font-black h-12 px-6 rounded-xl shadow-lg shadow-violet-600/20 active:scale-95 transition-all text-[11px] uppercase tracking-widest font-headline">
              <FileDown className="size-4 mr-2" />
              Export Report
            </Button>
@@ -75,11 +75,11 @@ export default function CyberSecurityReportsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {STATS.map((s, i) => (
           <Card key={i} className="border-none shadow-sm shadow-slate-100 rounded-2xl overflow-hidden bg-white">
-            <CardContent className="p-7 relative">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6 leading-none">{s.label}</p>
+            <CardContent className="p-7 relative font-headline">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 leading-none">{s.label}</p>
               <div className="flex items-baseline gap-2">
-                <h3 className="text-3xl font-bold text-slate-900 font-headline">{s.value}</h3>
-                <span className={`text-[10px] font-bold ${s.color} uppercase tracking-tighter flex items-center`}>
+                <h3 className="text-3xl font-black text-slate-900 font-headline tracking-tight">{s.value}</h3>
+                <span className={`text-[10px] font-black ${s.color} uppercase tracking-tighter flex items-center`}>
                   {s.isDown && <span className="mr-0.5">↓</span>}
                   {s.sub}
                 </span>
@@ -99,10 +99,10 @@ export default function CyberSecurityReportsPage() {
         <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-100 p-8 shadow-sm h-[480px] flex flex-col">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h4 className="font-bold text-lg text-slate-900 tracking-tight font-headline">Threats vs. Resolved (30 Days)</h4>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Monitoring remediation efficiency over time.</p>
+              <h4 className="font-black text-lg text-slate-900 tracking-tight font-headline uppercase italic">Threats resolved vs incoming</h4>
+              <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mt-1 font-headline">Monitoring remediation efficiency.</p>
             </div>
-            <div className="flex items-center gap-6 text-[10px] font-bold uppercase tracking-widest leading-none">
+            <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-widest leading-none font-headline">
                <div className="flex items-center gap-2 text-violet-600">
                  <div className="size-3 rounded-full bg-violet-600" />
                  Resolved
@@ -132,9 +132,9 @@ export default function CyberSecurityReportsPage() {
 
         {/* Regional Uptime */}
         <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-100 p-8 shadow-sm flex flex-col h-[480px]">
-          <h4 className="font-bold text-lg text-slate-900 tracking-tight mb-8 font-headline">Regional Node Uptime</h4>
+          <h4 className="font-black text-lg text-slate-900 tracking-tight mb-8 font-headline uppercase italic">Regional Node Status</h4>
           
-          <div className="flex-1 space-y-6 overflow-y-auto no-scrollbar">
+          <div className="flex-1 space-y-6 overflow-y-auto no-scrollbar font-headline">
             {[
               { id: "North America (NA-1)", sub: "Silicon Valley DC", val: "99.99%", tone: "text-emerald-500", status: "Active" },
               { id: "Europe (EU-WEST)", sub: "Frankfurt DC", val: "99.97%", tone: "text-emerald-500", status: "Active" },
@@ -145,7 +145,7 @@ export default function CyberSecurityReportsPage() {
                 <div className="flex justify-between items-start mb-1.5">
                   <div>
                     <h5 className="text-[13px] font-black text-slate-900 group-hover:text-violet-700 transition-colors uppercase tracking-tight font-headline">{node.id}</h5>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{node.sub}</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{node.sub}</p>
                   </div>
                   <div className="text-right">
                     <p className={`text-[13px] font-black ${node.tone}`}>{node.val}</p>
@@ -159,33 +159,33 @@ export default function CyberSecurityReportsPage() {
             ))}
           </div>
 
-          <button className="mt-8 w-full py-4 bg-slate-50 hover:bg-slate-100 rounded-xl text-[10px] font-black text-violet-700 uppercase tracking-widest transition-colors shadow-sm">
+          <button className="mt-8 w-full py-4 bg-slate-50 hover:bg-slate-100 rounded-xl text-[10px] font-black text-violet-700 uppercase tracking-widest transition-colors shadow-sm font-headline">
             View Infrastructure Map
           </button>
         </div>
       </div>
 
       {/* Report History */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mb-8">
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mb-8 font-headline">
         <div className="p-8 border-b border-slate-50 flex items-center justify-between">
-          <h4 className="font-bold text-slate-900 tracking-tight font-headline">Generated Report History</h4>
+          <h4 className="font-black text-slate-900 tracking-tight font-headline uppercase italic">Historical Intel Registry</h4>
           <div className="flex gap-2">
              {['PDF', 'CSV', 'JSON'].map(type => (
-               <button key={type} className="px-5 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-[10px] font-black text-slate-400 hover:text-violet-700 hover:bg-white hover:border-violet-100 transition-all uppercase tracking-widest">
+               <button key={type} className="px-5 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-[10px] font-black text-slate-400 hover:text-violet-700 hover:bg-white hover:border-violet-100 transition-all uppercase tracking-widest font-headline">
                  {type}
                </button>
              ))}
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="w-full text-left font-headline">
             <thead className="bg-slate-50/50 text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] border-b border-slate-50">
               <tr>
-                <th className="px-8 py-5">Report Name</th>
+                <th className="px-8 py-5">Report Unit</th>
                 <th className="px-8 py-5">Generated By</th>
-                <th className="px-8 py-5">Date & Time</th>
-                <th className="px-8 py-5">Status</th>
-                <th className="px-8 py-5 text-right">Actions</th>
+                <th className="px-8 py-5">Intel Timestamp</th>
+                <th className="px-8 py-5">State</th>
+                <th className="px-8 py-5 text-right">Unit Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -213,9 +213,9 @@ export default function CyberSecurityReportsPage() {
                       {item.status}
                     </span>
                   </td>
-                  <td className="px-8 py-6 text-right">
-                    <button className="text-[11px] font-black text-violet-700 hover:underline uppercase tracking-widest flex items-center gap-2 ml-auto group/btn">
-                      Download
+                  <td className="px-8 py-6">
+                    <button className="text-[11px] font-black text-violet-700 hover:underline uppercase tracking-widest flex items-center gap-2 ml-auto group/btn font-headline">
+                      Intelligence Download
                       <Download className="size-3 group-hover/btn:translate-y-0.5 transition-transform" />
                     </button>
                   </td>

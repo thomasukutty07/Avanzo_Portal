@@ -1,15 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=Public+Sans:wght@300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
-/* Ensure design mock HTML classes are included in the production CSS bundle */
-@source "./design/**/*.html";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+@source "./design/**/*.html";
 
 @custom-variant dark (&:is(.dark *));
 
 /* Product theme: neutral surfaces (#F8F9FA) + purple primary (#6200EE), secondary (#8166C9) — design reference */
 :root {
-  --background: #f8f9fa;
+  --background: #fcfcfc;
   --foreground: #1c1b1f;
   --card: #ffffff;
   --card-foreground: #1c1b1f;
@@ -43,6 +43,8 @@
   --sidebar-border: #e7e0ef;
   --sidebar-ring: #6200ee;
   --radius: 0.625rem;
+  /* Override any shadcn default font to enforce design system font */
+  --default-font-family: "Plus Jakarta Sans", "Public Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
 .dark {
@@ -83,6 +85,9 @@
 
 @theme inline {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", "Public Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-headline: "Plus Jakarta Sans", "Public Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -125,8 +130,6 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 
   /* Design HTML mocks: shared brand scale */
-  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-family-display: var(--font-display);
   --color-brand-purple: #6200ee;
   --color-brand-secondary: #8166c9;
   --color-brand-light: #f8f9fa;
@@ -152,6 +155,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: "Plus Jakarta Sans", "Public Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
   html {
@@ -168,68 +172,16 @@
 }
 
 @layer components {
-  /**
-   * Design HTML injects only <body> inner markup — `body` flex/h-screen classes are lost.
-   * Technical portal may include a fixed global `header` + row shell; security often uses
-   * `aside` + `main` only or an inner `div.flex.h-screen` wrapper.
-   */
   .design-portal {
     display: flex;
-    min-height: 100dvh;
     min-height: 100vh;
     overflow: hidden;
     width: 100%;
   }
 
-  /* Technical: fixed top bar + sidebar row (dashboard + subpages with injected header) */
-  .design-portal:has(> header.fixed) {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .design-portal:has(> header.fixed) > div.flex {
-    flex: 1 1 0%;
-    min-height: 0;
-    min-width: 0;
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
-  }
-
-  .design-portal:has(> header.fixed) > div.flex > aside {
-    flex-shrink: 0;
-  }
-
-  .design-portal:has(> header.fixed) > div.flex > main {
-    flex: 1 1 0%;
-    min-width: 0;
-    min-height: 0;
-  }
-
-  /* No global header: aside + main as direct children (e.g. cybersecurity) */
-  .design-portal:not(:has(> header)) {
-    flex-direction: row;
-    align-items: stretch;
-  }
-
-  .design-portal:not(:has(> header)) > aside {
-    flex-shrink: 0;
-  }
-
-  .design-portal:not(:has(> header)) > main {
-    flex: 1 1 0%;
-    min-width: 0;
-    min-height: 0;
-  }
-
-  .design-portal:not(:has(> header)) > div.flex.h-screen {
-    flex: 1 1 0%;
-    min-width: 0;
-    min-height: 0;
-  }
-
-  /* Super Admin pending: full-bleed TSX page — no left sidebar column */
-  .super-admin-pending-root aside {
-    display: none !important;
+  /* Plus Jakarta Sans specific optimizations */
+  .font-headline {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    letter-spacing: -0.02em;
   }
 }

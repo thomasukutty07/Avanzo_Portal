@@ -1,318 +1,268 @@
 import { useEffect, useState } from "react"
 import { api } from "@/lib/axios"
 import { extractResults } from "@/lib/apiResults"
-import { Card, CardContent } from "@/components/ui/card"
 import {
   Users,
   UserPlus,
   CheckCircle2,
   ClipboardList,
   Plus,
+  Loader2,
+  ChevronRight,
+  Zap,
+  Activity,
+  Shield
 } from "lucide-react"
 import type { LeaveRequest, User } from "@/types"
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  Tooltip, 
-  ResponsiveContainer,
-  Cell 
-} from 'recharts'
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { HRPortalChrome } from "@/components/portal/hr/HRPortalChrome"
+import { toast } from "sonner"
+import { useNavigate } from "react-router-dom"
 
-const attendanceData = [
-  { name: 'MON', value: 75 },
-  { name: 'TUE', value: 85 },
-  { name: 'WED', value: 95 },
-  { name: 'THU', value: 88 },
-  { name: 'FRI', value: 100 },
-  { name: 'SAT', value: 45 },
-  { name: 'SUN', value: 30 },
-]
 
 export default function HROverview() {
-  const [employeesCount, setEmployeesCount] = useState(0)
+  const navigate = useNavigate()
+  const [loading, setLoading] = useState(true)
   const [recentEmployees, setRecentEmployees] = useState<User[]>([])
   const [pendingLeaves, setPendingLeaves] = useState<LeaveRequest[]>([])
+  const [stats, setStats] = useState<any[]>([])
 
   useEffect(() => {
-    const load = async () => {
+    const loadDashboardData = async () => {
       try {
-        const [eRes, lRes] = await Promise.all([
+        setLoading(true)
+        const [eRes, lRes, aRes] = await Promise.all([
           api.get("/api/auth/employees/"),
           api.get("/api/leaves/requests/"),
+          api.get("/api/attendance/pulse/"),
         ])
+
         const allEmployees = extractResults<User>(eRes.data)
         const leaves = extractResults<LeaveRequest>(lRes.data)
-        
-        setEmployeesCount(allEmployees.length)
+        const attendance = aRes.data; 
+        const attendanceRate = attendance.attendance_rate || 0;
+
         setRecentEmployees(allEmployees.slice(0, 4))
         setPendingLeaves(
           leaves.filter((x) => x.status === "pending" || x.status === "tl_approved").slice(0, 3)
         )
+
+        const newThisMonth = allEmployees.filter(e => {
+          if (!e.date_of_joining) return false;
+          const joinDate = new Date(e.date_of_joining);
+          const now = new Date();
+          return joinDate.getMonth() === now.getMonth() && joinDate.getFullYear() === now.getFullYear();
+        }).length;
+
+        setStats([
+            { label: "TOTAL EMPLOYEES", value: allEmployees.length.toString().padStart(2, '0'), sub: "Global Active", icon: Users, color: "text-slate-900" },
+            { label: "NEW ONBOARDINGS", value: newThisMonth.toString().padStart(2, '0'), sub: "Current Month", icon: UserPlus, color: "text-slate-900" },
+            { label: "ATTENDANCE RATE", value: `${Math.round(attendanceRate)}%`, sub: `${attendance.present_now || 0}/${attendance.total_workforce || 0} Present`, valueColor: "text-emerald-500", icon: CheckCircle2, color: "text-emerald-500" },
+            { label: "PENDING LEAVES", value: leaves.filter(l => l.status === 'pending' || l.status === 'tl_approved').length.toString().padStart(2, '0'), sub: "Requires Triage", valueColor: "text-amber-500", icon: ClipboardList, color: "text-amber-500" },
+        ])
       } catch (err) {
         console.error("Failed to fetch dashboard data:", err)
+        toast.error("Sector synchronization failed.")
       } finally {
-        // isLoading not used
+        setLoading(false)
       }
     }
-    load()
+    loadDashboardData()
   }, [])
+
+  if (loading) {
+    return (
+        <HRPortalChrome>
+            <div className="flex h-[80vh] items-center justify-center bg-[#fcfcfc]">
+                <div className="flex flex-col items-center gap-6">
+                    <Loader2 className="h-10 w-10 animate-spin text-violet-600" />
+                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] font-headline">Scanning Personnel Registry Intelligence...</p>
+                </div>
+            </div>
+        </HRPortalChrome>
+    );
+  }
 
   return (
     <HRPortalChrome>
-      <div className="p-6 md:p-10 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard 
-            title="Total Employees" 
-            value={employeesCount.toLocaleString()} 
-            trend="+4%" 
-            icon={<Users className="size-5" />}
-            iconBg="bg-violet-100 text-violet-600"
-          />
-          <StatCard 
-            title="New Registrations" 
-            value="28" 
-            trend="+12%" 
-            icon={<UserPlus className="size-5" />}
-            iconBg="bg-blue-100 text-blue-600"
-          />
-          <StatCard 
-            title="Attendance Today" 
-            value="96.4%" 
-            trend="On time" 
-            icon={<CheckCircle2 className="size-5" />}
-            iconBg="bg-emerald-100 text-emerald-600"
-          />
-          <StatCard 
-            title="Leave Requests Pending" 
-            value={pendingLeaves.length.toString()} 
-            trend="High" 
-            icon={<ClipboardList className="size-5" />}
-            iconBg="bg-amber-100 text-amber-600"
-          />
+      <div className="p-4 md:p-10 space-y-12 pb-12 font-display bg-[#fcfcfc] min-h-screen animate-in fade-in duration-700">
+        {/* Page Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-2">
+            <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-violet-600 mb-2 leading-none">
+                    HR SECTOR COMMAND
+                </p>
+                <h1 className="text-3xl font-black text-slate-900 tracking-tight font-headline uppercase leading-none">
+                    Personnel Overview
+                </h1>
+                <p className="text-slate-500 mt-4 text-sm font-medium">Workforce analytics, leave compliance, and boarding status.</p>
+            </div>
+            <div className="flex items-center gap-4 self-start md:self-auto">
+                <button
+                    type="button"
+                    onClick={() => toast.info("Exporting sector registry…")}
+                    className="px-7 py-3 rounded-xl border border-slate-100 bg-white text-slate-900 text-[11px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm active:scale-95 font-headline"
+                >
+                    Export Dossier
+                </button>
+                <button
+                    type="button"
+                    onClick={() => navigate("/employee-registration")}
+                    className="flex items-center gap-3 px-7 py-3 rounded-xl bg-violet-600 text-white text-[11px] font-black uppercase tracking-widest hover:bg-violet-700 transition-all shadow-lg shadow-violet-600/20 active:scale-95 shadow-md font-headline"
+                >
+                    <Plus className="size-4 stroke-[3px]" />
+                    Onboard Unit
+                </button>
+            </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Recent Employee Hires */}
-          <Card className="lg:col-span-2 border-none shadow-premium overflow-hidden bg-white rounded-3xl">
-            <CardContent className="p-0">
-              <div className="flex items-center justify-between p-6 border-b border-slate-50">
-                <h2 className="font-bold text-slate-900">Recent Employee Hires</h2>
-                <Button variant="link" className="text-violet-600 font-bold text-xs p-0 h-auto">View All</Button>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50">
-                      <th className="px-6 py-4 font-bold">Employee</th>
-                      <th className="px-6 py-4 font-bold">Department</th>
-                      <th className="px-6 py-4 font-bold">Status</th>
-                      <th className="px-6 py-4 font-bold">Join Date</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50">
-                    {recentEmployees.map((emp, i) => (
-                      <tr key={emp.id} className="hover:bg-slate-50 transition-colors group">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className={`size-10 rounded-full flex items-center justify-center text-white font-bold shadow-sm ${['bg-orange-400', 'bg-blue-400', 'bg-emerald-400', 'bg-violet-400'][i % 4]}`}>
-                              {emp.first_name[0]}{emp.last_name[0]}
-                            </div>
-                            <p className="text-sm font-bold text-slate-700">{emp.first_name} {emp.last_name}</p>
+        {/* KPI Stats Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+            {stats.map((s: any) => (
+                <div key={s.label} className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-8 hover:shadow-xl hover:-translate-y-1 transition-all group">
+                    <div className="flex items-center justify-between mb-6">
+                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">{s.label}</p>
+                        <div className={`size-10 rounded-[1.2rem] bg-violet-50 text-violet-600 flex items-center justify-center border border-violet-100/50 group-hover:scale-110 group-hover:bg-violet-600 group-hover:text-white transition-all`}>
+                           <s.icon className="size-5 stroke-[2.5px]" />
+                        </div>
+                    </div>
+                    <p className={`text-5xl font-black tracking-tight font-headline tabular-nums leading-none ${s.valueColor || 'text-slate-900'}`}>{s.value}</p>
+                    <div className="mt-8 flex items-center justify-between">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest opacity-60 bg-slate-50 px-3 py-1 rounded-lg border border-slate-100/50">{s.sub}</span>
+                        <div className="size-2 bg-slate-50 border border-slate-100 rounded-full" />
+                    </div>
+                </div>
+            ))}
+        </div>
+
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Recent Employee Table */}
+          <div className="lg:col-span-8 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden hover:shadow-xl transition-all duration-700">
+            <div className="flex items-center justify-between px-10 py-8 border-b border-slate-50 bg-slate-50/10">
+              <h3 className="font-headline font-black text-xl text-slate-900 tracking-tight uppercase">Recent Talent Acquisition</h3>
+              <button 
+                onClick={() => navigate("/employees")}
+                className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-600 hover:text-violet-800 transition-colors flex items-center gap-3 bg-violet-50 px-5 py-2.5 rounded-xl border border-violet-100 shadow-sm"
+              >
+                Access Registry <ChevronRight className="size-3.5" />
+              </button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-slate-50/50 text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] border-b border-slate-50">
+                  <tr>
+                    <th className="px-10 py-6">Mission Unit Profile</th>
+                    <th className="px-10 py-6 text-center">Protocol Status</th>
+                    <th className="px-10 py-6 text-right">Synchronization Day</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {recentEmployees.length > 0 ? recentEmployees.map((emp) => (
+                    <tr key={emp.id} className="hover:bg-slate-50/30 transition-all group cursor-pointer" onClick={() => toast.info(`Syncing personnel dossier: ${emp.first_name}`)}>
+                      <td className="px-10 py-8">
+                        <div className="flex items-center gap-6">
+                          <div className="size-14 rounded-2xl bg-white border border-slate-100 p-2 shadow-sm flex items-center justify-center font-black text-slate-300 text-sm uppercase group-hover:rounded-xl group-hover:border-violet-100 group-hover:shadow-xl transition-all">
+                            {emp.first_name?.[0]}{emp.last_name?.[0]}
                           </div>
-                        </td>
-                        <td className="px-6 py-4 text-sm font-medium text-slate-500">{emp.department_name || "Engineering"}</td>
-                        <td className="px-6 py-4">
-                          <Badge className={`rounded-lg px-2.5 py-0.5 text-[10px] font-bold border-none shadow-none ${i === 2 ? 'bg-amber-50 text-amber-600 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'}`}>
-                            {i === 2 ? 'Onboarding' : 'Active'}
-                          </Badge>
-                        </td>
-                        <td className="px-6 py-4 text-sm font-medium text-slate-400">Oct {12 + (i * 3)}, 2023</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Attendance Weekly Chart */}
-          <Card className="border-none shadow-premium bg-white rounded-3xl overflow-hidden">
-            <CardContent className="p-6 h-full flex flex-col">
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h2 className="font-bold text-slate-900">Attendance Weekly</h2>
-                </div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Last 7 Days</p>
-              </div>
-              
-              <div className="flex-1 min-h-[220px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={attendanceData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                    <XAxis 
-                      dataKey="name" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}}
-                      dy={10}
-                    />
-                    <Tooltip 
-                      cursor={{fill: 'rgba(237, 233, 254, 0.4)'}}
-                      contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontWeight: 'bold'}}
-                    />
-                    <Bar dataKey="value" radius={[6, 6, 6, 6]} barSize={24}>
-                      {attendanceData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.value === 100 ? '#7C3AED' : '#EDE9FE'} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="mt-8 flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Average Rate</p>
-                  <p className="text-xl font-black text-slate-900">92.4%</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Peak Day</p>
-                  <p className="text-xl font-black text-slate-900">Wednesday</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Leave Requests */}
-          <Card className="border-none shadow-premium bg-white rounded-3xl overflow-hidden">
-            <CardContent className="p-0">
-              <div className="flex items-center justify-between p-6">
-                <h2 className="font-bold text-slate-900">Leave Requests</h2>
-                <Button variant="link" className="text-violet-600 font-bold text-xs p-0 h-auto">Manage</Button>
-              </div>
-              <div className="px-6 pb-6 space-y-4">
-                {pendingLeaves.length > 0 ? pendingLeaves.map((leave) => (
-                  <div key={leave.id} className="flex items-center justify-between p-1">
-                    <div className="flex items-center gap-4">
-                      <div className="size-11 rounded-full overflow-hidden border-2 border-white shadow-sm ring-1 ring-slate-100 bg-slate-50">
-                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${leave.employee_name}`} alt={leave.employee_name} className="size-full object-cover" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-800">{leave.employee_name}</p>
-                        <p className="text-[10px] font-medium text-slate-400">{leave.leave_type_display || "Sick Leave"} • {leave.created_at ? '2 days' : 'Today'}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button className="size-8 rounded-full border border-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-50 transition-colors">
-                        <Plus className="size-4 rotate-45" />
-                      </button>
-                      <button className="size-8 rounded-full bg-violet-600 flex items-center justify-center text-white shadow-md shadow-violet-100 hover:bg-violet-700 transition-colors">
-                        <CheckCircle2 className="size-4" />
-                      </button>
-                    </div>
-                  </div>
-                )) : (
-                  <div className="py-12 text-center">
-                    <p className="text-sm text-slate-400 font-medium">No pending leave requests</p>
-                  </div>
-                )}
-                {pendingLeaves.length > 0 && (
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-50">
-                     <div className="flex items-center gap-3">
-                       <div className="size-11 rounded-full overflow-hidden border-2 border-white shadow-sm ring-1 ring-slate-100 bg-slate-50">
-                          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Robert" alt="Robert" className="size-full object-cover" />
+                          <div>
+                            <p className="text-[16px] font-black text-slate-900 font-headline uppercase tracking-tight group-hover:text-violet-600 transition-colors leading-none">{emp.first_name} {emp.last_name}</p>
+                            <p className="text-[10px] text-slate-300 font-black uppercase tracking-widest mt-2">{emp.role_display || emp.role || 'Sector Unit'}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-bold text-slate-800">Robert Fox</p>
-                          <p className="text-[10px] font-medium text-slate-400">Vacation • 5 days</p>
-                        </div>
+                      </td>
+                      <td className="px-10 py-8">
+                         <div className="flex justify-center">
+                            <span className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest border border-emerald-100 shadow-sm">
+                                AUTHORIZED
+                            </span>
+                         </div>
+                      </td>
+                      <td className="px-10 py-8 text-right">
+                        <p className="text-[12px] font-black text-slate-400 tabular-nums uppercase tracking-widest opacity-60">
+                          {emp.date_of_joining ? new Date(emp.date_of_joining).toLocaleDateString() : 'SYNC PENDING'}
+                        </p>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan={3} className="px-10 py-24 text-center opacity-30">
+                        <Zap className="size-12 mx-auto mb-6 text-slate-200" />
+                        <p className="text-[11px] font-black uppercase tracking-[0.2em]">Personnel Registry Empty</p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Pending Leaves */}
+          <div className="lg:col-span-4 space-y-8">
+             <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-10 hover:shadow-xl transition-all duration-700 overflow-hidden relative group">
+                <div className="absolute top-0 left-0 w-full h-1 bg-amber-500/10" />
+                <div className="flex items-center justify-between mb-10">
+                   <h3 className="font-black text-xl text-slate-900 font-headline uppercase tracking-tight">Compliance Queue</h3>
+                   <span className="px-4 py-1.5 bg-amber-50 text-amber-600 rounded-xl text-[9px] font-black uppercase tracking-widest border border-amber-100 shadow-sm">PENDING TRIAGE</span>
+                </div>
+                <div className="space-y-6">
+                   {pendingLeaves.length > 0 ? (
+                     pendingLeaves.map((leave) => (
+                       <div key={leave.id} className="p-6 rounded-[1.8rem] bg-slate-50 border border-transparent hover:bg-white hover:border-violet-100 hover:shadow-xl transition-all cursor-pointer group/item relative overflow-hidden">
+                          <div className="absolute top-0 left-0 w-1 h-full bg-violet-600/0 group-hover/item:bg-violet-600 transition-all" />
+                          <div className="flex justify-between items-start mb-4">
+                             <p className="text-[13px] font-black text-slate-900 font-headline uppercase tracking-tight group-hover/item:text-violet-600 transition-colors">REQ #{leave.id.slice(0, 5)}</p>
+                             <span className="text-[10px] font-black text-slate-300 tabular-nums uppercase">{leave.start_date.split('-').slice(1).join('/')}</span>
+                          </div>
+                          <p className="text-[11px] text-slate-400 font-medium line-clamp-1 mb-6 uppercase tracking-tight opacity-80">{leave.reason || 'Operational synchronization request'}</p>
+                          <div className="flex items-center justify-between mt-2">
+                             <div className="flex items-center gap-3">
+                                <div className="size-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-violet-600 text-[10px] font-black shadow-sm group-hover/item:bg-violet-600 group-hover/item:text-white transition-all">
+                                  {leave.employee_name?.[0]}
+                                </div>
+                                <span className="text-[10px] font-black text-slate-900 uppercase tracking-tight group-hover/item:text-violet-600 transition-colors">{leave.employee_name?.split(' ')[0]}</span>
+                             </div>
+                             <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-violet-600 opacity-0 group-hover/item:opacity-100 transition-all -translate-x-2 group-hover/item:translate-x-0">
+                                Review <ChevronRight className="size-3 stroke-[3px]" />
+                             </div>
+                          </div>
+                       </div>
+                     ))
+                   ) : (
+                     <div className="py-20 text-center opacity-30">
+                        <CheckCircle2 className="size-12 mx-auto mb-6 text-slate-200" />
+                        <p className="text-[11px] font-black uppercase tracking-[0.2em]">Queue Synchronized</p>
                      </div>
-                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">2h Ago</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                   )}
+                </div>
+                <button 
+                  onClick={() => navigate("/leave-requests")}
+                  className="w-full mt-10 py-5 border border-slate-100 rounded-2xl text-[11px] font-black uppercase tracking-[0.3em] text-slate-300 hover:bg-slate-50 hover:text-violet-600 transition-all font-headline shadow-sm"
+                >
+                   Access Leave Hub
+                </button>
+             </div>
 
-          {/* Internal Announcements */}
-          <Card className="border-none shadow-premium bg-white rounded-3xl overflow-hidden">
-            <CardContent className="p-0">
-              <div className="flex items-center justify-between p-6">
-                <h2 className="font-bold text-slate-900">Internal Announcements</h2>
-                <Button variant="secondary" className="bg-violet-50 hover:bg-violet-100 text-violet-600 font-bold text-[10px] h-8 px-4 rounded-lg uppercase tracking-tight">Post New</Button>
-              </div>
-              <div className="px-6 pb-6 space-y-6">
-                <AnnouncementItem 
-                  title="Annual Company Retreat 2024"
-                  description="Pack your bags! Our annual retreat location has been chosen. Check the policy for travel reimbursements and itinerary details."
-                  date="Oct 24, 2023"
-                  comments={12}
-                  iconBg="bg-violet-50 text-violet-600"
-                  icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5"><path d="M14 9l-9 13" /><path d="M20 3.5a2.1 2.1 0 0 0-1.4.6l-6.3 6.3a2.1 2.1 0 1 0 3 3l6.3-6.3a2.1 2.1 0 0 0-.6-3.6Z" /><path d="m15 13 4 4" /><path d="m11.5 9.5 4 4" /><path d="M16 11l-4 4" /></svg>}
-                />
-                <AnnouncementItem 
-                  title="Updated Health Benefits Policy"
-                  description="We have expanded our mental health coverage starting next month. View the updated documentation in the HR portal."
-                  date="Oct 22, 2023"
-                  comments={5}
-                  iconBg="bg-blue-50 text-blue-600"
-                  icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" /><path d="M9 12h6" /><path d="M12 9v6" /></svg>}
-                />
-              </div>
-            </CardContent>
-          </Card>
+             <div className="bg-violet-600 rounded-[2.5rem] p-10 text-white shadow-xl shadow-violet-600/20 overflow-hidden relative group hover:scale-[1.02] transition-all duration-700 min-h-[300px] flex flex-col justify-between">
+                <div className="absolute -right-10 -top-10 p-4 opacity-10 group-hover:scale-125 group-hover:rotate-12 transition-all duration-1000">
+                   <Activity className="size-48" />
+                </div>
+                <div className="relative z-10">
+                   <h4 className="text-2xl font-black mb-3 font-headline uppercase tracking-tight">Registry Sync</h4>
+                   <p className="text-violet-100 text-[11px] font-black uppercase tracking-widest opacity-60 leading-relaxed">System-wide background synchronization of personnel metrics is currently operational.</p>
+                </div>
+                <div className="mt-10 relative z-10">
+                   <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden border border-white/5 shadow-inner">
+                      <div className="h-full bg-white w-2/3 animate-pulse shadow-[0_0_10px_white]" />
+                   </div>
+                   <div className="flex justify-between items-center mt-4">
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">PROTOCOL 88-X</span>
+                      <Shield className="size-4 opacity-40" />
+                   </div>
+                </div>
+             </div>
+          </div>
         </div>
       </div>
     </HRPortalChrome>
-  )
-}
-
-function StatCard({ title, value, trend, icon, iconBg }: { title: string, value: string, trend: string, icon: React.ReactNode, iconBg: string }) {
-  return (
-    <Card className="border-none shadow-premium bg-white rounded-3xl overflow-hidden group hover:-translate-y-1 transition-all duration-300">
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between">
-          <div className={`p-3 rounded-2xl ${iconBg} shadow-sm group-hover:scale-110 transition-transform`}>
-            {icon}
-          </div>
-          <Badge className="bg-emerald-50 text-emerald-600 border-none shadow-none text-[10px] font-bold px-2 py-0.5 rounded-lg">
-            {trend}
-          </Badge>
-        </div>
-        <div className="mt-6">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{title}</p>
-          <p className="text-3xl font-black text-slate-900 tracking-tight">{value}</p>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-function AnnouncementItem({ title, description, date, comments, icon, iconBg }: { title: string, description: string, date: string, comments: number, icon: React.ReactNode, iconBg: string }) {
-  return (
-    <div className="flex gap-4 group">
-      <div className={`shrink-0 size-10 rounded-xl flex items-center justify-center ${iconBg} group-hover:scale-105 transition-transform`}>
-        {icon}
-      </div>
-      <div className="space-y-1.5 flex-1 pb-6 border-b border-slate-50 last:border-0 last:pb-0">
-        <h3 className="text-sm font-bold text-slate-800 leading-tight group-hover:text-violet-600 transition-colors uppercase tracking-tight">{title}</h3>
-        <p className="text-xs font-medium text-slate-500 leading-relaxed line-clamp-2">{description}</p>
-        <div className="flex items-center gap-4 pt-1">
-          <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="size-3"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-            {date}
-          </div>
-          <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="size-3"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-            {comments} Comments
-          </div>
-        </div>
-      </div>
-    </div>
   )
 }

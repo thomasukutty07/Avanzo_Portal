@@ -6,8 +6,10 @@ from core.models import TimeStampedModel
 
 class LeaveRequest(TimeStampedModel):
     class LeaveType(models.TextChoices):
-        FULL_DAY = "full_day", "Full Day"
-        HALF_DAY = "half_day", "Half Day"
+        SICK = "sick", "Sick Leave"
+        CASUAL = "casual", "Casual Leave"
+        EARNED = "earned", "Earned Leave"
+        UNPAID = "unpaid", "Unpaid Leave"
 
     class Status(models.TextChoices):
         # The new 4-stage workflow
@@ -18,11 +20,18 @@ class LeaveRequest(TimeStampedModel):
 
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="leave_requests")
     leave_type = models.CharField(
-        max_length=20, choices=LeaveType.choices, default=LeaveType.FULL_DAY
+        max_length=20, choices=LeaveType.choices, default=LeaveType.CASUAL
     )
 
     start_date = models.DateField()
-    end_date = models.DateField()  # For half-day, start and end date will be the same
+    end_date = models.DateField()
+    is_half_day = models.BooleanField(default=False)
+    total_days = models.DecimalField(
+        max_digits=4,
+        decimal_places=1,
+        default=0.0,
+        help_text="Calculated duration. 0.5 for half days.",
+    )
     reason = models.TextField()
 
     status = models.CharField(
@@ -51,9 +60,8 @@ class LeaveRequest(TimeStampedModel):
         help_text="The HR manager who gave final system approval.",
     )
 
-    review_remarks = models.TextField(
-        blank=True, null=True, help_text="Final comments from reviewers."
-    )
+    tl_comment = models.TextField(blank=True, null=True, help_text="Comments from the Team Lead.")
+    hr_comment = models.TextField(blank=True, null=True, help_text="Comments from HR.")
 
     class Meta:
         db_table = "leave_requests"

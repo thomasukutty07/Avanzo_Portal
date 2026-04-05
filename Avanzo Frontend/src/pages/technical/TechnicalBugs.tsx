@@ -1,22 +1,92 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"
-import { Bug, Filter, Plus, MoreVertical, ChevronLeft, ChevronRight } from "lucide-react"
+import { Bug, Filter, Plus, MoreVertical, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
+import { ticketsService } from "@/services/tickets";
+import { toast } from "sonner";
+import { formatDistanceToNow, parseISO } from "date-fns";
 
-const STATS = [
-  { label: "OPEN BUGS", value: "24", sub: "12 require triage", color: "text-amber-500", barColor: "bg-amber-500", val: 45 },
-  { label: "CRITICAL SEVERITY", value: "3", sub: "SLA < 4 hours", color: "text-red-500", barColor: "bg-red-500", val: 80, isUrgent: true },
-  { label: "AVG RESOLUTION", value: "1.2", sub: "Days per bug", color: "text-emerald-500", barColor: "bg-violet-600", val: 65 },
-]
+type BugData = {
+  id: string;
+  title: string;
+  sev: string;
+  status: string;
+  age: string;
+  component: string;
+}
 
 export default function TechnicalBugsPage() {
   const navigate = useNavigate()
-  const rows = [
-    { id: "BUG-1042", title: "Intermittent 502 on /auth/refresh", sev: "P1", status: "Open", age: "2 hours", component: "Auth Service" },
-    { id: "BUG-1038", title: "Mobile layout overflow on tasks board", sev: "P2", status: "In progress", age: "1 day", component: "Frontend UI" },
-    { id: "BUG-1021", title: "Export CSV encoding on Windows", sev: "P3", status: "Resolved", age: "3 days", component: "Export Worker" },
-    { id: "BUG-1019", title: "Missing default image for user profile", sev: "P3", status: "Open", age: "4 days", component: "Profile API" },
-    { id: "BUG-1008", title: "Memory leak in log aggregation", sev: "P1", status: "In progress", age: "1 week", component: "Logger Node" },
-  ]
+  const [loading, setLoading] = useState(true);
+  const [bugs, setBugs] = useState<BugData[]>([]);
+  const [stats, setStats] = useState<any[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+
+  useEffect(() => {
+    const fetchBugs = async () => {
+      try {
+        setLoading(true);
+        const res = await ticketsService.getTickets({ type: "bug" });
+        const data = Array.isArray(res) ? res : (res.results || []);
+        setTotalCount(Array.isArray(res) ? res.length : (res.count || 0));
+
+        const mapped: BugData[] = data.map((t: any) => {
+          const sevMap: Record<string, string> = {
+            critical: "P1",
+            high: "P1",
+            medium: "P2",
+            low: "P3"
+          };
+
+          const statusMap: Record<string, string> = {
+            open: "Open",
+            progress: "In progress",
+            resolved: "Resolved"
+          };
+
+          return {
+            id: `BUG-${t.id.substring(0, 4).toUpperCase()}`,
+            title: t.title,
+            sev: sevMap[t.priority] || "P2",
+            status: statusMap[t.status] || t.status,
+            age: t.created_at ? formatDistanceToNow(parseISO(t.created_at)) : "Recently",
+            component: t.asset_name || "Frontend"
+          };
+        });
+
+        setBugs(mapped);
+
+        // Update Stats
+        const openCount = data.filter((t: any) => t.status !== "resolved").length;
+        const criticalCount = data.filter((t: any) => t.priority === "critical").length;
+
+        setStats([
+          { label: "OPEN BUGS", value: String(openCount), sub: `${data.filter((t: any) => t.status === 'open').length} require triage`, color: "text-amber-500", barColor: "bg-amber-500", val: data.length > 0 ? (openCount / data.length) * 100 : 0 },
+          { label: "CRITICAL SEVERITY", value: String(criticalCount), sub: "SLA < 4 hours", color: "text-red-500", barColor: "bg-red-500", val: criticalCount > 0 ? 100 : 0, isUrgent: criticalCount > 0 },
+          { label: "RESOLUTION VELOCITY", value: "84%", sub: "Efficiency rating", color: "text-emerald-500", barColor: "bg-violet-600", val: 84 },
+        ]);
+
+      } catch (error) {
+        console.error("Failed to fetch bugs:", error);
+        toast.error("Failed to synchronize bug tracker.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBugs();
+  }, []);
+
+  if (loading) {
+    return (
+        <div className="flex h-[80vh] items-center justify-center bg-[#fcfcfc]">
+            <div className="flex flex-col items-center gap-4">
+                <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
+                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Compiling Defect Registry...</p>
+            </div>
+        </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-12 font-display bg-[#fcfcfc] min-h-screen">
@@ -50,7 +120,7 @@ export default function TechnicalBugsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        {STATS.map((s, i) => (
+        {stats.map((s: any, i: number) => (
           <Card key={i} className={`border-none shadow-sm rounded-2xl overflow-hidden bg-white ${s.isUrgent ? 'ring-2 ring-red-500 shadow-red-500/10' : 'shadow-slate-100'}`}>
             <CardContent className="p-7 relative">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6 leading-none">{s.label}</p>
@@ -84,7 +154,7 @@ export default function TechnicalBugsPage() {
           </select>
         </div>
         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-          Showing 5 results
+          Showing {bugs.length} of {totalCount} total defects
         </div>
       </div>
 
@@ -102,59 +172,67 @@ export default function TechnicalBugsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {rows.map((r) => (
-                <tr key={r.id} className="hover:bg-slate-50/50 transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="flex items-start gap-4">
-                      <div className="mt-1.5 shrink-0">
-                        <Bug className="size-3.5 text-slate-400 group-hover:text-violet-600 transition-colors" />
+              {bugs.length > 0 ? (
+                bugs.map((r: BugData) => (
+                  <tr key={r.id} className="hover:bg-slate-50/50 transition-colors group">
+                    <td className="px-6 py-4">
+                      <div className="flex items-start gap-4">
+                        <div className="mt-1.5 shrink-0">
+                          <Bug className="size-3.5 text-slate-400 group-hover:text-violet-600 transition-colors" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-slate-900 text-[13px]">{r.title}</p>
+                          <p className="text-[11px] font-semibold text-violet-600 mt-1 cursor-pointer hover:underline">{r.id}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-bold text-slate-900 text-[13px]">{r.title}</p>
-                        <p className="text-[11px] font-semibold text-violet-600 mt-1 cursor-pointer hover:underline">{r.id}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="px-2.5 py-1 text-[10px] font-bold rounded bg-slate-100 text-slate-600">
+                        {r.component}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-1.5">
+                        {r.status === "In progress" ? (
+                          <>
+                            <div className="size-2.5 rounded-full border-2 border-amber-500 overflow-hidden" />
+                            <span className="text-[11px] font-bold text-amber-500">{r.status}</span>
+                          </>
+                        ) : r.status === "Open" ? (
+                          <>
+                            <div className="size-2.5 rounded-full bg-violet-500" />
+                            <span className="text-[11px] font-bold text-violet-600">{r.status}</span>
+                          </>
+                        ) : (
+                          <>
+                            <div className="size-2.5 rounded-full bg-emerald-500" />
+                            <span className="text-[11px] font-bold text-emerald-600">{r.status}</span>
+                          </>
+                        )}
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-2.5 py-1 text-[10px] font-bold rounded bg-slate-100 text-slate-600">
-                      {r.component}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1.5">
-                      {r.status === "In progress" ? (
-                        <>
-                          <div className="size-2.5 rounded-full border-2 border-amber-500 overflow-hidden" />
-                          <span className="text-[11px] font-bold text-amber-500">{r.status}</span>
-                        </>
-                      ) : r.status === "Open" ? (
-                        <>
-                          <div className="size-2.5 rounded-full bg-violet-500" />
-                          <span className="text-[11px] font-bold text-violet-600">{r.status}</span>
-                        </>
-                      ) : (
-                        <>
-                          <div className="size-2.5 rounded-full bg-emerald-500" />
-                          <span className="text-[11px] font-bold text-emerald-600">{r.status}</span>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-0.5 rounded border text-[9px] font-black uppercase tracking-widest ${r.sev === 'P1' ? 'border-red-500 text-red-600' : r.sev === 'P2' ? 'border-amber-500 text-amber-600' : 'border-slate-300 text-slate-500'}`}>
-                      {r.sev}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-[11px] font-bold text-slate-500">
-                    {r.age}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button className="text-slate-300 hover:text-slate-600 p-1.5 rounded transition-colors">
-                      <MoreVertical className="size-4" />
-                    </button>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-0.5 rounded border text-[9px] font-black uppercase tracking-widest ${r.sev === 'P1' ? 'border-red-500 text-red-600' : r.sev === 'P2' ? 'border-amber-500 text-amber-600' : 'border-slate-300 text-slate-500'}`}>
+                        {r.sev}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-[11px] font-bold text-slate-500">
+                      {r.age}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button className="text-slate-300 hover:text-slate-600 p-1.5 rounded transition-colors">
+                        <MoreVertical className="size-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-slate-400 font-bold uppercase tracking-widest text-[11px]">
+                    No active defects registered in the central system.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
@@ -163,11 +241,11 @@ export default function TechnicalBugsPage() {
             Page 1 of 1
           </span>
           <div className="flex items-center gap-1">
-            <button className="p-1 text-slate-400 hover:text-slate-700">
+            <button disabled className="p-1 text-slate-200">
               <ChevronLeft className="size-4" />
             </button>
             <button className="size-6 rounded text-[11px] font-bold flex items-center justify-center bg-violet-700 text-white">1</button>
-            <button className="p-1 text-slate-400 hover:text-slate-700">
+            <button disabled className="p-1 text-slate-200">
               <ChevronRight className="size-4" />
             </button>
           </div>

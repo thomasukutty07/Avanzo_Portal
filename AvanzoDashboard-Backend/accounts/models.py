@@ -62,6 +62,13 @@ class Employee(AbstractUser):
         help_text="Internal employee ID, e.g., AVZ-001",
     )
 
+    leave_balance = models.DecimalField(
+        max_digits=5,
+        decimal_places=1,
+        default=15.0,
+        help_text="Total remaining leave days available.",
+    )
+
     # RBAC
     access_role = models.ForeignKey(
         AccessRole,
@@ -170,3 +177,22 @@ class Employee(AbstractUser):
 
 auditlog.register(Employee)
 auditlog.register(AccessRole)
+
+
+class LoginAttempt(models.Model):
+    """
+    Tracks login failures and successes to implement 15-minute brute-force lockout.
+    """
+
+    email = models.EmailField(db_index=True)
+    attempted_at = models.DateTimeField(auto_now_add=True)
+    was_successful = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = "login_attempts"
+        verbose_name = "Login Attempt"
+        verbose_name_plural = "Login Attempts"
+        ordering = ["-attempted_at"]
+
+    def __str__(self):
+        return f"{self.email} - Success: {self.was_successful}"

@@ -33,16 +33,16 @@ export function SuperAdminSidebar({ onNavClick }: { onNavClick?: () => void }) {
   const { logout } = useAuth()
 
   return (
-    <aside className="fixed inset-y-0 left-0 flex h-full w-64 flex-col border-r border-slate-100 bg-white pt-6 font-body">
+    <aside className="fixed inset-y-0 left-0 flex h-full w-72 flex-col border-r border-slate-100 bg-white pt-8 font-headline">
       <div className="mb-10 px-8">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-700 text-white shadow-lg shadow-violet-900/20">
-          <ShieldCheck className="h-6 w-6" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-600 text-white shadow-lg shadow-violet-600/20">
+          <span className="text-2xl font-black">A</span>
         </div>
-        <h2 className="mt-4 text-xl font-black tracking-tight text-slate-900">
-          Super Admin
+        <h2 className="mt-6 text-xl font-black tracking-tight text-slate-900 leading-none">
+          Avanzo
         </h2>
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-          Portal Console
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-2">
+          Global Registry
         </p>
       </div>
 
@@ -54,14 +54,14 @@ export function SuperAdminSidebar({ onNavClick }: { onNavClick?: () => void }) {
               key={item.to}
               to={item.to}
               onClick={onNavClick}
-              className={`flex items-center gap-3 rounded-xl px-4 py-3 transition-all duration-300 group ${
+              className={`flex items-center gap-3 rounded-xl px-4 py-3.5 transition-all duration-300 group ${
                 isActive
-                  ? "bg-violet-700 text-white shadow-lg shadow-violet-900/20"
+                  ? "bg-violet-600 text-white shadow-lg shadow-violet-600/20"
                   : "text-slate-400 hover:bg-slate-50 hover:text-slate-900"
               }`}
             >
               <item.icon className={`h-5 w-5 shrink-0 ${isActive ? 'text-white' : 'text-slate-300 group-hover:text-violet-600'}`} />
-              <span className="text-xs font-bold">{item.label}</span>
+              <span className="text-[13px] font-bold tracking-tight">{item.label}</span>
             </Link>
           )
         })}
@@ -73,17 +73,17 @@ export function SuperAdminSidebar({ onNavClick }: { onNavClick?: () => void }) {
             toast.info("Accessing help documentation...")
             onNavClick?.()
           }}
-          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-slate-400 transition-all hover:bg-slate-50 hover:text-slate-900 group"
+          className="flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-[13px] font-bold text-slate-400 transition-all hover:bg-slate-50 hover:text-slate-900 group"
         >
           <HelpCircle className="h-5 w-5 text-slate-300 group-hover:text-violet-600" />
-          <span className="text-xs font-bold">Help Center</span>
+          <span className="tracking-tight">Terminal Help</span>
         </button>
         <button
           onClick={() => logout()}
-          className="flex items-center gap-3 rounded-xl px-4 py-3 text-red-500 transition-all hover:bg-red-50 font-bold text-xs mt-2"
+          className="flex items-center gap-3 rounded-xl px-4 py-3.5 text-red-500 transition-all hover:bg-red-50 font-bold text-[13px] mt-2 tracking-tight"
         >
           <LogOut className="h-5 w-5" />
-          Sign Out
+          Terminate Session
         </button>
       </div>
     </aside>

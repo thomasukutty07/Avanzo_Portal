@@ -2,9 +2,8 @@ import { HRPortalChrome } from "@/components/portal/hr/HRPortalChrome"
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
 import { toast } from "sonner"
 import { 
-  Plane, 
   Stethoscope, 
-  User, 
+  User as UserIcon, 
   Check, 
   Calendar, 
   Clock, 
@@ -13,51 +12,67 @@ import {
   ChevronRight
 } from "lucide-react"
 
-const SUMMARY = [
-  { label: "Annual Leave", value: "12 Days", sub: "Available", color: "blue", icon: Plane },
-  { label: "Sick Leave", value: "5 Days", sub: "Remaining", color: "red", icon: Stethoscope },
-  { label: "Personal Leave", value: "3 Days", sub: "Allocated", color: "amber", icon: User },
-]
+import { leavesService } from "@/services/leaves"
+import { useState, useEffect } from "react"
+import { format, parseISO } from "date-fns"
 
-const REQUESTS = [
-  {
-    id: 1,
-    name: "Sarah Jenkins",
-    role: "Product Designer • Engineering",
-    type: "Annual Leave",
-    dates: "Oct 24 - Oct 28, 2023",
-    days: "5 Days",
-    message: "Going on a family hiking trip to the Rockies.",
-    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuC-PsJYK8Oa96i1Kpwv6TAlOhBwXtUzj3HjzJzI2sQMMJD9ZtZ7fs61XkUQuT72vMvEh3Oon1t09BOKpaMThA4AF9mLpk3_VtzoT-DrpYPamcKEB60nVDmJz-H6tpd6rUBC0JdZLr8iuubZNrLCkvsKLaxqD43kskstPGTCO0zMLebubXz0f5QI1VUg4ftT_6m-LhvAZsgwwEBh92dXWZRsINKexyZQdUVx2H9wrEOt2egoBr4E_pePvBOewqbinK-h5wzCc7BbWhY"
-  },
-  {
-    id: 2,
-    name: "Marcus Thorne",
-    role: "Backend Dev • Engineering",
-    type: "Sick Leave",
-    dates: "Oct 12 - Oct 13, 2023",
-    days: "2 Days",
-    message: null,
-    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBjscnA0LqvLt1DU3QAx6YTMGanV8abm68EUemunFige4d21GrgOqJMGPkyjbh8ScdbCswylI3ki5MfRPZLd9seMZ8FfLeP2IrNY3tVEjAf8-LfbjY4kKns8d4PdbvdcZO7jXdGrPwIFieLCFV7PcJIVbuwjtbiAr8gvxoyV5kiuCV-bWlNmeVrU9iwCJtPQTjec6QMOqn9zkMtpf0XI2VqeckxOOjTlJsSeYX7oPJdIoeSMKcHEgyFjsREJUYgSihUF3CDLvS6JTs"
-  }
+const SUMMARY = [
+  { label: "Annual Leave", value: "24 Days", sub: "Allocated", color: "blue", icon: Calendar },
+  { label: "Sick Leave", value: "10 Days", sub: "Standard", color: "red", icon: Stethoscope },
+  { label: "Personal Leave", value: "05 Days", sub: "Allocated", color: "amber", icon: UserIcon },
 ]
 
 export default function HRLeaveRequests() {
   useDesignPortalLightTheme()
+  const [requests, setRequests] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchRequests()
+  }, [])
+
+  const fetchRequests = async () => {
+    try {
+      setLoading(true)
+      const data = await leavesService.getLeaveRequests()
+      setRequests(Array.isArray(data) ? data : (data.results || []))
+    } catch (error) {
+      console.error("Fetch error:", error)
+      toast.error("Failed to synchronize leave requests.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleAction = async (id: string, action: 'approve' | 'reject', name: string) => {
+    try {
+      if (action === 'approve') {
+        await leavesService.hrApprove(id, { hr_comment: "System approved via HR Portal." })
+        toast.success(`Leave request for ${name} has been fully approved.`)
+      } else {
+        await leavesService.rejectRequest(id, { hr_comment: "Declined by HR Management." })
+        toast.info(`Leave request for ${name} has been declined.`)
+      }
+      fetchRequests()
+    } catch (error) {
+      console.error("Action error:", error)
+      toast.error(`Operation failed: Tier 2 authentication required or network error.`)
+    }
+  }
 
   return (
     <HRPortalChrome>
-      <div className="p-8 space-y-8">
+      <div className="p-8 space-y-8 font-display">
         <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="font-headline text-[1.75rem] font-bold tracking-[-0.02em] text-[#191c1d]">Leave Management</h1>
-            <p className="font-body text-[#494456] mt-1 text-sm font-medium">Review team requests and manage upcoming availability.</p>
+          <div className="font-headline">
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">Leave Management</h1>
+            <p className="text-sm font-medium text-slate-500 mt-2">Review personnel requests and synchronize service availability.</p>
           </div>
           <button 
             onClick={() => toast.success("Exporting leave records to CSV...")}
-            className="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold shadow-sm hover:bg-slate-50 transition-all active:scale-95"
+            className="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-[11px] font-black text-slate-700 shadow-sm hover:bg-slate-50 transition-all active:scale-95 uppercase tracking-widest font-headline"
           >
-            <Download className="h-4 w-4" />
+            <Download className="h-4 w-4 stroke-[2.5px]" />
             Export CSV
           </button>
         </header>
@@ -73,10 +88,10 @@ export default function HRLeaveRequests() {
               }`}>
                 <stat.icon className="h-6 w-6" />
               </div>
-              <div className="font-body text-slate-700">
-                <p className="text-[10px] font-bold uppercase tracking-widest">{stat.label}</p>
-                <p className="text-2xl font-bold text-slate-900 leading-none mt-0.5">{stat.value}</p>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-1">{stat.sub}</p>
+              <div className="font-headline text-slate-700">
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">{stat.label}</p>
+                <p className="text-2xl font-black text-slate-900 leading-none mt-2 uppercase tracking-tight">{stat.value}</p>
+                <p className="text-[10px] text-slate-300 font-black uppercase tracking-tighter mt-1">{stat.sub}</p>
               </div>
             </div>
           ))}
@@ -85,70 +100,93 @@ export default function HRLeaveRequests() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main List */}
           <div className="lg:col-span-2 space-y-6">
-             <div className="flex items-center justify-between">
-                <h3 className="font-headline text-lg font-bold text-slate-900 leading-none">Pending Requests</h3>
-                <span className="bg-violet-100 text-violet-700 text-[10px] font-bold px-3 py-1 rounded-full uppercase">4 New</span>
+             <div className="flex items-center justify-between font-headline">
+                <h3 className="text-lg font-black text-slate-900 tracking-tight">Pending Approval Queue</h3>
+                {!loading && (
+                   <span className="bg-violet-100 text-violet-700 text-[10px] font-black px-3 py-1 rounded-lg uppercase tracking-widest">
+                      {requests.filter(r => r.status !== 'approved' && r.status !== 'rejected').length} Requests Active
+                   </span>
+                )}
               </div>
 
-              {REQUESTS.map((req) => (
-                <div key={req.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all font-body">
+              {loading ? (
+                 <div className="bg-white p-12 rounded-xl border border-dashed border-slate-200 flex items-center justify-center">
+                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest animate-pulse">Synchronizing Leave Operations...</p>
+                 </div>
+              ) : requests.length === 0 ? (
+                 <div className="bg-white p-12 rounded-xl border border-dashed border-slate-200 flex items-center justify-center">
+                    <p className="text-sm font-bold text-slate-300 uppercase tracking-widest">No active requests found.</p>
+                 </div>
+              ) : requests.map((req) => (
+                <div key={req.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all font-display">
                   <div className="p-6 flex items-start gap-4">
-                    <div className="h-14 w-14 rounded-xl bg-slate-100 ring-2 ring-white shadow-sm shrink-0 overflow-hidden">
-                      <img className="h-full w-full object-cover" src={req.img} alt={req.name} />
+                    <div className="h-14 w-14 rounded-xl bg-slate-100 ring-2 ring-white shadow-sm shrink-0 overflow-hidden flex items-center justify-center uppercase font-black text-slate-400">
+                      {req.employee_name?.split(' ').map((n: string) => n[0]).join('')}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
-                        <div>
-                          <h4 className="font-bold text-slate-900 text-lg leading-tight">{req.name}</h4>
-                          <p className="text-xs text-slate-400 font-bold uppercase tracking-tighter mt-0.5">{req.role}</p>
+                        <div className="font-headline">
+                          <h4 className="font-black text-slate-900 text-[15px] leading-tight tracking-tight">{req.employee_name}</h4>
+                          <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Personnel ID: {req.id.split('-')[0]}</p>
                         </div>
-                        <span className="bg-slate-100 text-slate-500 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-lg shrink-0">
-                          {req.type}
+                        <span className={`text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-xl shrink-0 font-headline border ${
+                           req.status === 'tl_approved' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
+                           req.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                           'bg-slate-50 text-slate-500 border-slate-100'
+                        }`}>
+                          {req.status === 'tl_approved' ? 'Sync Level 1 Ready' : req.status === 'pending' ? 'Pending TL Review' : req.status}
                         </span>
                       </div>
-                      <div className="mt-4 flex flex-wrap items-center gap-4">
-                        <div className="flex items-center gap-2 text-xs font-bold text-slate-500 px-3 py-1.5 bg-slate-50 rounded-lg">
-                          <Calendar className="h-3.5 w-3.5 text-violet-600" />
-                          {req.dates}
+                      <div className="mt-5 flex flex-wrap items-center gap-4 font-headline">
+                        <div className="flex items-center gap-2 text-[11px] font-black text-slate-500 px-4 py-2 bg-slate-50 rounded-xl border border-slate-50 uppercase tracking-tight">
+                          <Calendar className="h-3.5 w-3.5 text-violet-600 stroke-[2.5px]" />
+                          {format(parseISO(req.start_date), 'MMM dd, yyyy')} — {format(parseISO(req.end_date), 'MMM dd, yyyy')}
                         </div>
-                        <div className="flex items-center gap-2 text-xs font-bold text-slate-500 px-3 py-1.5 bg-slate-50 rounded-lg">
-                          <Clock className="h-3.5 w-3.5 text-violet-600" />
-                          {req.days}
+                        <div className="flex items-center gap-2 text-[11px] font-black text-slate-500 px-4 py-2 bg-slate-50 rounded-xl border border-slate-50 uppercase tracking-tight">
+                          <Clock className="h-3.5 w-3.5 text-violet-600 stroke-[2.5px]" />
+                          {req.leave_type_display || req.leave_type}
                         </div>
                       </div>
-                      {req.message && (
+                      {req.reason && (
                         <p className="mt-4 p-4 bg-slate-50 rounded-xl text-sm text-slate-600 font-medium relative border-l-4 border-violet-600">
-                          "{req.message}"
+                          "{req.reason}"
                         </p>
                       )}
                     </div>
                   </div>
-                  <div className="bg-slate-50/50 px-6 py-4 flex flex-col sm:flex-row justify-end gap-3 border-t border-slate-50">
-                    <button 
-                      onClick={() => toast.error(`Declined leave request for ${req.name}`)}
-                      className="px-6 py-2 text-sm font-bold text-slate-500 hover:text-red-600 transition-colors uppercase tracking-widest"
-                    >
-                      Decline
-                    </button>
-                    <button 
-                      onClick={() => toast.success(`Approved leave request for ${req.name} successfully!`)}
-                      className="bg-violet-700 hover:bg-violet-800 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-violet-900/10 transition-all flex items-center justify-center gap-2 active:scale-95"
-                    >
-                      <Check className="h-4 w-4" /> 
-                      Approve
-                    </button>
-                  </div>
+                  {(req.status === 'pending' || req.status === 'tl_approved') && (
+                    <div className="bg-slate-50/30 px-6 py-5 flex flex-col sm:flex-row justify-end gap-3 border-t border-slate-50 font-headline">
+                      <button 
+                        onClick={() => handleAction(req.id, 'reject', req.employee_name)}
+                        className="px-6 py-2.5 text-[11px] font-black text-slate-400 hover:text-red-600 transition-colors uppercase tracking-widest"
+                      >
+                        Decline Request
+                      </button>
+                      <button 
+                        disabled={req.status === 'pending'}
+                        onClick={() => handleAction(req.id, 'approve', req.employee_name)}
+                        className={`px-10 py-3 rounded-xl text-[11px] font-black shadow-lg transition-all flex items-center justify-center gap-3 active:scale-95 uppercase tracking-widest ${
+                           req.status === 'pending' 
+                           ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none' 
+                           : 'bg-violet-600 hover:bg-violet-700 text-white shadow-violet-600/20'
+                        }`}
+                      >
+                        <Check className="h-4 w-4 stroke-[3px]" /> 
+                        {req.status === 'pending' ? 'Waiting for TL' : 'Process Approval'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
           </div>
 
           {/* Sidebar Info */}
-          <div className="space-y-6">
-            <h3 className="font-headline text-lg font-bold text-slate-900 leading-none">Team Context</h3>
+          <div className="space-y-6 font-headline">
+            <h3 className="text-lg font-black text-slate-900 tracking-tight">Avanzo Calendar context</h3>
             
-            <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm font-body">
-              <div className="flex items-center justify-between mb-6">
-                <span className="font-bold text-xs uppercase tracking-widest text-slate-900">October 2023</span>
+            <div className="bg-white rounded-2xl border border-slate-100 p-8 shadow-sm">
+              <div className="flex items-center justify-between mb-8">
+                <span className="font-black text-[13px] uppercase tracking-[0.2em] text-slate-900">OCTOBER 2023</span>
                 <div className="flex gap-1">
                   <button onClick={() => toast.info("Last Month")} className="p-1.5 hover:bg-slate-50 rounded-lg border border-slate-100 text-slate-400 transition-colors"><ChevronLeft className="h-4 w-4" /></button>
                   <button onClick={() => toast.info("Next Month")} className="p-1.5 hover:bg-slate-50 rounded-lg border border-slate-100 text-slate-400 transition-colors"><ChevronRight className="h-4 w-4" /></button>
@@ -185,8 +223,8 @@ export default function HRLeaveRequests() {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4 font-body">
-              <h4 className="text-xs font-bold text-slate-900 uppercase tracking-widest">Leave Distribution</h4>
+            <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4 font-display">
+              <h4 className="text-xs font-bold text-slate-900 tracking-widest">Leave Distribution</h4>
               {[
                 { label: "Annual", val: 64, color: "bg-blue-500" },
                 { label: "Sick Leave", val: 22, color: "bg-red-500" },

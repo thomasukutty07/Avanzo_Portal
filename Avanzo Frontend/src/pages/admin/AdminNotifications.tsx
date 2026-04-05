@@ -1,5 +1,8 @@
 import { useState, useMemo } from "react"
 import { OrganizationAdminChrome } from "@/components/portal/organizationadmin/OrganizationAdminChrome"
+import { api } from "@/lib/axios"
+import { extractResults } from "@/lib/apiResults"
+import { useEffect } from "react"
 import { toast } from "sonner"
 import { 
   Check, 
@@ -17,114 +20,49 @@ import {
   SelectValue 
 } from "@/components/ui/select"
 
-const NOTIFICATIONS_DATA = [
-  {
-    id: "1",
-    title: "Unauthorized Access Attempt",
-    message: "Multiple failed login attempts detected on Cluster-A from unknown IP (192.168.1.105). Immediate action recommended.",
-    time: "2 minutes ago",
-    priority: "CRITICAL",
-    priorityColor: "text-red-600",
-    actionText: "Block IP Address",
-    actionColor: "text-red-700 hover:text-red-800",
-    iconBg: "bg-red-100",
-    iconColor: "text-red-600",
-    cardBg: "bg-red-50/30 border border-red-100 border-l-4 border-l-red-500",
-    titleColor: "text-red-800",
-    messageColor: "text-red-800/80 font-medium",
-    timeColor: "text-red-700",
-    ActionIcon: AlertCircle,
-    unreadDot: "bg-red-500",
-    type: "Security Alerts",
-    isRead: false,
-  },
-  {
-    id: "2",
-    title: "System Kernel Update Available",
-    message: "Stable release v4.2.1-hotfix is available for deployment. This update addresses 3 known security vulnerabilities.",
-    time: "45 minutes ago",
-    priority: "HIGH",
-    priorityColor: "text-violet-600",
-    actionText: "Schedule Update",
-    actionColor: "text-violet-600 hover:text-violet-700",
-    iconBg: "bg-violet-100",
-    iconColor: "text-violet-600",
-    cardBg: "bg-white border border-slate-100",
-    titleColor: "text-slate-900",
-    messageColor: "text-slate-500 font-medium",
-    timeColor: "text-slate-400",
-    ActionIcon: Server,
-    unreadDot: "bg-violet-500",
-    type: "System Updates",
-    isRead: false,
-  },
-  {
-    id: "3",
-    title: "Backup Completed Successfully",
-    message: "Daily snapshot for Project Orion (750GB) has been verified and stored in S3 Region: US-East-1.",
-    time: "3 hours ago",
-    priority: "MEDIUM",
-    priorityColor: "text-slate-400",
-    actionText: "View Details",
-    actionColor: "text-slate-400 hover:text-slate-600",
-    iconBg: "bg-slate-100",
-    iconColor: "text-slate-500",
-    cardBg: "bg-white border border-slate-100",
-    titleColor: "text-slate-900",
-    messageColor: "text-slate-500 font-medium",
-    timeColor: "text-slate-400",
-    ActionIcon: History,
-    type: "System Updates",
-    isRead: true,
-  },
-  {
-    id: "4",
-    title: "New Admin Member Invited",
-    message: "Invitation sent to sarah.j@quantum.ai to join the Security Operations team.",
-    time: "Yesterday at 4:15 PM",
-    priority: "LOW",
-    priorityColor: "text-slate-400",
-    iconBg: "bg-slate-100",
-    iconColor: "text-slate-500",
-    cardBg: "bg-white border border-slate-100",
-    titleColor: "text-slate-900",
-    messageColor: "text-slate-500 font-medium",
-    timeColor: "text-slate-400",
-    ActionIcon: UserPlus,
-    type: "Administrative",
-    isRead: true,
-  },
-  {
-    id: "5",
-    title: "Storage Capacity Warning",
-    message: "Main Database Cluster reached 85% storage capacity. Autoscaling will trigger at 90%.",
-    time: "May 15, 2024",
-    priority: "HIGH",
-    priorityColor: "text-orange-600",
-    actionText: "Adjust Thresholds",
-    actionColor: "text-violet-600 hover:text-violet-700",
-    iconBg: "bg-orange-50",
-    iconColor: "text-orange-500",
-    cardBg: "bg-white border border-slate-100",
-    titleColor: "text-slate-900",
-    messageColor: "text-slate-500 font-medium",
-    timeColor: "text-slate-400",
-    ActionIcon: Database,
-    unreadDot: "bg-violet-500",
-    type: "System Updates",
-    isRead: false,
-  }
-]
 
 export default function AdminNotificationsPage() {
   const [activeTab, setActiveTab] = useState("All Notifications")
   const [priorityFilter, setPriorityFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
   const [dateFilter, setDateFilter] = useState("all")
+  const [notificationsData, setNotificationsData] = useState<any[]>([])
+
+  useEffect(() => {
+    async function fetchNotifications() {
+      try {
+        const res = await api.get("/api/notifications/")
+        const apiNotifs = extractResults(res.data)
+        const mapped = apiNotifs.map((n: any, idx: number) => ({
+           id: n.id,
+           title: n.title,
+           message: n.message,
+           time: new Date(n.created_at).toLocaleString(),
+           priority: "MEDIUM",
+           priorityColor: "text-slate-400",
+           actionText: n.target_url ? "View Action" : "",
+           actionColor: "text-slate-400 hover:text-slate-600",
+           iconBg: "bg-slate-100",
+           iconColor: "text-slate-500",
+           cardBg: "bg-white border border-slate-100",
+           titleColor: "text-slate-900",
+           messageColor: "text-slate-500 font-medium",
+           timeColor: "text-slate-400",
+           ActionIcon: History,
+           type: n.notification_type || "System Updates",
+           isRead: n.is_read
+        }))
+        setNotificationsData(mapped)
+      } catch (e) {
+        console.error(e)
+      }
+    }
+    fetchNotifications()
+  }, [])
 
   // Apply filters dynamically
   const filteredNotifications = useMemo(() => {
-    return NOTIFICATIONS_DATA.filter((note) => {
+    return notificationsData.filter((note) => {
       // 1. Tab filter
       if (activeTab !== "All Notifications" && note.type !== activeTab) return false;
       
@@ -142,23 +80,23 @@ export default function AdminNotificationsPage() {
 
   return (
     <OrganizationAdminChrome>
-      <div className="p-8 lg:p-12 space-y-8 min-h-screen bg-[#fcfcfd] font-sans">
+      <div className="p-6 md:p-10 space-y-8 animate-in fade-in duration-500 min-h-screen font-display bg-[#fcfcfc] text-slate-900">
         
         {/* Header Section */}
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-           <div>
-              <h1 className="text-[32px] font-black tracking-tight text-slate-900 leading-tight font-display">
+           <div className="">
+              <h1 className="text-[32px] font-black tracking-tight text-slate-900 leading-tight">
                 Notifications
               </h1>
-              <p className="text-slate-500 mt-1 font-medium">
+              <p className="text-slate-500 mt-2 text-sm font-medium">
                 Manage your system alerts and security audit logs.
               </p>
            </div>
            <button 
              onClick={() => toast.success("All notifications marked as read.")}
-             className="flex items-center gap-2.5 px-6 py-3 bg-[#a855f7] text-white rounded-2xl text-[13px] font-black shadow-lg shadow-[#a855f7]/20 hover:bg-[#9333ea] transition-all active:scale-95"
+             className="flex items-center gap-2.5 px-8 py-3.5 bg-[#a855f7] text-white rounded-2xl text-[11px] font-black shadow-lg shadow-[#a855f7]/20 hover:bg-[#9333ea] transition-all active:scale-95 uppercase tracking-widest"
            >
-              <Check className="h-4 w-4" strokeWidth={3} />
+              <Check className="h-4 w-4 stroke-[3px]" />
               Mark all read
            </button>
         </header>
@@ -169,13 +107,11 @@ export default function AdminNotificationsPage() {
             <button 
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`text-sm font-bold whitespace-nowrap relative py-3 ${
-                activeTab === tab ? 'text-[#a855f7]' : 'text-slate-500 hover:text-slate-700'
-              }`}
+              className={`text-[11px] font-black whitespace-nowrap relative py-4 uppercase tracking-widest transition-all ${ activeTab === tab ? 'text-[#a855f7]' : 'text-slate-300 hover:text-slate-600' }`}
             >
               {tab}
               {activeTab === tab && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#a855f7]" />
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#a855f7] rounded-full" />
               )}
             </button>
           ))}
@@ -233,23 +169,23 @@ export default function AdminNotificationsPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                    <div className="flex items-center justify-between gap-4 mb-2">
-                      <h4 className={`text-base font-black ${note.titleColor}`}>{note.title}</h4>
+                      <h4 className={`text-base font-black tracking-tight ${note.titleColor}`}>{note.title}</h4>
                       <div className="flex items-center gap-2 shrink-0">
-                         <span className={`text-[10px] font-black tracking-widest uppercase ${note.priorityColor}`}>
+                         <span className={`text-[9px] font-black tracking-[0.2em] uppercase ${note.priorityColor}`}>
                            {note.priority}
                          </span>
                          {note.unreadDot && (
-                           <div className={`size-1.5 rounded-full ${note.unreadDot}`} />
+                           <div className={`size-2 rounded-full animate-pulse ${note.unreadDot}`} />
                          )}
                       </div>
                    </div>
-                   <p className={`text-sm ${note.messageColor} leading-relaxed mb-4`}>
+                   <p className={`text-sm ${note.messageColor} leading-relaxed mb-5 font-medium`}>
                       {note.message}
                    </p>
-                   <div className="flex items-center gap-5 text-xs font-black">
+                   <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-widest">
                       <span className={note.timeColor}>{note.time}</span>
                       {note.actionText && (
-                         <button className={`${note.actionColor} transition-colors capitalize`}>
+                         <button className={`${note.actionColor} transition-all hover:underline decoration-2 underline-offset-4`}>
                            {note.actionText}
                          </button>
                       )}

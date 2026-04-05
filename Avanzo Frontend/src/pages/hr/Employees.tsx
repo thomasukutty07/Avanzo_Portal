@@ -11,51 +11,78 @@ import {
   RotateCw, 
   MoreVertical, 
   ChevronLeft, 
-  ChevronRight
+  ChevronRight,
+  User,
+  Edit2,
+  UserX,
+  Lock as LockIcon
 } from "lucide-react"
 import { toast } from "sonner"
+import { useNavigate } from "react-router-dom"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { EmployeeUpsertForm } from "@/components/employees/EmployeeUpsertForm"
 
 interface EmployeeRow {
   id: string
   first_name: string
   last_name: string
   email: string
+  phone?: string
+  employee_id?: string | null
   role?: string
+  access_role?: string | null
+  department?: string | null
   department_name?: string
+  designation?: string | null
+  designation_name?: string
+  team_lead?: string | null
   status: string
-  date_of_joining?: string
+  date_of_joining?: string | null
   avatar?: string
 }
 
-const DUMMY_USERS: EmployeeRow[] = [
-  { id: 'd2', first_name: 'Sarah', last_name: 'Jenkins', email: 'sarah.j@avanzo.com', role: 'Senior Dev', department_name: 'Engineering', status: 'active', date_of_joining: '2021-10-12', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah' },
-  { id: 'd3', first_name: 'Michael', last_name: 'Chen', email: 'm.chen@avanzo.com', role: 'Lead Designer', department_name: 'Product', status: 'onboarding', date_of_joining: '2024-01-05', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Michael' },
-  { id: 'd4', first_name: 'Emily', last_name: 'Rodriguez', email: 'e.rodriguez@avanzo.com', role: 'Growth Specialist', department_name: 'Marketing', status: 'active', date_of_joining: '2022-03-22', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emily' },
-  { id: 'd5', first_name: 'Alex', last_name: 'Thompson', email: 'a.thompson@avanzo.com', role: 'DevOps Engineer', department_name: 'Engineering', status: 'on_leave', date_of_joining: '2023-07-14', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex' },
-  { id: 'd6', first_name: 'Olivia', last_name: 'Garcia', email: 'o.garcia@avanzo.com', role: 'Account Executive', department_name: 'Sales', status: 'active', date_of_joining: '2020-05-30', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Olivia' },
-]
-
 export default function HREmployees() {
-  const [employees, setEmployees] = useState<EmployeeRow[]>(DUMMY_USERS)
+  const navigate = useNavigate()
+  const [employees, setEmployees] = useState<EmployeeRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [selectedEmployee, setSelectedEmployee] = useState<EmployeeRow | null>(null)
+  const [modalType, setModalType] = useState<'view' | 'edit' | 'create' | null>(null)
+  const [revokeEmployee, setRevokeEmployee] = useState<EmployeeRow | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 6
+
 
   const load = useCallback(async () => {
     setIsLoading(true)
     try {
       const res = await api.get("/api/auth/employees/")
       const apiUsers = extractResults<EmployeeRow>(res.data)
-      // Merge dummy users with real users, avoiding duplicate IDs
-      const combined = [...apiUsers]
-      DUMMY_USERS.forEach(du => {
-          if (!combined.some(u => u.email === du.email)) {
-              combined.push(du)
-          }
-      })
-      setEmployees(combined)
+      setEmployees(apiUsers)
     } catch {
-      // Keep DUMMY_USERS on failure or if results empty
-      setEmployees(DUMMY_USERS)
+      setEmployees([])
     } finally {
       setIsLoading(false)
     }
@@ -71,9 +98,27 @@ export default function HREmployees() {
     (emp.role || "").toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const handleExport = () => {
-    toast.success("Exporting employee directory to CSV...")
+    const handleExport = () => {
+    if (filteredEmployees.length === 0) {
+      toast.error("No employees to export.");
+      return;
+    }
+    const headers = "Name,Email,Department,Role,Status,Joining Date\n";
+    const csvContent = filteredEmployees.map(e => 
+      `"${e.first_name} ${e.last_name}","${e.email}","${e.department_name || ''}","${e.role || ''}","${e.status}","${e.date_of_joining || ''}"`
+    ).join("\n");
+    const blob = new Blob([headers + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", "employees_export.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Employee directory exported to CSV!");
   }
+
+  const totalPages = Math.ceil(filteredEmployees.length / itemsPerPage)
+  const paginatedEmployees = filteredEmployees.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   return (
     <HRPortalChrome>
@@ -81,29 +126,38 @@ export default function HREmployees() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Employee Management</h1>
-            <p className="text-sm font-medium text-slate-500 mt-1">View and manage all active team members across departments.</p>
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight leading-none">Employee Registry</h1>
+            <p className="text-sm font-medium text-slate-500 mt-2">Global directory of active, onboarding, and off-duty personnel.</p>
           </div>
-          <Button 
-            onClick={handleExport}
-            variant="outline" 
-            className="bg-white border-slate-200 text-slate-700 font-bold text-xs h-10 px-4 rounded-xl shadow-sm hover:bg-slate-50 flex gap-2 items-center"
-          >
-            <Download className="size-4" />
-            Export CSV
-          </Button>
+          <div className="flex gap-3">
+            <Button 
+              onClick={handleExport}
+              variant="outline" 
+              className="bg-white border-slate-200 text-slate-700 font-bold text-xs h-10 px-4 rounded-xl shadow-sm hover:bg-slate-50 flex gap-2 items-center"
+            >
+              <Download className="size-4" />
+              Export CSV
+            </Button>
+            <Button
+              onClick={() => navigate('/employee-registration')}
+              className="bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs h-10 px-5 rounded-xl shadow-md shadow-violet-200 flex gap-2 items-center"
+            >
+              <User className="size-4" />
+              New Employee
+            </Button>
+          </div>
         </div>
 
         {/* Filters Section */}
         <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col lg:flex-row gap-4 items-center">
-            <div className="relative flex-1 w-full lg:max-w-md group">
+            <div className="relative flex-1 w-full lg:max-w-md group font-headline">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400 group-focus-within:text-violet-600 transition-colors" />
               <input 
                 type="text"
                 placeholder="Search by name, email or role..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-11 bg-slate-50 border-transparent rounded-xl pl-11 pr-4 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all"
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                className="w-full h-11 bg-slate-50 border-transparent rounded-xl pl-11 pr-4 text-[13px] font-black text-slate-900 focus:ring-4 focus:ring-violet-600/5 focus:bg-white focus:border-violet-100 transition-all placeholder:text-slate-300 uppercase tracking-tight"
               />
             </div>
             
@@ -138,38 +192,38 @@ export default function HREmployees() {
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="border-b border-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50/30">
-                    <th className="px-6 py-5">Employee</th>
-                    <th className="px-6 py-5">Department</th>
-                    <th className="px-6 py-5">Role</th>
-                    <th className="px-6 py-5">Status</th>
-                    <th className="px-6 py-5">Hire Date</th>
-                    <th className="px-6 py-5 text-center">Actions</th>
+                  <tr className="border-b border-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] bg-slate-50/20 font-headline">
+                    <th className="px-8 py-5">Personnel</th>
+                    <th className="px-8 py-5">Strategic Unit</th>
+                    <th className="px-8 py-5">Operational Role</th>
+                    <th className="px-8 py-5">Status</th>
+                    <th className="px-8 py-5">Date Of Entry</th>
+                    <th className="px-8 py-5 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {filteredEmployees.map((emp, i) => (
+                  {paginatedEmployees.map((emp, i) => (
                     <tr key={emp.id} className="hover:bg-slate-50 transition-colors group">
-                      <td className="px-6 py-4">
+                      <td className="px-8 py-6 font-headline">
                         <div className="flex items-center gap-4">
-                          <div className={`size-11 rounded-full flex items-center justify-center text-white font-bold border-2 border-white shadow-sm ring-1 ring-slate-100 overflow-hidden ${['bg-orange-400', 'bg-blue-400', 'bg-emerald-400', 'bg-violet-400'][i % 4]}`}>
+                          <div className={`size-11 rounded-xl flex items-center justify-center text-white font-black border-2 border-white shadow-sm ring-1 ring-slate-100 overflow-hidden uppercase italic ${['bg-orange-400', 'bg-blue-400', 'bg-emerald-400', 'bg-violet-400'][i % 4]}`}>
                             {emp.avatar ? <img src={emp.avatar} className="size-full object-cover" /> : `${emp.first_name[0]}${emp.last_name[0]}`}
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-slate-800 leading-tight">{emp.first_name} {emp.last_name}</p>
-                            <p className="text-[11px] font-medium text-slate-400">{emp.email}</p>
+                            <p className="text-[13px] font-bold text-slate-900 leading-tight tracking-tight">{emp.first_name} {emp.last_name}</p>
+                            <p className="text-[11px] font-black text-slate-300 mt-1 lowercase tracking-wide">{emp.email}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-[13px] font-bold text-slate-600">{emp.department_name || "Engineering"}</td>
-                      <td className="px-6 py-4 text-[13px] font-medium text-slate-500">{emp.role || "Senior Dev"}</td>
-                      <td className="px-6 py-4">
-                        <Badge className={`rounded-lg px-2.5 py-1 text-[10px] font-bold border-none shadow-none ${
+                      <td className="px-8 py-6 text-[12px] font-black text-slate-600 uppercase tracking-tight italic font-headline">{emp.department_name || "Engineering"}</td>
+                      <td className="px-8 py-6 text-[12px] font-black text-slate-500 lowercase tracking-tight font-headline">{emp.role || "Senior Dev"}</td>
+                      <td className="px-8 py-6 font-headline">
+                        <Badge className={`rounded-xl px-3 py-1 text-[9px] font-black border-none shadow-none uppercase tracking-widest ${
                             emp.status === 'onboarding' ? 'bg-amber-50 text-amber-600' : 
                             emp.status === 'on_leave' ? 'bg-slate-100 text-slate-500' : 
                             'bg-emerald-50 text-emerald-600'
                         }`}>
-                          <div className={`size-1.5 rounded-full mr-1.5 ${
+                          <div className={`size-1.5 rounded-full mr-2 ${
                               emp.status === 'onboarding' ? 'bg-amber-400' : 
                               emp.status === 'on_leave' ? 'bg-slate-400' : 
                               'bg-emerald-400'
@@ -178,13 +232,44 @@ export default function HREmployees() {
                            emp.status === 'on_leave' ? 'On Leave' : 'Active'}
                         </Badge>
                       </td>
-                      <td className="px-6 py-4 text-[13px] font-medium text-slate-500">{emp.date_of_joining ? new Date(emp.date_of_joining).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : 'Oct 12, 2021'}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex justify-center">
-                            <Button variant="ghost" size="icon" className="size-8 rounded-lg text-slate-300 hover:text-slate-600 hover:bg-slate-100">
+                      <td className="px-8 py-6 text-[12px] font-black text-slate-400 tabular-nums font-headline italic uppercase tracking-tighter">{emp.date_of_joining ? new Date(emp.date_of_joining).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : 'Feb 04, 2026'}</td>
+                      <td className="px-8 py-6 text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="size-9 rounded-xl text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-colors">
                                 <MoreVertical className="size-4" />
                             </Button>
-                        </div>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48 rounded-2xl p-2 shadow-xl border-slate-100 font-headline">
+                            <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-3 py-2">Management Actions</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              className="rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 flex items-center gap-2 cursor-pointer focus:bg-violet-50 focus:text-violet-700 transition-colors"
+                              onClick={() => {
+                                setSelectedEmployee(emp)
+                                setModalType('view')
+                              }}
+                            >
+                              <User className="size-3.5" /> View Full Profile
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 flex items-center gap-2 cursor-pointer focus:bg-violet-50 focus:text-violet-700 transition-colors"
+                              onClick={() => {
+                                setSelectedEmployee(emp)
+                                setModalType('edit')
+                              }}
+                            >
+                              <Edit2 className="size-3.5" /> Edit Employee Details
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              className="rounded-xl px-3 py-2.5 text-xs font-bold text-red-600 flex items-center gap-2 cursor-pointer focus:bg-red-50 focus:text-red-700 transition-colors"
+                              onClick={() => setRevokeEmployee(emp)}
+                            >
+                              <UserX className="size-3.5" /> Revoke System Access
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </td>
                     </tr>
                   ))}
@@ -192,22 +277,190 @@ export default function HREmployees() {
               </table>
             </div>
 
-            {/* Pagination Placeholder */}
+            {/* Pagination */}
             <div className="p-6 border-t border-slate-50 flex items-center justify-between">
                 <p className="text-xs font-bold text-slate-400 group">
-                    Showing <span className="text-slate-700">{filteredEmployees.slice(0, 5).length}</span> of <span className="text-slate-700">{filteredEmployees.length}</span> employees
+                    Showing <span className="text-slate-700">{Math.min(filteredEmployees.length, (currentPage - 1) * itemsPerPage + 1)}</span> to <span className="text-slate-700">{Math.min(filteredEmployees.length, currentPage * itemsPerPage)}</span> of <span className="text-slate-700">{filteredEmployees.length}</span> employees
                 </p>
                 <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" className="size-8 rounded-lg text-slate-300 hover:bg-slate-50"><ChevronLeft className="size-4" /></Button>
-                    <Button className="size-8 rounded-lg bg-violet-600 text-white font-bold text-xs shadow-md shadow-violet-100">1</Button>
-                    <Button variant="ghost" size="icon" className="size-8 rounded-lg text-slate-400 hover:bg-slate-50 font-bold text-xs">2</Button>
-                    <Button variant="ghost" size="icon" className="size-8 rounded-lg text-slate-400 hover:bg-slate-50 font-bold text-xs">3</Button>
-                    <Button variant="ghost" size="icon" className="size-8 rounded-lg text-slate-400 hover:bg-slate-50"><ChevronRight className="size-4" /></Button>
+                    <Button 
+                      variant="ghost" size="icon" 
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="size-8 rounded-lg text-slate-400 hover:bg-slate-50 disabled:opacity-30">
+                        <ChevronLeft className="size-4" />
+                    </Button>
+                    {[...Array(totalPages)].map((_, idx) => (
+                      <Button 
+                        key={idx}
+                        variant="ghost"
+                        onClick={() => setCurrentPage(idx + 1)}
+                        className={`size-8 rounded-lg font-bold text-xs ${currentPage === idx + 1 ? 'bg-violet-600 text-white shadow-md shadow-violet-100' : 'text-slate-400 hover:bg-slate-50'}`}
+                      >
+                        {idx + 1}
+                      </Button>
+                    ))}
+                    <Button 
+                      variant="ghost" size="icon" 
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages || totalPages === 0}
+                      className="size-8 rounded-lg text-slate-400 hover:bg-slate-50 disabled:opacity-30">
+                        <ChevronRight className="size-4" />
+                    </Button>
                 </div>
             </div>
           </CardContent>
         </Card>
+        
+        {/* Employee Detail/Edit Sheet */}
+        <Sheet open={!!modalType} onOpenChange={(open) => !open && setModalType(null)}>
+          <SheetContent side="right" className="w-full sm:max-w-xl p-0 border-l border-slate-100 font-display">
+            <div className="h-full flex flex-col bg-white">
+              <SheetHeader className="p-8 border-b border-slate-50 bg-[#fcfcfc] font-headline">
+                <SheetTitle className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                  <div className="size-10 rounded-xl bg-violet-600 text-white flex items-center justify-center">
+                    {modalType === 'view' ? <User size={20} /> : <Edit2 size={20} />}
+                  </div>
+                  {modalType === 'view' ? 'Staff Intelligence Profile' : modalType === 'edit' ? 'Edit Personnel Record' : 'Register New Employee'}
+                </SheetTitle>
+                {selectedEmployee && (
+                  <p className="text-xs font-bold text-slate-400 mt-2 uppercase tracking-widest leading-none">
+                    {selectedEmployee?.first_name} {selectedEmployee?.last_name} | {selectedEmployee?.email}
+                  </p>
+                )}
+              </SheetHeader>
+              
+              <div className="flex-1 overflow-y-auto p-8">
+                {modalType === 'view' && selectedEmployee && (
+                  <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+                    <section className="space-y-4">
+                      <h4 className="text-[10px] font-black text-violet-600 tracking-[0.2em] mb-4">Core Identification</h4>
+                      <div className="grid grid-cols-2 gap-6 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                        <ProfileItem label="Full Name" value={`${selectedEmployee.first_name} ${selectedEmployee.last_name}`} />
+                        <ProfileItem label="Contact Email" value={selectedEmployee.email} />
+                        <ProfileItem label="Strategic Unit" value={selectedEmployee.department_name || "Engineering"} />
+                        <ProfileItem label="Operational Role" value={selectedEmployee.role || "Senior Dev"} />
+                        <ProfileItem label="Date of Entry" value={selectedEmployee.date_of_joining || "Oct 12, 2021"} />
+                        <ProfileItem label="Status" value={selectedEmployee.status.toUpperCase()} />
+                      </div>
+                    </section>
+
+                    <section className="space-y-4">
+                      <h4 className="text-[10px] font-black text-violet-600 tracking-[0.2em] mb-4">Access Telemetry</h4>
+                      <div className="p-6 rounded-2xl border-2 border-dashed border-slate-100 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-bold text-slate-400">Portal Permissions</p>
+                          <Badge className="bg-emerald-50 text-emerald-600 border-none rounded-lg text-[9px] font-black tracking-widest">Active Access</Badge>
+                        </div>
+                        <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden">
+                          <div className="h-full bg-violet-600 w-full" />
+                        </div>
+                        <p className="text-[10px] font-medium text-slate-400 italic italic">Full synchronization with central security protocols is currently active.</p>
+                      </div>
+                    </section>
+                  </div>
+                )}
+
+                {modalType === 'edit' && selectedEmployee && (
+                  <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                     <EmployeeUpsertForm 
+                        initialData={{
+                          ...selectedEmployee,
+                          access_role: selectedEmployee.access_role // Ensure this is mapped correctly
+                        } as any}
+                        onSuccess={() => {
+                          setModalType(null)
+                          load()
+                        }}
+                        onCancel={() => setModalType(null)}
+                        submitLabel="Save Changes"
+                     />
+                  </div>
+                )}
+                
+
+              </div>
+              
+              {modalType === 'view' && (
+                <div className="p-8 border-t border-slate-50 bg-[#fcfcfc] flex gap-3">
+                  <Button 
+                    className="flex-1 h-12 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl shadow-lg shadow-violet-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+                    onClick={() => setModalType('edit')}
+                  >
+                    <Edit2 size={16} /> Edit Employee details
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="h-12 w-12 rounded-xl border-slate-200 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 hover:border-red-100 transition-all active:scale-95"
+                    onClick={() => {
+                      setRevokeEmployee(selectedEmployee)
+                      setModalType(null)
+                    }}
+                  >
+                    <UserX size={18} />
+                  </Button>
+                </div>
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        {/* Access Revocation Confirmation */}
+        <AlertDialog open={!!revokeEmployee} onOpenChange={(open) => !open && setRevokeEmployee(null)}>
+          <AlertDialogContent className="max-w-md rounded-2xl border border-slate-100 p-0 bg-white shadow-xl overflow-hidden font-display gap-0">
+            <div className="p-6">
+              <AlertDialogHeader className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="size-12 shrink-0 rounded-xl bg-red-50 text-red-600 flex items-center justify-center border border-red-100 shadow-inner">
+                    <UserX size={20} className="stroke-[2.5px]" />
+                  </div>
+                  <div className="space-y-1 text-left">
+                    <AlertDialogTitle className="text-xl font-bold text-slate-900 tracking-tight font-headline m-0">
+                      Revoke System Access
+                    </AlertDialogTitle>
+                    <p className="text-[10px] font-black text-red-600 uppercase tracking-[0.15em] leading-none">Security Lockout Protocol</p>
+                  </div>
+                </div>
+                <AlertDialogDescription className="text-sm font-medium text-slate-500 leading-relaxed text-left">
+                  You are initiating a system lockout for <span className="text-slate-900 font-bold">{revokeEmployee?.first_name} {revokeEmployee?.last_name}</span>. This will immediately terminate all active network sessions and securely invalidate their existing authentication credentials.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+            </div>
+            
+            <div className="bg-slate-50 px-6 py-4 border-t border-slate-100 flex items-center justify-end gap-3">
+              <AlertDialogCancel className="mt-0 h-10 px-5 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 text-xs font-bold transition-all outline-none ring-0 focus-visible:ring-0 focus-visible:ring-offset-0">
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={async () => {
+                  if (!revokeEmployee) return;
+                  try {
+                    await api.delete(`/api/auth/employees/${revokeEmployee.id}/`)
+                    toast.success(`Access completely revoked for ${revokeEmployee?.first_name}.`)
+                    load()
+                  } catch (e) {
+                    toast.error("Failed to revoke access.")
+                  } finally {
+                    setRevokeEmployee(null)
+                  }
+                }}
+                className="h-10 px-5 rounded-xl bg-red-600 hover:bg-red-700 outline-none text-white text-xs font-bold shadow-sm shadow-red-200 transition-all border-none ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+              >
+                Terminate Access
+              </AlertDialogAction>
+            </div>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </HRPortalChrome>
+  )
+}
+
+function ProfileItem({ label, value }: { label: string, value: string }) {
+  return (
+    <div className="space-y-1">
+      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
+      <p className="text-sm font-bold text-slate-900 tracking-tight font-headline">{value}</p>
+    </div>
   )
 }

@@ -4,7 +4,6 @@ import { SuperAdminChrome } from "@/components/layout/SuperAdminChrome"
 import { 
   Search, 
   Filter, 
-  ShieldCheck, 
   AlertCircle,
   Activity,
   User,
@@ -36,51 +35,54 @@ export default function SuperAdminAuditLogs() {
 
   return (
     <SuperAdminChrome>
-      <div className="space-y-10 py-8 font-sans text-slate-600">
+      <div className="space-y-10 py-8 font-display text-slate-600 bg-[#fcfcfc] min-h-screen p-8 lg:p-12">
         <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-          <div>
-            <h1 className="font-display text-3xl font-black tracking-tight text-slate-900 leading-tight">
+          <div className="font-headline space-y-1">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-600 mb-1">
+              SYSTEM SECURITY • OPERATIONS
+            </p>
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 leading-tight uppercase">
               Audit Logs
             </h1>
-            <p className="text-slate-500 mt-1 font-medium italic">
+            <p className="text-slate-500 mt-2 text-sm font-medium">
                Comprehensive immutable ledger of all high-level system operations.
             </p>
           </div>
           <button 
             disabled={exporting}
             onClick={handleExport}
-            className="flex items-center gap-3 px-8 py-3 bg-violet-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-violet-900/20 hover:bg-violet-700 transition-all active:scale-95 disabled:opacity-50"
+            className="flex items-center gap-3 px-10 py-4 bg-violet-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-violet-900/20 hover:bg-violet-700 transition-all active:scale-95 disabled:opacity-50 font-headline"
           >
-            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {exporting ? <Loader2 className="h-4 w-4 animate-spin stroke-[2.5px]" /> : <Download className="h-4 w-4 stroke-[3px]" />}
             {exporting ? 'Exporting...' : 'Export Audit Trail'}
           </button>
         </header>
 
         {/* Global Activity Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-           {[
-              { label: "Total Operations", value: "1.4k", icon: Activity, color: "text-violet-600 bg-violet-50" },
-              { label: "Security Events", value: "23", icon: AlertCircle, color: "text-red-600 bg-red-50" },
-              { label: "Access Requests", value: "842", icon: User, color: "text-blue-600 bg-blue-50" },
-              { label: "DB Changes", value: "156", icon: Database, color: "text-amber-600 bg-amber-50" },
-           ].map((stat, i) => (
-              <div key={i} className="bg-white p-6 rounded-[32px] border border-slate-50 shadow-sm flex items-center gap-5 transition-all hover:shadow-xl hover:shadow-violet-900/5 group cursor-help" onClick={() => toast.info(`Viewing ${stat.label} analytics`)}>
-                 <div className={`p-4 rounded-2xl ${stat.color} shadow-inner group-hover:scale-110 transition-transform`}>
-                    <stat.icon className="h-5 w-5" />
-                 </div>
-                 <div>
-                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest leading-none mb-1.5">{stat.label}</p>
-                    <p className="text-2xl font-black text-slate-900 leading-none tracking-tighter">{stat.value}</p>
-                 </div>
-              </div>
-           ))}
-        </div>
+         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 font-headline">
+            {[
+               { label: "Total Operations", value: "1.4k", icon: Activity, color: "text-violet-600 bg-violet-50" },
+               { label: "Security Events", value: "23", icon: AlertCircle, color: "text-red-600 bg-red-50" },
+               { label: "Access Requests", value: "842", icon: User, color: "text-blue-600 bg-blue-50" },
+               { label: "DB Changes", value: "156", icon: Database, color: "text-amber-600 bg-amber-50" },
+            ].map((stat, i) => (
+               <div key={i} className="bg-white p-7 rounded-[32px] border border-slate-50 shadow-sm flex items-center gap-6 transition-all hover:shadow-xl hover:shadow-violet-900/5 group cursor-help" onClick={() => toast.info(`Viewing ${stat.label} analytics`)}>
+                  <div className={`p-5 rounded-2xl ${stat.color} shadow-inner group-hover:scale-110 transition-transform`}>
+                     <stat.icon className="h-6 w-6 stroke-[2.5px]" />
+                  </div>
+                  <div>
+                     <p className="text-slate-300 text-[10px] font-black uppercase tracking-widest leading-none mb-2">{stat.label}</p>
+                     <p className="text-2xl font-black text-slate-900 leading-none tracking-tight uppercase">{stat.value}</p>
+                  </div>
+               </div>
+            ))}
+         </div>
 
         <div className="bg-white rounded-[40px] border border-slate-50 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
            <div className="p-10 border-b border-slate-50 flex flex-col sm:flex-row items-center justify-between gap-6 bg-slate-50/10">
               <div className="flex items-center gap-4">
                  <div className="size-3 bg-violet-600 rounded-full shadow-lg shadow-violet-600/50 animate-pulse" />
-                 <h3 className="font-display text-xl font-black text-slate-900 leading-none">Security Logs</h3>
+                 <h3 className="font-headline text-xl font-black text-slate-900 leading-none uppercase tracking-tight">Security Logs</h3>
               </div>
               <div className="flex items-center gap-4 w-full sm:w-auto">
                  <div className="relative flex-1 sm:w-80">

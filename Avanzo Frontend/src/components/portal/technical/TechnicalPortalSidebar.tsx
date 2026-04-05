@@ -13,7 +13,7 @@ export function TechnicalPortalSidebar({ onNavClick }: { onNavClick?: () => void
   const navigate = useNavigate()
 
   return (
-    <aside className="flex h-full w-full shrink-0 flex-col bg-white border-r border-slate-100 font-sans overflow-hidden">
+    <aside className="flex h-full w-full shrink-0 flex-col bg-white border-r border-slate-100 font-display overflow-hidden">
       <nav className="flex-1 space-y-1.5 overflow-y-auto px-4 py-8">
         {TECHNICAL_NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
           <NavLink
@@ -45,3 +45,4 @@ export function TechnicalPortalSidebar({ onNavClick }: { onNavClick?: () => void
     </aside>
   )
 }
+

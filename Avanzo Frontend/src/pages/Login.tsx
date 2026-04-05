@@ -18,6 +18,7 @@ export default function Login() {
   const [submitting, setSubmitting] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
 
   const copyText = async (text: string, what: string) => {
     try {
@@ -47,7 +48,7 @@ export default function Login() {
   }
 
   return (
-    <div className="relative min-h-screen bg-[#f8f9fa] font-sans text-[#191c1d] antialiased selection:bg-[#e8ddff] selection:text-[#4800b2]">
+    <div className="relative min-h-screen bg-[#f8f9fa] font-display text-[#191c1d] antialiased selection:bg-[#e8ddff] selection:text-[#4800b2]">
       {error && (
         <div className="fixed top-4 left-1/2 z-[100] -translate-x-1/2 rounded-md bg-destructive px-4 py-2 text-sm text-white shadow-lg">
           {error}
@@ -67,8 +68,9 @@ export default function Login() {
               src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtFEpf8aWktW5Fscnv5RzmZOASldfj869lzDF_hPTfGySGHVhfg8RyWelPuEvdFHgAJFsxARg7NU7DJyV0VWwXiwOF6Pce4GlulNNk9RNBCNto_VYPYjQ9v2mNaiNUKYVf4eaew_kmIdmko5LbSZrBSR4_uHDCbARnRCUmiEwNWEeYqV9YOJr46eqvJfyOkfGqwqKbECCDYG1BiGmQGyQ-RcMFhQBvQHfnIki1-2RUy9t_P5TkQ1gtsr45ubw7-cku8BqTEzAeoO4"
             />
           </div>
-          <div className="relative z-10 p-16">
-            <div className="flex items-center gap-3">
+          <div className="relative z-10 flex flex-1 flex-col items-center justify-center p-16 text-center"
+               style={{ animation: 'fadeSlideIn 0.5s ease-out both' }}>
+            <div className="flex items-center justify-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-lg">
                 <span
                   className="material-symbols-outlined font-bold text-[#4800b2]"
@@ -78,48 +80,41 @@ export default function Login() {
                 </span>
               </div>
               <span className="text-3xl font-extrabold tracking-tighter text-white">
-                Avanzo
+                AVANZO CYBER SECURITY
               </span>
             </div>
             <div className="relative z-10 mt-16 max-w-lg">
-              <h1 className="mb-6 font-['Manrope',sans-serif] text-5xl font-bold leading-tight tracking-tight text-white">
-                The Digital <br />
-                <span className="text-[#d0beff]">Bastion of Security.</span>
+              <h1 className="mb-6 font-headline text-5xl font-bold leading-tight tracking-tight text-white">
+                Welcome to <br />
+                <span className="text-[#d0beff]">AVANZO CYBER SECURITY.</span>
               </h1>
-              <p className="text-lg font-light leading-relaxed text-[#e8ddff] opacity-90">
-                Enter the command center. Our high-precision intelligence layer
-                monitors and mitigates threats in real-time, ensuring your
-                enterprise remains unassailable.
-              </p>
-              <div className="mt-12 flex w-fit items-center gap-3 rounded-full border border-white/10 bg-white/10 px-5 py-3 backdrop-blur-md">
-                <div className="relative flex h-3 w-3">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#e8ddff] opacity-75" />
-                  <span className="relative inline-flex h-3 w-3 rounded-full bg-[#e8ddff]" />
-                </div>
-                <span className="text-xs font-semibold uppercase tracking-widest text-white">
-                  Network Status: Optimized
-                </span>
-              </div>
             </div>
           </div>
-          <div className="relative z-10 p-16 text-sm font-medium uppercase tracking-wide text-[#d0beff]/60">
-            © {new Date().getFullYear()} Avanzo Security Systems. All Rights
+          <div className="relative z-10 p-16 text-center text-sm font-medium uppercase tracking-wide text-[#d0beff]/60">
+            © {new Date().getFullYear()} AVANZO CYBER SECURITY. All Rights
             Reserved.
           </div>
         </section>
         <section className="flex w-full items-center justify-center bg-[#f3f4f5] p-8 lg:w-1/2">
-          <div className="w-full max-w-md space-y-10">
+          <style>{`
+            @keyframes fadeSlideIn {
+              from { opacity: 0; transform: translateY(20px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+          `}</style>
+          <div className="w-full max-w-md space-y-10"
+               style={{ animation: 'fadeSlideIn 0.5s ease-out both' }}>
             <div className="space-y-2">
               <div className="mb-8 flex items-center gap-2 lg:hidden">
                 <span className="text-2xl font-extrabold tracking-tighter text-[#4800b2]">
-                  Avanzo
+                  AVANZO CYBER SECURITY
                 </span>
               </div>
-              <h2 className="font-['Manrope',sans-serif] text-3xl font-bold tracking-tight text-[#191c1d]">
-                Welcome Back
+              <h2 className="font-headline text-3xl font-bold tracking-tight text-[#191c1d]">
+                Employee Sign In
               </h2>
               <p className="font-medium text-[#494456]">
-                Please enter your credentials to access the bastion.
+                Please enter your credentials.
               </p>
             </div>
             <form className="space-y-6" onSubmit={onSubmit}>
@@ -129,7 +124,7 @@ export default function Login() {
                     className="mb-2 block text-xs font-semibold uppercase tracking-wider text-[#494456]"
                     htmlFor="email"
                   >
-                    Corporate Email
+                    Email Address
                   </label>
                   <div className="relative">
                     <span className="material-symbols-outlined absolute bottom-3 left-0 text-xl text-[#7a7488] transition-colors group-focus-within:text-[#4800b2]">
@@ -152,7 +147,7 @@ export default function Login() {
                     className="mb-2 block text-xs font-semibold uppercase tracking-wider text-[#494456]"
                     htmlFor="password"
                   >
-                    Secure Password
+                    Password
                   </label>
                   <div className="relative">
                     <span className="material-symbols-outlined absolute bottom-3 left-0 text-xl text-[#7a7488] transition-colors group-focus-within:text-[#4800b2]">
@@ -161,13 +156,22 @@ export default function Login() {
                     <input
                       id="password"
                       name="password"
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       autoComplete="current-password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full border-0 border-b border-[#cbc3d9]/30 bg-transparent pt-2 pb-3 pl-8 text-[#191c1d] placeholder:text-[#7a7488]/40 focus:border-[#4800b2] focus:ring-0"
+                      className="w-full border-0 border-b border-[#cbc3d9]/30 bg-transparent pt-2 pb-3 pl-8 pr-10 text-[#191c1d] placeholder:text-[#7a7488]/40 focus:border-[#4800b2] focus:ring-0"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute bottom-3 right-0 flex items-center justify-center text-[#7a7488] transition-colors hover:text-[#4800b2]"
+                    >
+                      <span className="material-symbols-outlined text-xl">
+                        {showPassword ? "visibility_off" : "visibility"}
+                      </span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -198,7 +202,7 @@ export default function Login() {
                   type="submit"
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#4800b2] to-[#6200ee] px-6 py-4 font-bold text-white shadow-[0px_4px_20px_rgba(73,68,86,0.04),0px_12px_40px_rgba(73,68,86,0.08)] transition-all hover:opacity-95 active:scale-[0.98]"
                 >
-                  <span>Access Platform</span>
+                  <span>Sign In</span>
                   <span className="material-symbols-outlined text-lg">
                     arrow_forward
                   </span>
@@ -212,7 +216,7 @@ export default function Login() {
                   </div>
                   <div className="relative flex justify-center text-xs font-semibold uppercase tracking-widest">
                     <span className="bg-[#f3f4f5] px-4 font-bold text-[#7a7488]">
-                      Verification Proxy
+                      Or continue with
                     </span>
                   </div>
                 </div>
@@ -242,53 +246,21 @@ export default function Login() {
                 </button>
               </div>
             </form>
-            <div className="pt-8 text-center">
+            <div className="pt-8 text-center space-y-2">
               <p className="font-medium text-[#494456]">
-                Don&apos;t have an account?{" "}
+                Are you an organization administrator?{" "}
                 <Link
-                  to="/register-org"
+                  to="/org-login"
                   className="ml-1 font-bold text-[#4800b2] decoration-primary/30 underline-offset-4 hover:underline"
                 >
-                  Establish Security Node
+                  Organization Portal
                 </Link>
               </p>
             </div>
           </div>
         </section>
       </main>
-      <footer className="pointer-events-none fixed bottom-0 right-0 hidden w-1/2 items-center justify-between p-8 lg:flex">
-        <div className="pointer-events-auto flex gap-6">
-          <a
-            className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#7a7488] transition-colors hover:text-[#4800b2]"
-            href="#"
-          >
-            Privacy
-          </a>
-          <a
-            className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#7a7488] transition-colors hover:text-[#4800b2]"
-            href="#"
-          >
-            Protocol
-          </a>
-          <a
-            className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#7a7488] transition-colors hover:text-[#4800b2]"
-            href="#"
-          >
-            Support
-          </a>
-        </div>
-        <div className="pointer-events-auto flex cursor-help items-center gap-2 group">
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#7a7488] transition-colors group-hover:text-[#4800b2]">
-            Encryption: AES-256
-          </span>
-          <span
-            className="material-symbols-outlined text-sm text-[#7a7488] transition-colors group-hover:text-[#4800b2]"
-            style={{ fontVariationSettings: "'FILL' 1" }}
-          >
-            verified_user
-          </span>
-        </div>
-      </footer>
+
       {isDummyAuthEnabled() && (
         <div className="fixed bottom-4 right-4 z-[101] max-h-[min(60vh,420px)] max-w-sm overflow-y-auto rounded-lg border border-border bg-card/95 p-4 text-xs shadow-lg backdrop-blur-sm">
           <p className="mb-2 font-semibold text-foreground">
@@ -332,3 +304,4 @@ export default function Login() {
     </div>
   )
 }
+

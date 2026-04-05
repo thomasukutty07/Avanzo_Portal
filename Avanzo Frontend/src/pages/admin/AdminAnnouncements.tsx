@@ -14,6 +14,9 @@ import {
   X
 } from "lucide-react"
 import { OrganizationAdminChrome } from "@/components/portal/organizationadmin/OrganizationAdminChrome"
+import { api } from "@/lib/axios"
+import { extractResults } from "@/lib/apiResults"
+import { useEffect } from "react"
 import { 
   Dialog, 
   DialogContent, 
@@ -31,29 +34,9 @@ import {
   SelectValue 
 } from "@/components/ui/select"
 
-const MOCK_ANNOUNCEMENTS = [
-  { 
-    id: "ANN-001", 
-    title: "Quarterly Performance Review Schedule", 
-    content: "All departments are requested to complete their self-evaluations by Friday. Team leads will schedule 1-on-1 sessions starting next Monday.", 
-    target: "All Staff", 
-    author: "Organization Admin", 
-    date: "Oct 24, 2023",
-    type: "All"
-  },
-  { 
-    id: "ANN-002", 
-    title: "Updated HR Benefits Policy", 
-    content: "We have updated the health insurance coverage policy. Please review the document in the HR portal for details on new wellness benefits.", 
-    target: "HR Team", 
-    author: "Admin Console", 
-    date: "Oct 22, 2023",
-    type: "HR"
-  },
-]
 
 export default function AdminAnnouncementsPage() {
-  const [announcements, setAnnouncements] = useState(MOCK_ANNOUNCEMENTS)
+  const [announcements, setAnnouncements] = useState<any[]>([])
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [sending, setSending] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -64,6 +47,29 @@ export default function AdminAnnouncementsPage() {
     target: "All"
   })
 
+  const loadAnnouncements = async () => {
+    try {
+      const res = await api.get("/api/notifications/broadcasts/")
+      const apiAnns = extractResults(res.data)
+      const mapped = apiAnns.map((a: any) => ({
+        id: a.id,
+        title: a.title,
+        content: a.message || a.content || "",
+        target: a.target_scope === "org_wide" ? "All Staff" : a.department_name ? `Dept: ${a.department_name}` : "Department",
+        author: a.created_by_name || "System Admin",
+        date: new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+        type: a.target_scope === "org_wide" ? "All" : "HR"
+      }))
+      setAnnouncements(mapped)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  useEffect(() => {
+    loadAnnouncements()
+  }, [])
+
   const handleSend = () => {
     if (!newAnn.title || !newAnn.content) {
       toast.error("Please fill in all fields.")
@@ -71,27 +77,35 @@ export default function AdminAnnouncementsPage() {
     }
 
     setSending(true)
-    setTimeout(() => {
-      const addedAnn = {
-        id: `ANN-00${announcements.length + 1}`,
-        title: newAnn.title,
-        content: newAnn.content,
-        target: newAnn.target === "All" ? "All Staff" : `${newAnn.target} Team`,
-        author: "Organization Admin",
-        date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-        type: newAnn.target
-      }
-      setAnnouncements([addedAnn, ...announcements])
+    
+    // Map frontend state to backend model
+    const isDeptScoped = newAnn.target === "HR";
+    const payload = {
+      title: newAnn.title,
+      message: newAnn.content,
+      target_scope: isDeptScoped ? "department" : "org_wide",
+      severity: "info",
+      department: isDeptScoped ? "6e159a6d-e44b-4b21-884c-0d331908b982" : null
+    }
+
+    api.post("/api/notifications/broadcasts/", payload).then(() => {
       setSending(false)
       setIsCreateOpen(false)
       setNewAnn({ title: "", content: "", target: "All" })
+      loadAnnouncements()
       toast.success("Announcement broadcasted successfully.")
-    }, 1200)
+    }).catch((e) => {
+      setSending(false)
+      toast.error("Failed to broadcast announcement.")
+      console.error(e)
+    })
   }
 
   const handleDelete = (id: string) => {
-    setAnnouncements(announcements.filter(a => a.id !== id))
-    toast.success("Announcement removed from archive.")
+    api.delete(`/api/notifications/broadcasts/${id}/`).then(() => {
+      setAnnouncements(announcements.filter(a => a.id !== id))
+      toast.success("Announcement removed from archive.")
+    }).catch(() => toast.error("Failed to delete."))
   }
 
   const filteredAnnouncements = announcements.filter(a => 
@@ -101,31 +115,30 @@ export default function AdminAnnouncementsPage() {
 
   return (
     <OrganizationAdminChrome>
-      <div className="p-8 lg:p-12 space-y-10 min-h-screen bg-[#fcfcfd] font-sans">
+      <div className="p-6 md:p-10 space-y-8 animate-in fade-in duration-500 min-h-screen font-display bg-[#fcfcfc] text-slate-900">
         <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-               <Megaphone className="h-5 w-5 text-violet-600" />
-               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-violet-600">Company Communications</span>
-            </div>
+          <div className="space-y-1">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-600">
+              ADMINISTRATION • BROADCASTS
+            </p>
             <h1 className="text-3xl font-black tracking-tight text-slate-900 leading-tight">
               Announcements
             </h1>
-            <p className="text-slate-500 mt-1 font-medium italic">
-               Broadcast organization-wide updates and critical messages.
+            <p className="text-slate-500 mt-2 text-sm font-medium">
+               Manage organizational broadcasts and personnel notifications.
             </p>
           </div>
 
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
               <button 
-                className="flex items-center gap-3 px-8 py-3 bg-violet-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-violet-900/20 hover:bg-violet-700 transition-all active:scale-95"
+                className="flex items-center gap-3 px-10 py-4 bg-violet-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-violet-900/20 hover:bg-violet-700 transition-all active:scale-95"
               >
-                <Plus className="h-4 w-4" />
-                New Announcement
+                <Plus className="h-4 w-4 stroke-[3px]" />
+                New Broadcast
               </button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px] rounded-[24px] border-none shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)] p-0 overflow-hidden font-sans gap-0 [&>button]:hidden">
+            <DialogContent className="sm:max-w-[500px] rounded-[24px] border-none shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)] p-0 overflow-hidden font-display gap-0 [&>button]:hidden">
               {/* Custom Close Button */}
               <DialogTrigger asChild>
                 <button className="absolute top-5 right-5 text-slate-900/60 hover:text-slate-900 transition-colors z-10 p-1">
@@ -135,8 +148,8 @@ export default function AdminAnnouncementsPage() {
 
               <div className="bg-[#8b3dff] px-8 pt-10 pb-8 text-white relative">
                  <DialogHeader>
-                   <DialogTitle className="text-[26px] font-black tracking-tight flex items-center gap-2.5">
-                      <Megaphone className="h-6 w-6" />
+                   <DialogTitle className="text-[26px] font-black tracking-tight flex items-center gap-2.5 uppercase">
+                      <Megaphone className="h-6 w-6 stroke-[2.5px]" />
                       Create Broadcast
                    </DialogTitle>
                  </DialogHeader>
@@ -157,13 +170,13 @@ export default function AdminAnnouncementsPage() {
                 <div className="space-y-1.5">
                    <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Target Audience</label>
                    <Select value={newAnn.target} onValueChange={(val) => setNewAnn({...newAnn, target: val})}>
-                     <SelectTrigger className="rounded-xl border border-slate-100 bg-slate-50/50 py-6 px-4 focus:ring-0 focus:ring-offset-0 text-slate-700 font-medium w-[240px]">
+                     <SelectTrigger className="rounded-xl border border-slate-100 bg-slate-50/50 py-6 px-4 focus:ring-4 focus:ring-violet-600/5 text-slate-700 font-black uppercase text-[11px] w-[240px] tracking-tight">
                        <SelectValue placeholder="Select target group" />
                      </SelectTrigger>
                      <SelectContent className="rounded-2xl border-slate-100 shadow-xl">
-                       <SelectItem value="All" className="rounded-lg p-3 cursor-pointer">Whole Company (All Staff)</SelectItem>
-                       <SelectItem value="HR" className="rounded-lg p-3 cursor-pointer">HR Department Only</SelectItem>
-                       <SelectItem value="Team Lead" className="rounded-lg p-3 cursor-pointer">Team Leads & Managers</SelectItem>
+                       <SelectItem value="All" className="rounded-lg p-3 cursor-pointer text-[11px] font-black uppercase tracking-tight">Whole Company (All Staff)</SelectItem>
+                       <SelectItem value="HR" className="rounded-lg p-3 cursor-pointer text-[11px] font-black uppercase tracking-tight">HR Department Only</SelectItem>
+                       <SelectItem value="Team Lead" className="rounded-lg p-3 cursor-pointer text-[11px] font-black uppercase tracking-tight">Team Leads & Managers</SelectItem>
                      </SelectContent>
                    </Select>
                 </div>
@@ -193,24 +206,24 @@ export default function AdminAnnouncementsPage() {
           </Dialog>
         </header>
 
-        <div className="bg-white rounded-[40px] border border-slate-50 shadow-sm overflow-hidden flex flex-col min-h-[600px]">
+         <div className="bg-white rounded-[40px] border border-slate-50 shadow-premium overflow-hidden flex flex-col min-h-[600px]">
            <div className="p-10 border-b border-slate-50 flex flex-col sm:flex-row items-center justify-between gap-6 bg-slate-50/10">
               <div className="flex items-center gap-4">
-                 <div className="size-3 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/50" />
-                 <h3 className="text-xl font-black text-slate-900 leading-none">Broadcast Archive</h3>
+                 <div className="size-3 bg-violet-600 rounded-full shadow-lg shadow-violet-600/50 animate-pulse" />
+                 <h3 className="text-xl font-black text-slate-900 leading-none tracking-tight">Active Broadcasts</h3>
               </div>
               <div className="flex items-center gap-4 w-full sm:w-auto">
                  <div className="relative flex-1 sm:w-80">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 stroke-[2.5px]" />
                     <input 
-                       placeholder="Filter announcements..."
+                       placeholder="FILTER ANNOUNCEMENTS..."
                        value={searchQuery}
                        onChange={e => setSearchQuery(e.target.value)}
-                       className="w-full bg-white border-slate-100 rounded-2xl pl-12 py-3 text-sm font-medium focus:ring-violet-600 transition-all placeholder:text-slate-300"
+                       className="w-full bg-white border-slate-100 rounded-2xl pl-12 py-3.5 text-[11px] font-black uppercase tracking-widest focus:ring-4 focus:ring-violet-600/5 transition-all placeholder:text-slate-300"
                        type="text"
                     />
                  </div>
-                 <button onClick={() => toast.info("Filter parameters ready")} className="p-3 bg-white border border-slate-100 rounded-2xl text-slate-500 hover:bg-slate-50 transition-all shadow-sm active:scale-95"><Filter className="h-5 w-5" /></button>
+                 <button onClick={() => toast.info("Filter parameters ready")} className="p-3.5 bg-white border border-slate-100 rounded-2xl text-slate-500 hover:bg-slate-50 transition-all shadow-sm active:scale-95"><Filter className="h-5 w-5 stroke-[2.5px]" /></button>
               </div>
            </div>
 
@@ -219,41 +232,34 @@ export default function AdminAnnouncementsPage() {
                <div className="grid grid-cols-1 gap-6">
                  {filteredAnnouncements.map((ann) => (
                    <div key={ann.id} className="group relative bg-white rounded-3xl border border-slate-100 p-8 hover:border-violet-100 transition-all hover:shadow-xl hover:shadow-violet-900/5 overflow-hidden">
-                      <div className={`absolute top-0 right-0 w-1.5 h-full ${
-                        ann.type === 'All' ? 'bg-violet-600' :
-                        ann.type === 'HR' ? 'bg-rose-500' :
-                        'bg-amber-500'
-                      }`} />
+                      <div className={`absolute top-0 right-0 w-1.5 h-full ${ ann.type === 'All' ? 'bg-violet-600' : ann.type === 'HR' ? 'bg-rose-500' : 'bg-amber-500' }`} />
                       
                       <div className="flex flex-col md:flex-row justify-between gap-6">
                          <div className="flex-1 space-y-4">
-                            <div className="flex flex-wrap items-center gap-3">
-                               <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                                 ann.type === 'All' ? 'bg-violet-50 text-violet-700 border-violet-100' :
-                                 ann.type === 'HR' ? 'bg-rose-50 text-rose-700 border-rose-100' :
-                                 'bg-amber-50 text-amber-700 border-amber-100'
-                               }`}>
-                                  Target: {ann.target}
-                               </span>
-                               <div className="flex items-center gap-2 text-[9px] font-black text-slate-300 uppercase tracking-widest">
-                                  <Calendar className="h-3 w-3" />
-                                  {ann.date}
+                            <div className="">
+                               <h4 className="text-base font-black text-slate-900 group-hover:text-violet-700 transition-colors tracking-tight">{ann.title}</h4>
+                               <div className="flex items-center gap-3 mt-2">
+                                 <div className="p-1 px-2.5 bg-slate-50 border border-slate-100 rounded-md">
+                                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">{ann.type} Sector</p>
+                                 </div>
+                                 <p className="text-[10px] text-slate-300 font-black uppercase tracking-widest flex items-center gap-2">
+                                   <Calendar className="h-3 w-3 stroke-[2.5px]" /> {ann.date}
+                                 </p>
                                </div>
                             </div>
-                            <h4 className="text-xl font-black text-slate-900 group-hover:text-violet-600 transition-colors tracking-tight">{ann.title}</h4>
-                            <p className="text-sm text-slate-500 leading-relaxed font-medium line-clamp-3 italic">"{ann.content}"</p>
+                            <p className="text-sm text-slate-500 leading-relaxed font-medium line-clamp-3">"{ann.content}"</p>
                          </div>
                          
                          <div className="flex flex-row md:flex-col justify-between items-end gap-4 min-w-[150px]">
-                            <div className="flex flex-col items-end gap-1">
-                               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Author Identity</p>
-                               <div className="flex items-center gap-2">
-                                  <span className="text-xs font-bold text-slate-900">{ann.author}</span>
-                                  <div className="size-6 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200">
-                                     <UserSquare2 className="h-3 w-3 text-slate-400" />
-                                  </div>
-                               </div>
-                            </div>
+                             <div className="flex flex-col items-end gap-1">
+                                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Author Identity</p>
+                                <div className="flex items-center gap-2">
+                                   <span className="text-[11px] font-black text-slate-900 tracking-tight">{ann.author}</span>
+                                   <div className="size-8 rounded-xl bg-slate-50 flex items-center justify-center border border-slate-100 shadow-sm">
+                                      <UserSquare2 className="h-4 w-4 text-slate-400 stroke-[2.5px]" />
+                                   </div>
+                                </div>
+                             </div>
                             <button 
                                onClick={() => handleDelete(ann.id)}
                                className="p-3 rounded-2xl bg-slate-50 text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all opacity-0 group-hover:opacity-100"
@@ -272,7 +278,7 @@ export default function AdminAnnouncementsPage() {
                   </div>
                   <div className="space-y-1">
                      <p className="text-sm font-black text-slate-400 uppercase tracking-widest">No broadcasts transmitted</p>
-                     <p className="text-xs text-slate-300 font-medium italic">Create your first org-wide announcement to reach your team.</p>
+                     <p className="text-xs text-slate-300 font-medium">Create your first org-wide announcement to reach your team.</p>
                   </div>
                </div>
              )}
@@ -280,7 +286,7 @@ export default function AdminAnnouncementsPage() {
 
            <div className="mt-auto p-10 bg-slate-50/30 border-t border-slate-50">
               <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">
-                 <p className="flex items-center gap-3 italic">
+                 <p className="flex items-center gap-3">
                     <Users className="h-4 w-4 text-violet-500" />
                     Broadcasting active across {announcements.length} stored messages
                  </p>

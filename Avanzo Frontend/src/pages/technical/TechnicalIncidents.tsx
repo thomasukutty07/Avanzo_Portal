@@ -1,71 +1,113 @@
+import { useState, useEffect } from "react";
 import { 
   Plus,
   Filter,
   MoreVertical,
-  Clock
+  Clock,
+  Loader2
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { ticketsService } from "@/services/tickets";
+import { toast } from "sonner";
+import { formatDistanceToNow, parseISO } from "date-fns";
 
-const STATS = [
-  { label: "AVG. RESOLUTION TIME", value: "4.2h", sub: "-12% vs last mo", color: "text-emerald-500", barColor: "bg-violet-600", val: 65 },
-  { label: "UNASSIGNED INCIDENTS", value: "07", sub: "Requiring triage", extra: "SLA deadline approaching for 2", hasWarning: true },
-  { label: "CRITICAL INCIDENTS", value: "03", sub: "Active now", barColor: "bg-red-500", val: 35 },
-  { label: "MAINTENANCE DEFICIT", value: "14%", sub: "-5% improvement", color: "text-red-500", barColor: "bg-red-500", val: 14 },
-]
-
-const INCIDENTS = [
-  { 
-    id: "INC-2024-001", 
-    time: "Reported 12m ago",
-    desc: "Production Database CPU Spikes", 
-    target: "Target: Main DB Cluster",
-    sev: "HIGH", 
-    status: "Investigating", 
-    assignee: "M. Lopez",
-    initial: "ML",
-    sevColor: "text-orange-600 bg-orange-50 border-orange-100",
-    statusColor: "text-blue-500"
-  },
-  { 
-    id: "INC-2024-002", 
-    time: "Reported 45m ago",
-    desc: "Frontend Payment Gateway Timeout", 
-    target: "Service: Checkout API",
-    sev: "CRITICAL", 
-    status: "New", 
-    assignee: "Unassigned",
-    initial: "??",
-    sevColor: "text-red-600 bg-red-50 border-red-100",
-    statusColor: "text-slate-400"
-  },
-  { 
-    id: "INC-2024-003", 
-    time: "Reported 2h ago",
-    desc: "Cache Invalidation Failure", 
-    target: "Target: Redis Cache Layer",
-    sev: "HIGH", 
-    status: "Investigating", 
-    assignee: "S. Chen",
-    initial: "SC",
-    sevColor: "text-orange-600 bg-orange-50 border-orange-100",
-    statusColor: "text-blue-500"
-  },
-  { 
-    id: "INC-2024-004", 
-    time: "Reported 5h ago",
-    desc: "Stale Worker Nodes in Kubernetes", 
-    target: "Target: Background Jobs Pool",
-    sev: "MEDIUM", 
-    status: "Contained", 
-    assignee: "T. Wilson",
-    initial: "TW",
-    sevColor: "text-amber-600 bg-amber-50 border-amber-100",
-    statusColor: "text-emerald-500"
-  },
-]
+type Incident = {
+  id: string;
+  time: string;
+  desc: string;
+  target: string;
+  sev: string;
+  status: string;
+  assignee: string;
+  initial: string;
+  sevColor: string;
+  statusColor: string;
+}
 
 export default function TechnicalIncidentsPage() {
+  const [loading, setLoading] = useState(true);
+  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [stats, setStats] = useState<any[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+
+  useEffect(() => {
+    const fetchIncidents = async () => {
+      try {
+        setLoading(true);
+        const res = await ticketsService.getTickets({ type: "incident" });
+        const data = Array.isArray(res) ? res : (res.results || []);
+        setTotalCount(Array.isArray(res) ? res.length : (res.count || 0));
+
+        const mapped: Incident[] = data.map((t: any) => {
+          const sev = (t.priority || "MEDIUM").toUpperCase();
+          const statusMap: Record<string, string> = {
+            open: "New",
+            progress: "Investigating",
+            resolved: "Resolved"
+          };
+          
+          const sevStyles: Record<string, string> = {
+            CRITICAL: "text-red-600 bg-red-50 border-red-100",
+            HIGH: "text-orange-600 bg-orange-50 border-orange-100",
+            MEDIUM: "text-amber-600 bg-amber-50 border-amber-100",
+            LOW: "text-slate-600 bg-slate-50 border-slate-100"
+          };
+
+          const statusColors: Record<string, string> = {
+            open: "text-slate-400",
+            progress: "text-blue-500",
+            resolved: "text-emerald-500"
+          };
+
+          return {
+            id: `INC-${t.id.substring(0, 8).toUpperCase()}`,
+            time: t.created_at ? `Reported ${formatDistanceToNow(parseISO(t.created_at))} ago` : "Recently",
+            desc: t.title,
+            target: t.asset_name || "Internal System",
+            sev,
+            status: statusMap[t.status] || t.status,
+            assignee: t.assignee_name || "Unassigned",
+            initial: t.assignee_name ? t.assignee_name.split(' ').map((n:any) => n[0]).join('') : "??",
+            sevColor: sevStyles[sev] || sevStyles.MEDIUM,
+            statusColor: statusColors[t.status] || "text-slate-400"
+          };
+        });
+
+        setIncidents(mapped);
+
+        // Update Stats
+        const criticalCount = data.filter((t: any) => t.priority === "critical").length;
+        const unassignedCount = data.filter((t: any) => !t.assignee).length;
+
+        setStats([
+          { label: "AVG. RESOLUTION TIME", value: "4.2h", sub: "-12% vs last mo", color: "text-emerald-500", barColor: "bg-violet-600", val: 65 },
+          { label: "UNASSIGNED INCIDENTS", value: String(unassignedCount).padStart(2, '0'), sub: "Requiring triage", extra: unassignedCount > 0 ? "SLA deadline approaching" : "All triaged", hasWarning: unassignedCount > 0 },
+          { label: "CRITICAL INCIDENTS", value: String(criticalCount).padStart(2, '0'), sub: "Active now", barColor: "bg-red-500", val: criticalCount > 0 ? 100 : 0 },
+          { label: "MAINTENANCE DEFICIT", value: "14%", sub: "-5% improvement", color: "text-red-500", barColor: "bg-red-500", val: 14 },
+        ]);
+
+      } catch (error) {
+        console.error("Failed to fetch incidents:", error);
+        toast.error("Failed to synchronize incident feed.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchIncidents();
+  }, []);
+
+  if (loading) {
+    return (
+        <div className="flex h-[80vh] items-center justify-center bg-[#fcfcfc]">
+            <div className="flex flex-col items-center gap-4">
+                <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
+                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Scanning Network Health...</p>
+            </div>
+        </div>
+    );
+  }
   return (
     <div className="space-y-6 pb-12 font-display bg-[#fcfcfc] min-h-screen">
 
@@ -85,7 +127,7 @@ export default function TechnicalIncidentsPage() {
 
       {/* KPI Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {STATS.map((s, i) => (
+        {stats.map((s: any, i: number) => (
           <Card key={i} className="border-none shadow-sm shadow-slate-100 rounded-2xl overflow-hidden bg-white">
             <CardContent className="p-7 relative">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6 leading-none">{s.label}</p>
@@ -130,7 +172,7 @@ export default function TechnicalIncidentsPage() {
             <option>Assignee: Me</option>
           </select>
         </div>
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4">Showing 24 of 142 total incidents</span>
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4">Showing {incidents.length} of {totalCount} total incidents</span>
       </div>
 
       {/* Incidents Table */}
@@ -148,54 +190,62 @@ export default function TechnicalIncidentsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {INCIDENTS.map((inc, i) => (
-                <tr key={i} className="group hover:bg-slate-50/50 transition-colors cursor-pointer">
-                  <td className="px-8 py-6">
-                    <span className="font-bold text-[12px] text-violet-700 block">{inc.id}</span>
-                    <span className="text-[9px] font-bold text-slate-400 block mt-1 tracking-tight">{inc.time}</span>
-                  </td>
-                  <td className="px-8 py-6">
-                    <p className="text-[13px] font-bold text-slate-900 group-hover:text-violet-700 transition-colors leading-none">{inc.desc}</p>
-                    <p className="text-[10px] text-slate-400 font-medium mt-1.5 leading-none uppercase tracking-tighter">{inc.target}</p>
-                  </td>
-                  <td className="px-8 py-6">
-                    <span className={`px-2 py-0.5 rounded text-[8px] font-black tracking-[0.1em] border ${inc.sevColor}`}>
-                      {inc.sev}
-                    </span>
-                  </td>
-                  <td className="px-8 py-6">
-                    <div className="flex items-center gap-2">
-                      <div className={`size-1.5 rounded-full bg-current ${inc.statusColor} ${inc.status === 'Investigating' ? 'animate-pulse' : ''}`} />
-                      <span className={`text-[11px] font-bold ${inc.statusColor}`}>{inc.status}</span>
-                    </div>
-                  </td>
-                  <td className="px-8 py-6">
-                    <div className="flex items-center gap-3">
-                      <div className="size-8 rounded-lg bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400 shadow-sm border border-slate-200/50">
-                        {inc.initial}
-                      </div>
-                      <span className={`text-[11px] font-bold ${inc.assignee === 'Unassigned' ? 'text-slate-400 font-medium' : 'text-slate-700'}`}>
-                        {inc.assignee}
+              {incidents.length > 0 ? (
+                incidents.map((inc, i) => (
+                  <tr key={i} className="group hover:bg-slate-50/50 transition-colors cursor-pointer">
+                    <td className="px-8 py-6">
+                      <span className="font-bold text-[12px] text-violet-700 block">{inc.id}</span>
+                      <span className="text-[9px] font-bold text-slate-400 block mt-1 tracking-tight">{inc.time}</span>
+                    </td>
+                    <td className="px-8 py-6">
+                      <p className="text-[13px] font-bold text-slate-900 group-hover:text-violet-700 transition-colors leading-none">{inc.desc}</p>
+                      <p className="text-[10px] text-slate-400 font-medium mt-1.5 leading-none uppercase tracking-tighter">{inc.target}</p>
+                    </td>
+                    <td className="px-8 py-6">
+                      <span className={`px-2 py-0.5 rounded text-[8px] font-black tracking-[0.1em] border ${inc.sevColor}`}>
+                        {inc.sev}
                       </span>
-                    </div>
-                  </td>
-                  <td className="px-8 py-6 text-right">
-                    <button className="p-2 text-slate-300 hover:text-slate-600 transition-colors">
-                      <MoreVertical className="size-4" />
-                    </button>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-2">
+                        <div className={`size-1.5 rounded-full bg-current ${inc.statusColor} ${inc.status === 'Investigating' ? 'animate-pulse' : ''}`} />
+                        <span className={`text-[11px] font-bold ${inc.statusColor}`}>{inc.status}</span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-3">
+                        <div className="size-8 rounded-lg bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400 shadow-sm border border-slate-200/50">
+                          {inc.initial}
+                        </div>
+                        <span className={`text-[11px] font-bold ${inc.assignee === 'Unassigned' ? 'text-slate-400 font-medium' : 'text-slate-700'}`}>
+                          {inc.assignee}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-right">
+                      <button className="p-2 text-slate-300 hover:text-slate-600 transition-colors">
+                        <MoreVertical className="size-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="px-8 py-12 text-center text-slate-400 font-bold uppercase tracking-widest text-[11px]">
+                    No active incidents detected.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
         
         {/* Pagination */}
         <div className="px-8 py-5 bg-white border-t border-slate-100 flex items-center justify-between">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Page 1 of 6</p>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Page 1 of 1</p>
           <div className="flex gap-2">
             <Button disabled variant="outline" className="h-8 min-w-[80px] text-[10px] font-bold uppercase tracking-widest border-slate-200">Previous</Button>
-            <Button variant="outline" className="h-8 min-w-[80px] text-[10px] font-bold uppercase tracking-widest border-violet-200 text-violet-700 hover:bg-violet-50">Next</Button>
+            <Button disabled variant="outline" className="h-8 min-w-[80px] text-[10px] font-bold uppercase tracking-widest border-slate-200 text-slate-400">Next</Button>
           </div>
         </div>
       </div>

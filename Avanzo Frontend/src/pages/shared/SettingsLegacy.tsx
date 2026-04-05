@@ -61,7 +61,7 @@ export default function SettingsLegacyPage() {
   const initials = user?.first_name ? `${user.first_name.charAt(0)}${user.last_name?.charAt(0) || ''}` : "AA"
 
   return (
-    <div className="space-y-12 bg-[#fcfcfd] min-h-[calc(100vh-64px)] p-6 md:p-12 font-sans overflow-x-hidden">
+    <div className="space-y-12 bg-[#fcfcfd] min-h-[calc(100vh-64px)] p-6 md:p-12 font-display overflow-x-hidden">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -345,3 +345,4 @@ export default function SettingsLegacyPage() {
     </div>
   )
 }
+

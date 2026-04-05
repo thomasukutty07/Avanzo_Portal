@@ -13,6 +13,7 @@ import { CyberSecurityPortalLayout } from "@/components/portal/cyber_security/Cy
 import { Loader2 } from "lucide-react"
 
 const Login = lazy(() => import("@/pages/Login"))
+const OrgLogin = lazy(() => import("@/pages/OrgLogin"))
 const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard"))
 const UsersPage = lazy(() => import("@/pages/admin/Users"))
 const DepartmentsPage = lazy(() => import("@/pages/admin/Departments"))
@@ -29,6 +30,7 @@ const EmployeeRegistrationPage = lazy(() =>
   import("@/pages/hr/EmployeeRegistration")
 )
 const HRAnnouncementsPage = lazy(() => import("@/pages/hr/HRAnnouncements"))
+const SettingsLegacyPage = lazy(() => import("@/pages/shared/SettingsLegacy"))
 const HRCreateAnnouncementPage = lazy(() =>
   import("@/pages/hr/CreateAnnouncement")
 )
@@ -155,6 +157,10 @@ export default function App() {
           path="/login"
           element={!isAuthenticated ? <Login /> : <Navigate to="/" replace />}
         />
+        <Route
+          path="/org-login"
+          element={!isAuthenticated ? <OrgLogin /> : <Navigate to="/" replace />}
+        />
 
         <Route element={<PublicDesignLayout />}>
           <Route
@@ -244,6 +250,7 @@ export default function App() {
               <Route path="bugs" element={<TechnicalBugsPage />} />
               <Route path="announcements" element={<TechnicalAnnouncementsPage />} />
               <Route path="reports" element={<TechnicalReportsPage />} />
+              <Route path="profile" element={<SettingsLegacyPage />} />
             </Route>
           </Route>
 
@@ -259,6 +266,7 @@ export default function App() {
                 path="create-announcement"
                 element={<CyberSecurityCreateAnnouncementPage />}
               />
+              <Route path="profile" element={<SettingsLegacyPage />} />
             </Route>
           </Route>
 

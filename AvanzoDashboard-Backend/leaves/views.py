@@ -1,8 +1,10 @@
+from django.db.models import F
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from accounts.models import Employee
 from core.permissions import IsAdminOrHR, IsTeamLead
 
 from .models import LeaveRequest
@@ -26,16 +28,31 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """
-        Admins/HR see all.
+        Admins/HR see TL_APPROVED by default (their actionable queue).
         Team Leads see their reports.
         Employees see only their own.
         """
         user = self.request.user
+        qs = LeaveRequest.objects.select_related("employee", "tl_reviewer", "hr_reviewer")
         if user.is_admin or user.is_hr:
-            return LeaveRequest.objects.all()
+            return qs.filter(status=LeaveRequest.Status.TL_APPROVED)
         if user.is_team_lead:
-            return LeaveRequest.objects.filter(employee__team_lead=user)
-        return LeaveRequest.objects.filter(employee=user)
+            return qs.filter(employee__team_lead=user)
+        return qs.filter(employee=user)
+
+    @action(detail=False, methods=["get"], permission_classes=[IsAdminOrHR])
+    def history(self, request):
+        """HR/Admin endpoint to view the full history of all leave requests."""
+        requests = LeaveRequest.objects.select_related(
+            "employee", "tl_reviewer", "hr_reviewer"
+        ).all()
+        page = self.paginate_queryset(requests)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(requests, many=True)
+        return Response(serializer.data)
 
     def perform_create(self, serializer):
         """Initial application: Sets status to PENDING and notifies Team Lead."""
@@ -49,8 +66,15 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
         if leave.status != LeaveRequest.Status.PENDING:
             return Response({"detail": "Request is not in a pending state."}, status=400)
 
+        comment = request.data.get("comment")
+        if not comment:
+            return Response(
+                {"detail": "A comment is required when reviewing a leave request."}, status=400
+            )
+
         leave.status = LeaveRequest.Status.TL_APPROVED
         leave.tl_reviewer = request.user
+        leave.tl_comment = comment
         leave.save()
 
         LeaveNotificationService.notify_hr_tl_approved(leave)
@@ -63,9 +87,21 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
         if leave.status != LeaveRequest.Status.TL_APPROVED:
             return Response({"detail": "Requires Team Lead approval first."}, status=400)
 
+        comment = request.data.get("comment")
+        if not comment:
+            return Response(
+                {"detail": "A comment is required when reviewing a leave request."}, status=400
+            )
+
         leave.status = LeaveRequest.Status.APPROVED
         leave.hr_reviewer = request.user
+        leave.hr_comment = comment
         leave.save()
+
+        # Atomic deduction of leave balance
+        Employee.objects.filter(id=leave.employee.id).update(
+            leave_balance=F("leave_balance") - leave.total_days
+        )
 
         LeaveNotificationService.notify_employee_status_update(leave)
         return Response({"status": "Fully Approved"})
@@ -74,14 +110,23 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
     def reject(self, request, pk=None):
         """Rejection: Can be done by either TL or HR at any stage."""
         leave = self.get_object()
+
+        comment = request.data.get("comment")
+        if not comment:
+            return Response(
+                {"detail": "A comment is required when rejecting a leave request."}, status=400
+            )
+
         leave.status = LeaveRequest.Status.REJECTED
-        # Track who rejected it
+
+        # Track who rejected it and preserve their comment
         if request.user.is_hr:
             leave.hr_reviewer = request.user
+            leave.hr_comment = comment
         else:
             leave.tl_reviewer = request.user
+            leave.tl_comment = comment
 
-        leave.review_remarks = request.data.get("remarks", "No remarks provided.")
         leave.save()
 
         LeaveNotificationService.notify_employee_status_update(leave)

@@ -12,13 +12,13 @@ export default function SuperAdminAccessPage() {
   }
 
   return (
-    <div className="flex h-stretch min-h-screen items-stretch bg-[#f8f9fa] font-body text-[#191c1d]">
+    <div className="flex h-stretch min-h-screen items-stretch bg-[#fcfcfc] font-display text-[#191c1d]">
       <button
         type="button"
         onClick={handleLogout}
-        className="absolute right-4 top-4 z-[60] rounded-lg border border-[#cbc3d9]/40 bg-white/90 px-3 py-1.5 text-xs font-semibold text-red-600 shadow-sm backdrop-blur-sm transition-colors hover:bg-red-50"
+        className="absolute right-4 top-4 z-[60] rounded-lg border border-[#cbc3d9]/40 bg-white/90 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-red-600 shadow-sm backdrop-blur-sm transition-all hover:bg-red-50 font-headline"
       >
-        Log out
+        Discard
       </button>
 
       {/* Left Panel: The Digital Bastion Visuals */}
@@ -49,11 +49,11 @@ export default function SuperAdminAccessPage() {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-[#4800b2] shadow-xl">
               <span className="material-symbols-outlined">security</span>
             </div>
-            <span className="font-headline text-2xl font-extrabold tracking-tight text-white">
+            <span className="font-headline text-2xl font-black tracking-tight text-white">
               Avanzo
             </span>
           </div>
-          <h1 className="font-headline mb-6 text-5xl font-extrabold leading-tight tracking-tight text-white">
+          <h1 className="font-headline mb-6 text-5xl font-black leading-tight tracking-tight text-white">
             Secure your workspace.
           </h1>
           <p className="text-lg font-medium leading-relaxed text-[#d0beff] opacity-90">
@@ -67,7 +67,7 @@ export default function SuperAdminAccessPage() {
               <span className="material-symbols-outlined text-white">lock</span>
             </div>
             <div>
-              <h4 className="font-headline mb-2 font-bold text-white">
+              <h4 className="font-headline mb-2 font-black text-white">
                 Advanced Encryption
               </h4>
               <p className="text-sm leading-relaxed text-[#d0beff]">
@@ -79,16 +79,16 @@ export default function SuperAdminAccessPage() {
       </aside>
 
       {/* Right Panel: Access Configuration Form */}
-      <main className="flex flex-1 flex-col items-center justify-center overflow-y-auto bg-white p-8 md:p-16">
+      <main className="flex flex-1 flex-col items-center justify-center overflow-y-auto bg-[#fcfcfc] p-8 md:p-16">
         <div className="w-full max-w-xl">
           {/* Progress Stepper */}
-          <div className="relative mb-16 flex items-center justify-between">
+          <div className="relative mb-16 flex items-center justify-between font-headline">
             <div className="absolute left-0 top-1/2 -z-10 h-px w-full bg-[#f3f4f5]"></div>
             <div className="flex flex-col items-center gap-2">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#4800b2] text-white ring-4 ring-white">
                 <span className="material-symbols-outlined text-sm">check</span>
               </div>
-              <span className="font-label text-[10px] font-bold uppercase tracking-widest text-[#494456]">
+              <span className="font-headline text-[10px] font-black uppercase tracking-widest text-[#494456]">
                 Profile
               </span>
             </div>
@@ -96,7 +96,7 @@ export default function SuperAdminAccessPage() {
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#4800b2] text-white ring-4 ring-white">
                 <span className="material-symbols-outlined text-sm">check</span>
               </div>
-              <span className="font-label text-[10px] font-bold uppercase tracking-widest text-[#494456]">
+              <span className="font-headline text-[10px] font-black uppercase tracking-widest text-[#494456]">
                 Contact
               </span>
             </div>
@@ -106,17 +106,17 @@ export default function SuperAdminAccessPage() {
                   lock_open
                 </span>
               </div>
-              <span className="font-label text-[10px] font-bold uppercase tracking-widest text-[#4800b2]">
+              <span className="font-headline text-[10px] font-black uppercase tracking-widest text-[#4800b2]">
                 Access
               </span>
             </div>
           </div>
 
-          <div className="text-left">
-            <h2 className="font-headline mb-2 text-3xl font-extrabold tracking-tight text-[#191c1d]">
-              Access & Security Setup
+          <div className="text-left font-headline">
+            <h2 className="text-3xl font-black tracking-tight text-[#191c1d] uppercase">
+              Credential Matrix
             </h2>
-            <p className="font-medium text-[#494456]">
+            <p className="mt-2 text-sm font-medium text-slate-400">
               Establish the foundation for your secure digital bastion.
             </p>
           </div>
@@ -127,8 +127,8 @@ export default function SuperAdminAccessPage() {
           >
             <div className="space-y-8">
               <div className="relative">
-                <label className="font-label mb-1 block text-[11px] font-bold uppercase tracking-widest text-[#494456]">
-                  Primary Admin Username
+                <label className="font-headline mb-2 block text-[11px] font-black uppercase tracking-widest text-slate-400 italic">
+                  Root Admin Identification
                 </label>
                 <input
                   className="w-full border-b border-[#cbc3d9]/40 bg-transparent py-3 px-0 font-medium text-[#191c1d] transition-all placeholder:text-[#d9dadb] focus:border-[#4800b2] focus:outline-none focus:ring-0"
@@ -137,57 +137,57 @@ export default function SuperAdminAccessPage() {
                 />
               </div>
               <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-                <div className="relative">
-                  <label className="font-label mb-1 block text-[11px] font-bold uppercase tracking-widest text-[#494456]">
-                    Password
-                  </label>
-                  <input
-                    className="w-full border-b border-[#cbc3d9]/40 bg-transparent py-3 px-0 font-medium text-[#191c1d] transition-all placeholder:text-[#d9dadb] focus:border-[#4800b2] focus:outline-none focus:ring-0"
-                    placeholder="••••••••"
-                    type="password"
-                  />
-                  <div className="mt-2 flex h-1 gap-1">
-                    <div className="flex-1 rounded-full bg-[#4800b2]"></div>
-                    <div className="flex-1 rounded-full bg-[#4800b2]"></div>
-                    <div className="flex-1 rounded-full bg-[#4800b2]"></div>
-                    <div className="flex-1 rounded-full bg-[#e7e8e9]"></div>
-                  </div>
-                  <span className="mt-1 block text-[10px] font-bold uppercase tracking-tight text-[#4800b2]">
-                    Strong Security
-                  </span>
-                </div>
-                <div className="relative">
-                  <label className="font-label mb-1 block text-[11px] font-bold uppercase tracking-widest text-[#494456]">
-                    Confirm Password
-                  </label>
-                  <input
-                    className="w-full border-b border-[#cbc3d9]/40 bg-transparent py-3 px-0 font-medium text-[#191c1d] transition-all placeholder:text-[#d9dadb] focus:border-[#4800b2] focus:outline-none focus:ring-0"
-                    placeholder="••••••••"
-                    type="password"
-                  />
-                </div>
+                 <div className="relative">
+                   <label className="font-headline mb-2 block text-[11px] font-black uppercase tracking-widest text-slate-400 italic">
+                     Secret Cipher
+                   </label>
+                   <input
+                     className="w-full border-b border-[#cbc3d9]/40 bg-transparent py-4 px-0 font-black text-[#191c1d] transition-all placeholder:text-[#d9dadb] focus:border-[#4800b2] focus:outline-none focus:ring-0 uppercase tracking-widest text-lg"
+                     placeholder="••••••••"
+                     type="password"
+                   />
+                   <div className="mt-3 flex h-1 gap-1.5">
+                     <div className="flex-1 rounded-full bg-[#4800b2]"></div>
+                     <div className="flex-1 rounded-full bg-[#4800b2]"></div>
+                     <div className="flex-1 rounded-full bg-[#4800b2]"></div>
+                     <div className="flex-1 rounded-full bg-[#e7e8e9]"></div>
+                   </div>
+                   <span className="mt-2 block text-[10px] font-black uppercase tracking-[0.2em] text-[#4800b2] font-headline italic">
+                     Cipher Strength: High
+                   </span>
+                 </div>
+                 <div className="relative">
+                   <label className="font-headline mb-2 block text-[11px] font-black uppercase tracking-widest text-slate-400 italic">
+                     Verify Cipher
+                   </label>
+                   <input
+                     className="w-full border-b border-[#cbc3d9]/40 bg-transparent py-4 px-0 font-black text-[#191c1d] transition-all placeholder:text-[#d9dadb] focus:border-[#4800b2] focus:outline-none focus:ring-0 uppercase tracking-widest text-lg"
+                     placeholder="••••••••"
+                     type="password"
+                   />
+                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-6">
-              <button
-                onClick={() => toast.info("Returning to step 2...")}
-                className="text-sm font-bold text-[#4800b2] transition-all hover:underline"
-                type="button"
-              >
-                Back
-              </button>
-              <button
-                onClick={() => toast.success("Access configuration complete!")}
-                className="flex items-center gap-3 rounded-xl bg-gradient-to-br from-[#4800b2] to-[#6200ee] px-8 py-4 font-bold text-white shadow-xl shadow-[#4800b2]/20 transition-all hover:scale-105 active:scale-95"
-                type="button"
-              >
-                <span>Complete Registration</span>
-                <span className="material-symbols-outlined">
-                  rocket_launch
-                </span>
-              </button>
-            </div>
+             <div className="flex items-center justify-between pt-10 font-headline">
+               <button
+                 onClick={() => toast.info("Returning to previous matrix...")}
+                 className="text-[11px] font-black text-slate-400 uppercase tracking-widest hover:text-[#4800b2] transition-all italic underline decoration-2 underline-offset-8"
+                 type="button"
+               >
+                 Back
+               </button>
+               <button
+                 onClick={() => toast.success("Access configuration complete!")}
+                 className="flex items-center gap-4 rounded-2xl bg-gradient-to-br from-[#4800b2] to-[#6200ee] px-10 py-5 text-[12px] font-black uppercase tracking-widest text-white shadow-2xl shadow-[#4800b2]/30 transition-all hover:scale-105 active:scale-95 italic"
+                 type="button"
+               >
+                 <span>Authorize Nexus</span>
+                 <span className="material-symbols-outlined text-lg">
+                   rocket_launch
+                 </span>
+               </button>
+             </div>
           </form>
 
           <footer className="mt-20 border-t border-[#f3f4f5] pt-10">

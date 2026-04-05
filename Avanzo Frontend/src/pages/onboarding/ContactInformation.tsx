@@ -52,7 +52,7 @@ export default function ContactInformationPage() {
       }
     >
       <header className="mb-10">
-        <h2 className="font-['Manrope',sans-serif] text-3xl font-bold tracking-tight text-[#191c1d]">
+        <h2 className="font-headline text-3xl font-bold tracking-tight text-[#191c1d]">
           Primary contact information
         </h2>
         <p className="mt-2 text-[#494456]">

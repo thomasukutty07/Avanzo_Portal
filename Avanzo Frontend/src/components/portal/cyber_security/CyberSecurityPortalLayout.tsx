@@ -6,7 +6,7 @@ import { CyberSecurityPortalHeader } from "./CyberSecurityPortalHeader"
 import { X } from "lucide-react"
 
 /** Cybersecurity portal: sidebar + sticky header + main outlet. */
-export function CyberSecurityPortalLayout() {
+export function CyberSecurityPortalLayout({ children }: { children?: React.ReactNode }) {
   useDesignPortalLightTheme()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
@@ -32,12 +32,12 @@ export function CyberSecurityPortalLayout() {
       </div>
 
       {/* Main column */}
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden md:pl-64">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden md:pl-72">
         {/* Shared sticky header */}
         <CyberSecurityPortalHeader onMenuClick={() => setIsSidebarOpen(true)} />
 
         <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
-          <Outlet />
+          {children || <Outlet />}
         </div>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Link } from "react-router-dom"
 import { Bell, Search } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { toast } from "sonner"
@@ -57,19 +58,22 @@ export function TechnicalPortalHeader() {
         
         <div className="h-8 w-px bg-slate-200 hidden sm:block" />
         
-        <div className="flex items-center gap-3">
+        <Link 
+          to="/technical/profile"
+          className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer group"
+        >
           <div className="hidden sm:block text-right">
-            <p className="text-sm font-bold leading-none text-slate-900">
+            <p className="text-sm font-bold leading-none text-slate-900 group-hover:text-violet-600 transition-colors">
               {name}
             </p>
             <p className="text-[11px] font-semibold text-slate-500 mt-1">{role}</p>
           </div>
           <img
             alt=""
-            className="size-10 rounded-full object-cover shadow-sm ring-2 ring-white"
+            className="size-10 rounded-full object-cover shadow-sm ring-2 ring-white group-hover:ring-violet-100 transition-all"
             src={PROFILE_IMG}
           />
-        </div>
+        </Link>
       </div>
     </div>
   )

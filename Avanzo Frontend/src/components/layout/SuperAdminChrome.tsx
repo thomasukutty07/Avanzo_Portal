@@ -7,7 +7,7 @@ export function SuperAdminChrome({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   return (
-    <div className="min-h-screen w-full bg-[#f8f9fa] font-sans antialiased text-[#191c1d] overflow-x-hidden">
+    <div className="min-h-screen w-full bg-[#f8f9fa] font-display antialiased text-[#191c1d] overflow-x-hidden">
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
@@ -37,7 +37,7 @@ export function SuperAdminChrome({ children }: { children: React.ReactNode }) {
         </button>
       </div>
 
-      <main className="ml-0 md:ml-64 min-h-screen px-4 md:px-8 pb-12 pt-20">
+      <main className="ml-0 md:ml-72 min-h-screen px-4 md:px-8 pb-12 pt-20">
         <div className="mx-auto max-w-7xl">
           {children}
         </div>

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
-import type { Department, Designation, Role, UserRole } from "@/types"
+import type { Department, Designation, Role, UserRole, User } from "@/types"
 
 export type EmployeeRow = {
   id: string
@@ -29,12 +29,14 @@ type Props = {
   onSuccess: () => void
   onCancel?: () => void
   submitLabel?: string
+  initialData?: any | null
 }
 
 export function EmployeeUpsertForm({
   onSuccess,
   onCancel,
   submitLabel = "Create employee",
+  initialData,
 }: Props) {
   const { user } = useAuth()
   const isHr = user?.role === "HR"
@@ -42,7 +44,7 @@ export function EmployeeUpsertForm({
   const [roles, setRoles] = useState<Role[]>([])
   const [departments, setDepartments] = useState<Department[]>([])
   const [designations, setDesignations] = useState<Designation[]>([])
-  const [teamLeadOptions, setTeamLeadOptions] = useState<EmployeeRow[]>([])
+  const [teamLeadOptions, setTeamLeadOptions] = useState<any[]>([])
   const [loadingMeta, setLoadingMeta] = useState(true)
   const [submitting, setSubmitting] = useState(false)
 
@@ -59,6 +61,21 @@ export function EmployeeUpsertForm({
   const [dateOfJoining, setDateOfJoining] = useState("")
 
   useEffect(() => {
+    if (initialData) {
+      setEmail(initialData.email || "")
+      setFirstName(initialData.first_name || "")
+      setLastName(initialData.last_name || "")
+      setPhone(initialData.phone || "")
+      setEmployeeId(initialData.employee_id || "")
+      setAccessRoleId(initialData.access_role || "")
+      setDepartmentId(initialData.department || "")
+      setDesignationId(initialData.designation || "")
+      setTeamLeadId(initialData.team_lead || "")
+      setDateOfJoining(initialData.date_of_joining || "")
+    }
+  }, [initialData])
+
+  useEffect(() => {
     const load = async () => {
       setLoadingMeta(true)
       try {
@@ -71,9 +88,9 @@ export function EmployeeUpsertForm({
         setRoles(extractResults<Role>(r.data))
         setDepartments(extractResults<Department>(d.data))
         setDesignations(extractResults<Designation>(g.data))
-        const emps = extractResults<EmployeeRow>(empRes.data)
+        const emps = extractResults<any>(empRes.data)
         setTeamLeadOptions(
-          emps.filter((e) => e.role === "Team Lead" || String(e.role).includes("Lead"))
+          emps.filter((e: any) => e.role === "Team Lead" || String(e.role).includes("Lead"))
         )
       } catch {
         toast.error("Failed to load form data (check API / login).")
@@ -90,19 +107,23 @@ export function EmployeeUpsertForm({
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    if (!email.trim() || !password || !firstName.trim() || !lastName.trim()) {
-      toast.error("Email, password, first and last name are required.")
+    if (!email.trim() || !firstName.trim() || !lastName.trim()) {
+      toast.error("Email, first and last name are required.")
       return
     }
     if (!accessRoleId) {
       toast.error("Select an access role.")
       return
     }
+    if (!initialData && !password) {
+      toast.error("Password is required for new accounts.")
+      return
+    }
+
     setSubmitting(true)
     try {
-      await api.post("/api/auth/employees/", {
+      const payload: any = {
         email: email.trim(),
-        password,
         first_name: firstName.trim(),
         last_name: lastName.trim(),
         phone: phone.trim() || undefined,
@@ -113,8 +134,16 @@ export function EmployeeUpsertForm({
         team_lead: teamLeadId || null,
         status: "active",
         date_of_joining: dateOfJoining || null,
-      })
-      toast.success(`Registered ${firstName} ${lastName}`)
+      }
+      if (password) payload.password = password
+
+      if (initialData?.id) {
+        await api.patch(`/api/auth/employees/${initialData.id}/`, payload)
+        toast.success(`Updated ${firstName} ${lastName}`)
+      } else {
+        await api.post("/api/auth/employees/", payload)
+        toast.success(`Registered ${firstName} ${lastName}`)
+      }
       onSuccess()
     } catch (err: unknown) {
       const msg =
@@ -125,7 +154,7 @@ export function EmployeeUpsertForm({
         typeof err.response === "object" &&
         "data" in err.response
           ? JSON.stringify((err.response as { data: unknown }).data)
-          : "Could not create employee"
+          : "Could not save employee"
       toast.error(msg)
     } finally {
       setSubmitting(false)
@@ -134,71 +163,70 @@ export function EmployeeUpsertForm({
 
   if (loadingMeta) {
     return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex h-32 items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     )
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="emp-email">Work email</Label>
+          <Label htmlFor="emp-email">Email address</Label>
           <Input
             id="emp-email"
             type="email"
-            autoComplete="email"
+            placeholder="john@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            required
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="emp-password">Temporary password</Label>
+          <Label htmlFor="emp-password">Password {initialData ? "(leave blank to keep current)" : ""}</Label>
           <Input
             id="emp-password"
             type="password"
-            autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={8}
           />
         </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="emp-fn">First name</Label>
+          <Label htmlFor="emp-fname">First name</Label>
           <Input
-            id="emp-fn"
+            id="emp-fname"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
-            required
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="emp-ln">Last name</Label>
+          <Label htmlFor="emp-lname">Last name</Label>
           <Input
-            id="emp-ln"
+            id="emp-lname"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
-            required
+          />
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="emp-id">Employee ID (Optional)</Label>
+          <Input
+            id="emp-id"
+            value={employeeId}
+            onChange={(e) => setEmployeeId(e.target.value)}
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="emp-phone">Phone</Label>
+          <Label htmlFor="emp-phone">Phone number</Label>
           <Input
             id="emp-phone"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="emp-eid">Employee ID (optional)</Label>
-          <Input
-            id="emp-eid"
-            value={employeeId}
-            onChange={(e) => setEmployeeId(e.target.value)}
-            placeholder="Leave blank to auto-assign"
           />
         </div>
       </div>
@@ -210,9 +238,8 @@ export function EmployeeUpsertForm({
           className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
           value={accessRoleId}
           onChange={(e) => setAccessRoleId(e.target.value)}
-          required
         >
-          <option value="">Select role…</option>
+          <option value="">Select a role</option>
           {roleChoices.map((r) => (
             <option key={r.id} value={r.id}>
               {r.name}
@@ -230,7 +257,7 @@ export function EmployeeUpsertForm({
             value={departmentId}
             onChange={(e) => setDepartmentId(e.target.value)}
           >
-            <option value="">None</option>
+            <option value="">Select department</option>
             {departments.map((d) => (
               <option key={d.id} value={d.id}>
                 {d.name}
@@ -246,7 +273,7 @@ export function EmployeeUpsertForm({
             value={designationId}
             onChange={(e) => setDesignationId(e.target.value)}
           >
-            <option value="">None</option>
+            <option value="">Select designation</option>
             {designations.map((d) => (
               <option key={d.id} value={d.id}>
                 {d.name}

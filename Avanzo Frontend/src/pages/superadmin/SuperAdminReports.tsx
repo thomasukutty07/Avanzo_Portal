@@ -10,7 +10,6 @@ import {
   ShieldCheck, 
   Mail,
   Loader2,
-  FileSearch,
   Zap
 } from "lucide-react"
 import { 
@@ -65,57 +64,56 @@ export default function SuperAdminReports() {
 
   return (
     <SuperAdminChrome>
-      <div className="space-y-10 py-8 font-sans text-slate-600">
+      <div className="space-y-10 py-8 font-display text-slate-600 bg-[#fcfcfc] min-h-screen p-8 lg:p-12">
         <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-               <FileSearch className="h-5 w-5 text-violet-600" />
-               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-violet-600">Reporting Center</span>
-            </div>
-            <h1 className="font-display text-3xl font-black tracking-tight text-slate-900 leading-tight">
-              System Analytics
+          <div className="font-headline space-y-1">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-600 mb-1">
+              SYSTEM ANALYTICS • OVERVIEW
+            </p>
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 leading-tight uppercase">
+              Operational Intel
             </h1>
-            <p className="text-slate-500 mt-1 font-medium italic">
+            <p className="text-slate-500 mt-2 text-sm font-medium">
                Aggregate and analyze system-wide performance and security reports.
             </p>
           </div>
           <button 
             disabled={compiling}
             onClick={handleCompile}
-            className="flex items-center gap-3 px-8 py-3 bg-violet-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-violet-900/20 hover:bg-violet-700 transition-all active:scale-95 disabled:opacity-50"
+            className="flex items-center gap-3 px-10 py-4 bg-violet-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-violet-900/20 hover:bg-violet-700 transition-all active:scale-95 disabled:opacity-50 font-headline"
           >
-            {compiling ? <Loader2 className="h-4 w-4 animate-spin" /> : <BarChart3 className="h-4 w-4" />}
+            {compiling ? <Loader2 className="h-4 w-4 animate-spin stroke-[2.5px]" /> : <BarChart3 className="h-4 w-4 stroke-[3px]" />}
             {compiling ? 'Compiling Intel...' : 'Compile Report'}
           </button>
         </header>
 
         {/* Dashboard Insight Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-           {[
-              { label: "Uptime Status", value: "99.9%", icon: ShieldCheck, color: "text-emerald-600 bg-emerald-50", trend: "Stability Index" },
-              { label: "Sync Velocity", value: "84 GB/s", icon: Zap, color: "text-blue-600 bg-blue-50", trend: "Real-time Feed" },
-              { label: "Pending Tasks", value: "12 units", icon: Mail, color: "text-violet-600 bg-violet-50", trend: "Action Required" },
-           ].map((stat, i) => (
-              <div key={i} className="bg-white p-8 rounded-[32px] border border-slate-50 shadow-sm flex flex-col gap-6 group transition-all hover:shadow-xl hover:shadow-violet-900/5">
-                 <div className="flex justify-between items-start">
-                    <div className={`p-4 rounded-2xl ${stat.color} shadow-inner`}>
-                       <stat.icon className="h-6 w-6" />
-                    </div>
-                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-300">{stat.trend}</span>
-                 </div>
-                 <div>
-                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2">{stat.label}</p>
-                    <p className="text-3xl font-black text-slate-900 leading-none tracking-tighter">{stat.value}</p>
-                 </div>
-              </div>
-           ))}
+            {[
+               { label: "Uptime Status", value: "99.9%", icon: ShieldCheck, color: "text-emerald-600 bg-emerald-50", trend: "Stability Index" },
+               { label: "Sync Velocity", value: "84 GB/s", icon: Zap, color: "text-blue-600 bg-blue-50", trend: "Real-time Feed" },
+               { label: "Pending Tasks", value: "12 units", icon: Mail, color: "text-violet-600 bg-violet-50", trend: "Action Required" },
+            ].map((stat, i) => (
+               <div key={i} className="bg-white p-9 rounded-[32px] border border-slate-50 shadow-sm flex flex-col gap-8 group transition-all hover:shadow-xl hover:shadow-violet-900/5 font-headline">
+                  <div className="flex justify-between items-start">
+                     <div className={`p-5 rounded-2xl ${stat.color} shadow-inner group-hover:scale-110 transition-transform`}>
+                        <stat.icon className="h-6 w-6 stroke-[2.5px]" />
+                     </div>
+                     <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-300">{stat.trend}</span>
+                  </div>
+                  <div>
+                     <p className="text-slate-300 text-[10px] font-black uppercase tracking-[0.2em] mb-3">{stat.label}</p>
+                     <p className="text-3xl font-black text-slate-900 leading-none tracking-tight uppercase">{stat.value}</p>
+                  </div>
+               </div>
+            ))}
         </div>
 
         <div className="bg-white rounded-[40px] border border-slate-50 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
            <div className="p-10 border-b border-slate-50 flex flex-col sm:flex-row items-center justify-between gap-6 bg-slate-50/10">
               <div className="flex items-center gap-4">
                  <div className="size-3 bg-violet-600 rounded-full shadow-lg shadow-violet-600/50" />
-                 <h3 className="font-display text-xl font-black text-slate-900 leading-none">Available Reports</h3>
+                 <h3 className="font-headline text-xl font-black text-slate-900 leading-none uppercase italic tracking-tight">Available Reports</h3>
               </div>
               <div className="flex items-center gap-4 w-full sm:w-auto">
                  <div className="relative flex-1 sm:w-80">
@@ -145,9 +143,9 @@ export default function SuperAdminReports() {
                    <tr key={rep.id} className="group hover:bg-slate-50/50 transition-all cursor-pointer">
                      <td className="px-10 py-8 font-black text-xs text-slate-300 tracking-widest">{rep.id}</td>
                      <td className="px-10 py-8">
-                        <div>
-                           <h4 className="font-display text-base font-black text-slate-900 group-hover:text-violet-700 transition-colors">{rep.name}</h4>
-                           <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1.5">{rep.type} Sector • {rep.size}</p>
+                        <div className="font-headline">
+                           <h4 className="text-base font-black text-slate-900 group-hover:text-violet-700 transition-colors uppercase italic tracking-tight">{rep.name}</h4>
+                           <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-2 italic">{rep.type} Sector • {rep.size}</p>
                         </div>
                      </td>
                      <td className="px-10 py-8 text-[11px] font-black text-slate-400 uppercase tracking-widest">{rep.date}</td>

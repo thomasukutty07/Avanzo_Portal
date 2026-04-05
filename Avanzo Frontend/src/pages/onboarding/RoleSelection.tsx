@@ -31,7 +31,7 @@ export default function RoleSelectionPage() {
   useDesignPortalLightTheme()
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-[#f8f9fa] font-sans text-[#1c1b1f] antialiased">
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-[#f8f9fa] font-display text-[#1c1b1f] antialiased">
       <header className="flex items-center justify-between border-b border-[#e7e0ef] px-6 py-4 lg:px-20">
         <div className="flex items-center gap-3">
           <div className="flex size-10 items-center justify-center rounded-lg bg-[#6200ee] text-white">
@@ -121,3 +121,4 @@ export default function RoleSelectionPage() {
     </div>
   )
 }
+

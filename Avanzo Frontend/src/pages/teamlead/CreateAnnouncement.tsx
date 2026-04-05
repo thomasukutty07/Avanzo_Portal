@@ -11,12 +11,12 @@ import {
   X,
   Type,
   Layout,
-  Globe,
-  Lock,
-  Plus,
-  Users,
   Zap,
-  Loader2
+  Globe,
+  Loader2,
+  ChevronLeft,
+  FileText,
+  BadgeCheck
 } from "lucide-react"
 import { 
   DropdownMenu, 
@@ -40,7 +40,7 @@ export default function TeamLeadCreateAnnouncementPage() {
     const file = e.target.files?.[0]
     if (file) {
       setAttachments(prev => [...prev, { name: file.name, type }])
-      toast.success(`${type === 'media' ? 'Media' : 'Document'} attached: ${file.name}`)
+      toast.success(`${type === 'media' ? 'Asset' : 'Document'} synchronized: ${file.name}`)
     }
   }
 
@@ -54,70 +54,92 @@ export default function TeamLeadCreateAnnouncementPage() {
 
   const handleTransmit = () => {
     if (!subject || !content) {
-      toast.error("Subject and content are required for transmission.")
+      toast.error("Subject and intelligence content are required for transmission.")
       return
     }
     
     setLoading(true)
     setTimeout(() => {
       setLoading(false)
-      toast.success("Broadcast successfully synchronized!")
-      navigate("/team-announcements")
+      toast.success("Broadcast successfully synchronized with the central hub!")
+      navigate("/teamlead/announcements")
     }, 1500)
   }
 
   return (
     <TeamLeadChrome>
-      <div className="max-w-4xl mx-auto p-8 space-y-8 font-body">
+      <div className="max-w-5xl mx-auto p-4 md:p-10 space-y-12 animate-in fade-in zoom-in-95 duration-700">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="font-headline text-3xl font-black text-slate-900 tracking-tight">Draft Transmission</h2>
-            <p className="text-slate-500 mt-1 font-medium italic">Compose a critical update for your team units.</p>
-          </div>
+          <header className="flex items-center gap-6">
+            <button 
+              onClick={() => navigate("/teamlead/announcements")}
+              className="p-3 bg-white border border-slate-100 rounded-2xl text-slate-400 hover:text-violet-600 hover:shadow-xl transition-all shadow-sm"
+            >
+              <ChevronLeft className="size-5" />
+            </button>
+            <div>
+              <h2 className="text-3xl font-black tracking-tight text-slate-900 font-headline leading-none uppercase">Draft Transmission</h2>
+              <p className="text-sm font-bold text-slate-400 mt-3 uppercase tracking-widest leading-none">Composing tactical update for mission units</p>
+            </div>
+          </header>
           <button 
-            onClick={() => navigate("/team-announcements")}
-            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all"
+            onClick={() => navigate("/teamlead/announcements")}
+            className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
           >
-            <X className="h-6 w-6" />
+            <X className="size-6" />
           </button>
         </div>
 
-        <section className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden flex flex-col min-h-[500px]">
+        <section className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col min-h-[600px] hover:shadow-2xl transition-all duration-500 relative">
+          <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-violet-600 via-blue-500 to-violet-600 animate-gradient-x" />
+          
           {/* Form Area */}
-          <div className="flex-1 p-8 space-y-8">
+          <div className="flex-1 p-10 md:p-16 space-y-12">
             <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => handleFileUpload(e, 'document')} />
             <input type="file" accept="image/*" ref={mediaInputRef} className="hidden" onChange={(e) => handleFileUpload(e, 'media')} />
             
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Subject Heading</label>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                 <div className="size-8 rounded-xl bg-violet-50 flex items-center justify-center text-violet-600 shadow-sm">
+                    <Type className="size-4" />
+                 </div>
+                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Tactical Subject Heading</label>
+              </div>
               <input 
                 type="text" 
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                placeholder="Enter a compelling title..."
-                className="w-full bg-transparent border-none p-0 text-2xl font-bold text-slate-900 placeholder:text-slate-200 focus:ring-0"
+                placeholder="Enter a high-impact title..."
+                className="w-full bg-transparent border-none p-0 text-3xl font-black text-slate-900 placeholder:text-slate-100 focus:ring-0 uppercase tracking-tight font-headline"
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Update Content</label>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                  <div className="size-8 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-sm">
+                    <FileText className="size-4" />
+                 </div>
+                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Intelligence Briefing Content</label>
+              </div>
               <textarea 
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder="Broadcast your message here..."
-                className="w-full min-h-[200px] bg-transparent border-none p-0 text-lg font-medium text-slate-600 placeholder:text-slate-200 focus:ring-0 resize-none leading-relaxed"
+                placeholder="Broadcast your mission parameters or updates here..."
+                className="w-full min-h-[300px] bg-transparent border-none p-0 text-xl font-medium text-slate-600 placeholder:text-slate-100 focus:ring-0 resize-none leading-relaxed"
               />
             </div>
 
             {attachments.length > 0 && (
-              <div className="flex flex-wrap gap-3 pt-6 border-t border-slate-100">
+              <div className="flex flex-wrap gap-4 pt-10 border-t border-slate-50">
                 {attachments.map((file, i) => (
-                  <div key={i} className="flex items-center gap-3 px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl group animate-in fade-in slide-in-from-bottom-2">
-                    {file.type === 'media' ? <Plus className="h-4 w-4 text-violet-600" /> : <Users className="h-4 w-4 text-blue-600" />}
-                    <span className="text-xs font-bold text-slate-700 truncate max-w-[150px]">{file.name}</span>
-                    <button type="button" onClick={() => removeAttachment(i)} className="text-slate-300 hover:text-red-500 transition-colors">
-                      <X className="h-4 w-4" />
+                  <div key={i} className="flex items-center gap-3 pl-4 pr-3 py-3 bg-slate-50 border border-slate-100 rounded-2xl group animate-in fade-in slide-in-from-bottom-4 transition-all hover:bg-white hover:shadow-xl hover:border-violet-100">
+                    <div className="size-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center shadow-sm">
+                       {file.type === 'media' ? <ImageIcon className="size-4 text-violet-600" /> : <Paperclip className="size-4 text-blue-600" />}
+                    </div>
+                    <span className="text-[11px] font-black text-slate-900 uppercase tracking-tight truncate max-w-[200px]">{file.name}</span>
+                    <button type="button" onClick={() => removeAttachment(i)} className="p-1.5 text-slate-300 hover:text-red-500 transition-colors">
+                      <X className="size-4" />
                     </button>
                   </div>
                 ))}
@@ -126,34 +148,34 @@ export default function TeamLeadCreateAnnouncementPage() {
           </div>
 
           {/* Tools & Actions */}
-          <div className="px-8 py-6 bg-slate-50/30 border-t border-slate-50 flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-1">
+          <div className="px-10 py-8 bg-slate-50/20 border-t border-slate-50 flex flex-col sm:flex-row items-center justify-between gap-8">
+            <div className="flex items-center gap-2">
               <button 
                 onClick={() => mediaInputRef.current?.click()} 
-                className="p-3 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all group" title="Add Visuals"
+                className="p-4 text-slate-400 hover:text-violet-600 hover:bg-white hover:shadow-xl rounded-2xl transition-all group scale-100 active:scale-95" title="Add Visuals"
               >
-                <ImageIcon className="h-5 w-5" />
+                <ImageIcon className="size-6" />
               </button>
               <button 
                 onClick={() => fileInputRef.current?.click()} 
-                className="p-3 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all group" title="Attach Dossier"
+                className="p-4 text-slate-400 hover:text-violet-600 hover:bg-white hover:shadow-xl rounded-2xl transition-all group scale-100 active:scale-95" title="Attach Dossier"
               >
-                <Paperclip className="h-5 w-5" />
+                <Paperclip className="size-6" />
               </button>
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="p-3 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all group" title="Insert Sentiment">
-                    <Smile className="h-5 w-5" />
+                  <button className="p-4 text-slate-400 hover:text-violet-600 hover:bg-white hover:shadow-xl rounded-2xl transition-all group scale-100 active:scale-95" title="Insert Sentiment">
+                    <Smile className="size-6" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="p-2 grid grid-cols-4 gap-1 w-fit rounded-2xl border-slate-100 shadow-2xl bg-white">
+                <DropdownMenuContent className="p-3 grid grid-cols-4 gap-2 w-fit rounded-3xl border-slate-100 shadow-2xl bg-white animate-in zoom-in-95 duration-200">
                   {['👍', '🚀', '🔥', '✅', '⚠️', '📈', '💡', '🗓️'].map(emoji => (
                     <button 
                       key={emoji} 
                       type="button" 
                       onClick={() => addEmoji(emoji)} 
-                      className="size-10 flex items-center justify-center hover:bg-slate-50 rounded-xl transition-colors text-xl"
+                      className="size-12 flex items-center justify-center hover:bg-slate-50 rounded-2xl transition-all text-2xl hover:scale-110 active:scale-90"
                     >
                       {emoji}
                     </button>
@@ -161,31 +183,31 @@ export default function TeamLeadCreateAnnouncementPage() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <div className="h-6 w-[1px] bg-slate-200 mx-2" />
-              <button onClick={() => toast.info("Advanced formatting enabled")} className="p-3 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all group" title="Rich Text">
-                <Type className="h-5 w-5" />
+              <div className="h-10 w-[2px] bg-slate-100 mx-3 rounded-full" />
+              <button onClick={() => toast.info("Advanced formatting enabled")} className="p-4 text-slate-400 hover:text-violet-600 hover:bg-white hover:shadow-xl rounded-2xl transition-all group scale-100 active:scale-95" title="Rich Text">
+                <Layout className="size-6" />
               </button>
             </div>
 
-            <div className="flex items-center gap-4 w-full sm:w-auto">
-              <div className="flex items-center gap-2 bg-white border border-slate-100 rounded-xl px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 shadow-sm">
-                <Globe className="h-3 w-3 text-emerald-500" />
+            <div className="flex items-center gap-6 w-full sm:w-auto">
+              <div className="flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-5 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 shadow-sm">
+                <Globe className="size-4 text-emerald-500 animate-pulse" />
                 Everyone
               </div>
               <button 
                 disabled={loading}
                 onClick={handleTransmit}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-3 px-8 py-3 bg-violet-600 text-white font-bold rounded-2xl hover:bg-violet-700 transition-all shadow-lg shadow-violet-900/20 active:scale-95 group disabled:opacity-50"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-4 px-10 py-4 bg-violet-600 text-white font-black rounded-2xl hover:bg-violet-700 transition-all shadow-lg shadow-violet-600/20 active:scale-95 group disabled:opacity-50 text-xs uppercase tracking-widest"
               >
                 {loading ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Syncing...
+                    <Loader2 className="size-5 animate-spin" />
+                    Synchronizing...
                   </>
                 ) : (
                   <>
-                    <Send className="h-4 w-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                    Transmit Update
+                    <Send className="size-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                    Transmit Broadcast
                   </>
                 )}
               </button>
@@ -193,20 +215,20 @@ export default function TeamLeadCreateAnnouncementPage() {
           </div>
         </section>
 
-        {/* Hints */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="p-6 rounded-2xl bg-white border border-slate-100 shadow-sm flex gap-4">
-             <div className="size-10 bg-violet-50 rounded-xl flex items-center justify-center text-violet-600 shrink-0"><Layout className="h-5 w-5" /></div>
+        {/* Security / Info Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="p-8 rounded-[2rem] bg-white border border-slate-100 shadow-sm flex gap-6 hover:shadow-xl hover:-translate-y-1 transition-all group">
+             <div className="size-14 bg-violet-50 border border-violet-100 rounded-2xl flex items-center justify-center text-violet-600 shrink-0 group-hover:scale-110 transition-transform shadow-sm"><Zap className="size-6" /></div>
              <div>
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-tight">Global Visibility</h4>
-                <p className="text-[10px] text-slate-500 font-medium mt-1 leading-relaxed">This update will be visible to all members of the Corporate Team across their unified dashboards.</p>
+                <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest">Global Sector Sync</h4>
+                <p className="text-[11px] text-slate-400 font-black uppercase tracking-widest mt-2 leading-relaxed opacity-60">This intelligence update will be synchronized across all unified mission unit dashboards instantly.</p>
              </div>
           </div>
-          <div className="p-6 rounded-2xl bg-white border border-slate-100 shadow-sm flex gap-4">
-             <div className="size-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600 shrink-0"><Lock className="h-5 w-5" /></div>
+          <div className="p-8 rounded-[2rem] bg-white border border-slate-100 shadow-sm flex gap-6 hover:shadow-xl hover:-translate-y-1 transition-all group">
+             <div className="size-14 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 shrink-0 group-hover:scale-110 transition-transform shadow-sm"><BadgeCheck className="size-6" /></div>
              <div>
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-tight">Immutable Record</h4>
-                <p className="text-[10px] text-slate-500 font-medium mt-1 leading-relaxed">Once transmitted, a cryptographically signed copy is stored in the departmental audit logs for transparency.</p>
+                <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest">Immutable Register</h4>
+                <p className="text-[11px] text-slate-400 font-black uppercase tracking-widest mt-2 leading-relaxed opacity-60">Transmission will be cryptographically registered in the departmental audit log for total transparency.</p>
              </div>
           </div>
         </div>

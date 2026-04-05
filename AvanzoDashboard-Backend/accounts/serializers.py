@@ -48,7 +48,18 @@ class MeSerializer(serializers.ModelSerializer):
             "status",
             "date_of_joining",
         ]
-        read_only_fields = fields
+        read_only_fields = [
+            "id",
+            "email",
+            "avatar",
+            "employee_id",
+            "role",
+            "department_name",
+            "designation_name",
+            "team_lead_name",
+            "status",
+            "date_of_joining",
+        ]
 
     def get_team_lead_name(self, obj) -> str | None:
         return obj.team_lead.get_full_name() if obj.team_lead else None
@@ -66,7 +77,6 @@ class EmployeeSerializer(serializers.ModelSerializer):
     """Used by Admin and HR for managing users."""
 
     password = serializers.CharField(write_only=True, required=False)
-    role = serializers.CharField(source="role_name", read_only=True)
 
     class Meta:
         model = Employee
@@ -79,7 +89,6 @@ class EmployeeSerializer(serializers.ModelSerializer):
             "phone",
             "employee_id",
             "access_role",
-            "role",
             "department",
             "designation",
             "team_lead",

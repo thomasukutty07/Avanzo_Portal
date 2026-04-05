@@ -22,7 +22,7 @@ const sizes = [
 ] as const
 
 const inputClass =
-  "w-full border-t-0 border-l-0 border-r-0 border-b border-[#cbc3d9]/50 bg-transparent py-3 text-[#191c1d] outline-none transition-all placeholder:text-[#7a7488]/50 focus:border-[#4800b2] focus:ring-0"
+  "w-full border-t-0 border-l-0 border-r-0 border-b border-[#cbc3d9]/50 bg-transparent py-2 text-[#191c1d] outline-none transition-all placeholder:text-[#7a7488]/50 focus:border-[#4800b2] focus:ring-0"
 
 const labelClass =
   "mb-1 block text-[11px] font-semibold uppercase tracking-widest text-[#494456]"
@@ -37,42 +37,19 @@ export default function OrganizationRegistrationPage() {
   return (
     <RegisterOrgWizardLayout
       step={1}
-      asideTitle={
-        <>
-          Secure your digital <br />
-          <span className="text-[#d0beff]">bastion today.</span>
-        </>
-      }
-      asideLead={
-        <>
-          <p>
-            Register your company, then await platform approval. Hierarchy:
-            Super Admin → Organization → Admin → HR → Team Lead → Employee.
-          </p>
-          <p className="mt-4 border-l-2 border-white/30 pl-4 text-sm leading-relaxed text-[#e8ddff]/90">
-            After you submit, your organization status is{" "}
-            <strong className="text-white">PENDING</strong> until a Super Admin
-            approves (<strong className="text-white">ACTIVE</strong>) or
-            declines (<strong className="text-white">REJECTED</strong>). Tenants
-            may also be <strong className="text-white">SUSPENDED</strong> for
-            platform control.
-          </p>
-        </>
-      }
     >
-      <header className="mb-10">
-        <h2 className="font-['Manrope',sans-serif] text-3xl font-bold tracking-tight text-[#191c1d]">
+      <header className="mb-3">
+        <h2 className="font-headline text-xl font-bold tracking-tight text-[#191c1d]">
           Register your organization
         </h2>
-        <p className="mt-2 text-[#494456]">
-          Company profile: name, business email, website, industry, size,
-          location. Steps 2–3 cover contact details and admin account access.
+        <p className="mt-0.5 text-xs text-[#494456]">
+          Company profile: name, business email, website, industry, size, location.
         </p>
       </header>
-      <div className="mb-10">
+      <div className="mb-3">
         <button
           type="button"
-          className="flex w-full items-center justify-center gap-3 rounded-xl border-b-2 border-[#e7e8e9] bg-white py-3.5 px-6 font-semibold text-[#191c1d] transition-all hover:bg-[#f8f9fa] active:scale-[0.98]"
+          className="flex w-full items-center justify-center gap-3 rounded-xl border-b-2 border-[#e7e8e9] bg-white py-2.5 px-6 font-semibold text-[#191c1d] transition-all hover:bg-[#f8f9fa] active:scale-[0.98]"
         >
           <img
             alt=""
@@ -81,15 +58,15 @@ export default function OrganizationRegistrationPage() {
           />
           Sign up with Google
         </button>
-        <div className="relative my-8 text-center">
+        <div className="relative my-3 text-center">
           <span className="relative z-10 bg-white px-4 text-xs font-semibold uppercase tracking-widest text-[#7a7488]">
             Or use business email
           </span>
           <div className="absolute top-1/2 left-0 h-px w-full bg-[#cbc3d9]/30" />
         </div>
       </div>
-      <form className="space-y-8" onSubmit={onSubmit}>
-        <div className="space-y-6">
+      <form className="space-y-4" onSubmit={onSubmit}>
+        <div className="space-y-4">
           <div>
             <label className={labelClass}>Organization Name</label>
             <input
@@ -99,7 +76,7 @@ export default function OrganizationRegistrationPage() {
               name="name"
             />
           </div>
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <label className={labelClass}>Business Email</label>
               <input
@@ -119,7 +96,7 @@ export default function OrganizationRegistrationPage() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <label className={labelClass}>Industry</label>
               <select
@@ -164,7 +141,7 @@ export default function OrganizationRegistrationPage() {
             </div>
           </div>
         </div>
-        <div className="flex items-center justify-between gap-4 pt-8">
+        <div className="flex items-center justify-between gap-4 pt-6">
           <button
             type="button"
             className="px-6 py-3.5 font-semibold text-[#494456] transition-colors hover:text-[#4800b2]"
@@ -182,9 +159,18 @@ export default function OrganizationRegistrationPage() {
           </Link>
         </div>
       </form>
-      <footer className="mt-16 space-y-3 border-t border-[#edeeef] pt-8 text-center">
-        <p className="text-xs leading-relaxed text-[#494456]">
-          By proceeding, you agree to Avanzo&apos;s{" "}
+      <footer className="mt-4 border-t border-[#edeeef] pt-4 text-center space-y-2">
+        <p className="text-sm text-[#494456]">
+          Already have an account?{" "}
+          <Link
+            to="/org-login"
+            className="font-semibold text-[#4800b2] underline-offset-4 hover:underline"
+          >
+            Sign in
+          </Link>
+        </p>
+        <p className="text-xs leading-relaxed text-[#191c1d]">
+          By proceeding, you agree to AVANZO CYBER SECURITY&apos;s{" "}
           <a
             className="font-semibold text-[#4800b2] underline underline-offset-4"
             href="#"
@@ -196,15 +182,9 @@ export default function OrganizationRegistrationPage() {
             className="font-semibold text-[#4800b2] underline underline-offset-4"
             href="#"
           >
-            Data Processing Addendum
+            Privacy Policy
           </a>
           .
-        </p>
-        <p className="mx-auto max-w-lg text-[11px] leading-relaxed text-[#494456]/90">
-          Workflow: submit registration → status <strong>PENDING</strong> → Super
-          Admin approves → <strong>ACTIVE</strong> → Admin creates departments
-          (Technical, Cybersecurity, HR, Accounts, Sales, etc.) → HR onboards
-          users → projects, tasks, and incidents.
         </p>
       </footer>
     </RegisterOrgWizardLayout>

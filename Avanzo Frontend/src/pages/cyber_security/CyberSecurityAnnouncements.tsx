@@ -53,36 +53,38 @@ const COMPANY_UPDATES = [
 
 export default function CyberSecurityAnnouncementsPage() {
   return (
-    <div className="space-y-6 pt-4 min-h-screen pb-12 font-display">
-
-      <div className="mb-10">
-        <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none italic uppercase font-headline">Announcements</h1>
-        <p className="text-slate-500 mt-2 font-medium italic">Internal updates, CyberSecurity alerts, and organizational news.</p>
+    <div className="space-y-10 pt-4 min-h-screen pb-12 font-display bg-[#fcfcfc]">
+      <div className="mb-10 font-headline space-y-1">
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-600">
+          SECURITY INTELLIGENCE • BROADCASTS
+        </p>
+        <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none uppercase">Operation Alerts</h1>
+        <p className="text-slate-500 mt-2 text-sm font-medium">Internal updates, CyberSecurity alerts, and organizational intelligence.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* News Feed */}
         <div className="lg:col-span-8 space-y-6">
           <div className="flex items-center justify-between px-2 mb-4">
-             <h4 className="font-bold text-slate-900 tracking-tight font-headline">CyberSecurity Department Updates</h4>
-             <button className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-violet-600 transition-colors bg-slate-50 px-3 py-1 rounded-lg">Sort By: Newest</button>
+             <h4 className="font-black text-slate-900 tracking-tight font-headline uppercase italic">CyberSecurity Department Updates</h4>
+             <button className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-violet-600 transition-colors bg-slate-50 px-3 py-1 rounded-lg font-headline">Sort By: Newest</button>
           </div>
 
           {ANNOUNCEMENTS.map((news, i) => (
             <Card key={i} className={`border border-slate-100 shadow-sm rounded-2xl overflow-hidden bg-white border-l-4 ${news.accent}`}>
               <CardContent className="p-8">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-6 font-headline">
                   <div className="flex items-center gap-4">
-                    <span className={`px-2.5 py-1 rounded text-[9px] font-black tracking-widest border ${news.tagColor}`}>
+                    <span className={`px-2.5 py-1 rounded-[6px] text-[9px] font-black tracking-widest border ${news.tagColor} shadow-sm uppercase italic`}>
                       {news.tag}
                     </span>
-                    <span className="text-[10px] font-bold text-slate-300 tracking-tight">{news.date}</span>
+                    <span className="text-[10px] font-black text-slate-300 tracking-tight uppercase tabular-nums">{news.date}</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-right hidden sm:block">
-                      <p className="text-[11px] font-bold text-slate-900 leading-none">{news.author}</p>
+                      <p className="text-[11px] font-black text-slate-900 leading-none uppercase italic">{news.author}</p>
                     </div>
-                    <div className="size-8 rounded-lg bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400 border border-slate-200/50">
+                    <div className="size-8 rounded-lg bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400 border border-slate-200/50 shadow-sm uppercase italic">
                       {news.initials}
                     </div>
                   </div>
@@ -93,24 +95,24 @@ export default function CyberSecurityAnnouncementsPage() {
                   {news.content}
                 </p>
 
-                <div className="flex items-center gap-6 pt-6 border-t border-slate-50">
+                <div className="flex items-center gap-6 pt-6 border-t border-slate-50 font-headline">
                   {news.linkText && (
-                    <button className="text-[11px] font-black text-violet-700 hover:underline flex items-center gap-2 group italic">
+                    <button className="text-[11px] font-black text-violet-700 hover:underline flex items-center gap-2 group italic uppercase tracking-tight">
                       {news.linkText}
                       <ChevronRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
                     </button>
                   )}
                   {news.comments && (
-                    <button className="text-[11px] font-bold text-slate-400 hover:text-slate-600 flex items-center gap-2">
+                    <button className="text-[11px] font-black text-slate-400 hover:text-slate-600 flex items-center gap-2 uppercase italic tracking-tight">
                        <MessageSquare className="size-3.5" />
                        {news.comments} Comments
                     </button>
                   )}
                   {news.file && (
-                    <div className="flex-1 flex justify-between items-center p-3 px-5 bg-slate-50 rounded-xl group cursor-pointer hover:bg-slate-100 transition-colors">
+                    <div className="flex-1 flex justify-between items-center p-3 px-5 bg-slate-50 rounded-xl group cursor-pointer hover:bg-slate-100 transition-colors font-headline">
                        <div className="flex items-center gap-3">
                          <FileText className="size-4 text-violet-600" />
-                         <span className="text-[11px] font-bold text-slate-900">{news.file}</span>
+                         <span className="text-[11px] font-black text-slate-900 uppercase tracking-tight">{news.file}</span>
                        </div>
                        <button className="text-[10px] font-black text-violet-600 uppercase tracking-widest group-hover:scale-105 transition-transform">Download</button>
                     </div>
@@ -131,21 +133,21 @@ export default function CyberSecurityAnnouncementsPage() {
             </div>
             
             <div className="space-y-8">
-               {COMPANY_UPDATES.map((upd, i) => (
-                 <div key={i} className="group cursor-pointer">
-                    <div className="flex justify-between items-center mb-1.5 text-[9px] font-bold uppercase tracking-widest">
-                       <span className="text-violet-600">{upd.dept}</span>
-                       <span className="text-slate-300 group-hover:text-slate-400 transition-colors">{upd.time}</span>
-                    </div>
-                    <h5 className="text-[13px] font-black text-slate-900 group-hover:text-violet-700 transition-colors mb-1 font-headline">{upd.title}</h5>
-                    <p className="text-[11px] text-slate-500 font-medium line-clamp-2 leading-relaxed italic pr-2">
-                      {upd.desc}
-                    </p>
-                 </div>
-               ))}
+                {COMPANY_UPDATES.map((upd, i) => (
+                  <div key={i} className="group cursor-pointer font-headline">
+                     <div className="flex justify-between items-center mb-1.5 text-[9px] font-black uppercase tracking-widest">
+                        <span className="text-violet-600">{upd.dept}</span>
+                        <span className="text-slate-300 group-hover:text-slate-400 transition-colors">{upd.time}</span>
+                     </div>
+                     <h5 className="text-[13px] font-black text-slate-900 group-hover:text-violet-700 transition-colors mb-1 font-headline uppercase italic tracking-tight">{upd.title}</h5>
+                     <p className="text-[11px] text-slate-500 font-bold line-clamp-2 leading-relaxed italic pr-2 uppercase tracking-tight">
+                       {upd.desc}
+                     </p>
+                  </div>
+                ))}
             </div>
 
-            <button className="mt-10 w-full py-2 text-[10px] font-black text-violet-700 hover:text-violet-800 uppercase tracking-widest border-t border-slate-50 pt-4 text-center transition-colors">
+            <button className="mt-10 w-full py-2 text-[10px] font-black text-violet-700 hover:text-violet-800 uppercase tracking-widest border-t border-slate-50 pt-4 text-center transition-colors font-headline">
               View All Company News
             </button>
           </div>

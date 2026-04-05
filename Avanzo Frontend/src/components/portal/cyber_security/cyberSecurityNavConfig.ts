@@ -6,6 +6,7 @@ import {
   Megaphone,
   CalendarRange,
   CheckSquare,
+  User
 } from "lucide-react"
 
 export type CyberSecurityNavItem = {
@@ -22,4 +23,5 @@ export const CYBER_SECURITY_NAV_ITEMS: CyberSecurityNavItem[] = [
   { to: "/security/leave", label: "Leave Request", icon: CalendarRange },
   { to: "/security/announcements", label: "Announcements", icon: Megaphone },
   { to: "/security/reports", label: "Reports", icon: BarChart3 },
+  { to: "/security/profile", label: "My Profile", icon: User },
 ]

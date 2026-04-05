@@ -22,6 +22,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env()
 environ.Env.read_env(BASE_DIR / ".env")
 
+# Detect SQLite early
+is_sqlite = env("DATABASE_URL", default="").startswith("sqlite")
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env("SECRET_KEY")
 
@@ -31,32 +34,45 @@ DEBUG = env.bool("DEBUG", default=False)
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 
 
-# Application definition
-
-INSTALLED_APPS = [
-    "django.contrib.admin",
-    "django.contrib.auth",
+SHARED_APPS = (
+    "django_tenants",
+    "clients",
     "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
     "django.contrib.staticfiles",
-    # Third-party
-    "rest_framework",
-    "rest_framework_simplejwt",
     "corsheaders",
     "drf_spectacular",
-    "auditlog",
-    # Local apps
+)
+
+TENANT_APPS = (
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.sessions",
+    "django.contrib.messages",
     "core",
     "accounts",
     "organization",
-    "notifications",
     "attendance",
-    "leaves",
     "projects",
-]
+    "leaves",
+    "notifications",
+    "tickets",
+    "rest_framework",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
+    "auditlog",
+)
+
+# Shared apps filtering for SQLite
+final_shared_apps = list(SHARED_APPS)
+if is_sqlite:
+    final_shared_apps = [app for app in final_shared_apps if "tenants" not in app]
+
+INSTALLED_APPS = final_shared_apps + [app for app in TENANT_APPS if app not in final_shared_apps]
+TENANT_MODEL = "clients.Client"
+TENANT_DOMAIN_MODEL = "clients.Domain"
 
 MIDDLEWARE = [
+    "django_tenants.middleware.main.TenantMainMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -68,6 +84,8 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "config.urls"
+PUBLIC_SCHEMA_URLCONF = "config.public_urls"
+SHOW_PUBLIC_IF_NO_TENANT_FOUND = True
 
 TEMPLATES = [
     {
@@ -91,8 +109,23 @@ WSGI_APPLICATION = "config.wsgi.application"
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {"default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")}
-DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)
-DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
+
+if is_sqlite:
+    DATABASES["default"]["ENGINE"] = "django.db.backends.sqlite3"
+    # Remove tenant middleware and router if using SQLite
+    MIDDLEWARE = [m for m in MIDDLEWARE if "django_tenants" not in m]
+    DATABASE_ROUTERS = []
+else:
+    DATABASES["default"]["ENGINE"] = "django_tenants.postgresql_backend"
+    DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)
+    DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
+    DATABASE_ROUTERS = ("django_tenants.routers.TenantSyncRouter",)
+
+# Password Hashing Strategy
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",  # For legacy migration
+]
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -174,6 +207,13 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Internal company dashboard REST API",
     "VERSION": "0.1.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    "ENUM_NAME_OVERRIDES": {
+        "ProjectStatusEnum": "projects.models.Project.Status",
+        "TaskStatusEnum": "projects.models.Task.Status",
+        "LeaveRequestStatusEnum": "leaves.models.LeaveRequest.Status",
+        "EmployeeStatusEnum": "accounts.models.Employee.Status",
+        "DailyLogStatusEnum": "attendance.models.DailyLog.Status",
+    },
 }
 
 # ── Production Security ─────────────────────────────────────
@@ -198,3 +238,17 @@ if not DEBUG:
 
     # Static files (served by whitenoise or nginx)
     STATIC_ROOT = BASE_DIR / "staticfiles"
+
+
+# ── Celery (Background Task Queue) ──────────────────────────
+# Redis is used as both the message broker and result backend.
+# Install Redis locally: sudo apt install redis-server
+# Or use Docker: docker run -d -p 6379:6379 redis:7-alpine
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://127.0.0.1:6379/0")
+CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://127.0.0.1:6379/1")
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 300  # 5 min hard limit per task
+CELERY_TASK_SOFT_TIME_LIMIT = 240  # 4 min soft limit (raises SoftTimeLimitExceeded)
