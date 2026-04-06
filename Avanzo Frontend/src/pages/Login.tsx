@@ -1,7 +1,7 @@
 import { useState } from "react"
 import type { FormEvent } from "react"
 import { Link } from "react-router-dom"
-import { Copy, Loader2, Shield, AtSign, Lock, Eye, EyeOff, Check, ArrowRight } from "lucide-react"
+import { Copy, Loader2, AtSign, Lock, Eye, EyeOff, Check, ArrowRight } from "lucide-react"
 import { toast } from "sonner"
 import { useAuth } from "@/context/AuthContext"
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
@@ -10,6 +10,7 @@ import {
   DUMMY_SHARED_PASSWORD,
   isDummyAuthEnabled,
 } from "@/lib/dummyAuth"
+import AvanzoLogo from "@/assets/Avanzo Logo corrected and final.jpg"
 
 export default function Login() {
   useDesignPortalLightTheme()
@@ -75,10 +76,8 @@ export default function Login() {
           </div>
           <div className="relative z-10 flex flex-1 flex-col items-center justify-center p-16 text-center"
                style={{ animation: 'fadeSlideIn 0.5s ease-out both' }}>
-            <div className="flex items-center justify-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-lg">
-                <Shield className="h-6 w-6 text-[#4800b2]" fill="currentColor" />
-              </div>
+            <div className="flex items-center justify-center gap-4">
+              <img src={AvanzoLogo} alt="Avanzo Logo" className="h-12 w-auto rounded-xl shadow-xl border border-white/10" />
               <span className="text-3xl font-extrabold tracking-tighter text-white">
                 AVANZO CYBER SECURITY
               </span>
