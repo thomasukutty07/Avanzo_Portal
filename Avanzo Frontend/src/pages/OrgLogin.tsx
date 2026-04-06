@@ -1,7 +1,7 @@
 import { useState } from "react"
 import type { FormEvent } from "react"
 import { Link } from "react-router-dom"
-import { Copy, Loader2 } from "lucide-react"
+import { Copy, Loader2, Building, Briefcase, Lock, Eye, EyeOff, Check, ArrowRight } from "lucide-react"
 import { toast } from "sonner"
 import { useAuth } from "@/context/AuthContext"
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
@@ -13,7 +13,7 @@ import {
 
 export default function OrgLogin() {
   useDesignPortalLightTheme()
-  const { login } = useAuth()
+  const { login, logout } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [email, setEmail] = useState("")
@@ -39,7 +39,12 @@ export default function OrgLogin() {
     setError(null)
     setSubmitting(true)
     try {
-      await login(trimmed, password)
+      const u = await login(trimmed, password)
+      if (u.role !== "Admin" && u.role !== "Super Admin" && u.role !== "Organization") {
+        logout()
+        setError("Personnel credentials detected. Please use the Employee Identity Portal.")
+        return
+      }
     } catch {
       setError("Invalid email or password")
     } finally {
@@ -72,12 +77,7 @@ export default function OrgLogin() {
                style={{ animation: 'fadeSlideIn 0.5s ease-out both' }}>
             <div className="flex items-center justify-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-lg">
-                <span
-                  className="material-symbols-outlined font-bold text-[#4800b2]"
-                  style={{ fontVariationSettings: "'FILL' 1" }}
-                >
-                  domain
-                </span>
+                <Building className="h-6 w-6 text-[#4800b2]" />
               </div>
               <span className="text-3xl font-extrabold tracking-tighter text-white">
                 AVANZO CYBER SECURITY
@@ -127,9 +127,7 @@ export default function OrgLogin() {
                     Work Email
                   </label>
                   <div className="relative">
-                    <span className="material-symbols-outlined absolute bottom-3 left-0 text-xl text-[#7a7488] transition-colors group-focus-within:text-[#4800b2]">
-                      business_center
-                    </span>
+                    <Briefcase className="absolute bottom-3 left-0 size-5 text-[#7a7488] transition-colors group-focus-within:text-[#4800b2]" />
                     <input
                       id="email"
                       name="email"
@@ -150,9 +148,7 @@ export default function OrgLogin() {
                     Password
                   </label>
                   <div className="relative">
-                    <span className="material-symbols-outlined absolute bottom-3 left-0 text-xl text-[#7a7488] transition-colors group-focus-within:text-[#4800b2]">
-                      lock
-                    </span>
+                    <Lock className="absolute bottom-3 left-0 size-5 text-[#7a7488] transition-colors group-focus-within:text-[#4800b2]" />
                     <input
                       id="password"
                       name="password"
@@ -168,9 +164,7 @@ export default function OrgLogin() {
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute bottom-3 right-0 flex items-center justify-center text-[#7a7488] transition-colors hover:text-[#4800b2]"
                     >
-                      <span className="material-symbols-outlined text-xl">
-                        {showPassword ? "visibility_off" : "visibility"}
-                      </span>
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
                   </div>
                 </div>
@@ -182,9 +176,7 @@ export default function OrgLogin() {
                       className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border-2 border-[#cbc3d9]/50 transition-all checked:border-[#4800b2] checked:bg-[#4800b2]"
                       type="checkbox"
                     />
-                    <span className="material-symbols-outlined pointer-events-none absolute left-1/2 -translate-x-1/2 text-sm text-white opacity-0 peer-checked:opacity-100">
-                      check
-                    </span>
+                    <Check className="pointer-events-none absolute left-1/2 -translate-x-1/2 size-3.5 text-white opacity-0 peer-checked:opacity-100" strokeWidth={3} />
                   </div>
                   <span className="text-sm font-medium text-[#494456] transition-colors group-hover:text-[#191c1d]">
                     Keep me signed in
@@ -203,9 +195,7 @@ export default function OrgLogin() {
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#4800b2] to-[#6200ee] px-6 py-4 font-bold text-white shadow-[0px_4px_20px_rgba(73,68,86,0.04),0px_12px_40px_rgba(73,68,86,0.08)] transition-all hover:opacity-95 active:scale-[0.98]"
                 >
                   <span>Sign In</span>
-                  <span className="material-symbols-outlined text-lg">
-                    arrow_forward
-                  </span>
+                  <ArrowRight size={18} strokeWidth={3} />
                 </button>
                 <div className="relative py-4">
                   <div

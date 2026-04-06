@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { api } from "@/lib/axios"
 import { extractResults } from "@/lib/apiResults"
 import { toast } from "sonner"
-import { MoreVertical, Plus, Shield, ExternalLink, Loader2, Zap } from "lucide-react"
+import { MoreVertical, Shield, ExternalLink, Loader2, Zap } from "lucide-react"
 import { OrganizationAdminChrome } from "@/components/portal/organizationadmin/OrganizationAdminChrome"
 import {
   AreaChart,
@@ -60,7 +60,7 @@ export default function AdminDashboard() {
     {
       label: "PROJECT PROGRESS",
       value: `${avgProgress}%`,
-      sub: "Fleet Momentum",
+      sub: "Average Completion",
       subColor: "text-emerald-500",
       accent: "text-slate-900",
       bar: true,
@@ -70,7 +70,7 @@ export default function AdminDashboard() {
     {
       label: "ACTIVE TASKS",
       value: activeTasksCount.toString().padStart(2, '0'),
-      sub: `${tasks.filter(t => t.status === "in_progress").length} Processing`,
+      sub: `${tasks.filter(t => t.status === "in_progress").length} In Progress`,
       subColor: "text-slate-400",
       accent: "text-slate-900",
       icon: "✓",
@@ -78,15 +78,15 @@ export default function AdminDashboard() {
     {
       label: "OPEN BUGS",
       value: criticalBugsCount.toString().padStart(2, '0'),
-      sub: `Sector Severity: ${criticalBugsCount}`,
+      sub: `Current Load: ${criticalBugsCount}`,
       subColor: "text-red-400",
       accent: "text-red-500",
       icon: "⚠",
     },
     {
-      label: "ENTITIES",
+      label: "SYSTEM USERS",
       value: projects.reduce((acc, p) => acc + (p.team?.length || 0), 0).toString().padStart(2, '0'),
-      sub: "Total Unit Reach",
+      sub: "Total Registered Personnel",
       subColor: "text-slate-400",
       accent: "text-slate-900",
       icon: "👥",

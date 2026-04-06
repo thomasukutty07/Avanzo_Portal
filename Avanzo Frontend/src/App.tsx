@@ -20,6 +20,7 @@ const DepartmentsPage = lazy(() => import("@/pages/admin/Departments"))
 const ReportsPage = lazy(() => import("@/pages/admin/Reports"))
 const AdminNotificationsPage = lazy(() => import("@/pages/admin/AdminNotifications"))
 const AdminAnnouncementsPage = lazy(() => import("@/pages/admin/AdminAnnouncements"))
+const AdminEmployeeRegistrationPage = lazy(() => import("@/pages/admin/AdminEmployeeRegistration"))
 const SettingsPage = lazy(() => import("@/pages/shared/Settings"))
 const HROverview = lazy(() => import("@/pages/hr/HROverview"))
 const HREmployees = lazy(() => import("@/pages/hr/Employees"))
@@ -62,6 +63,9 @@ const TechnicalAnnouncementsPage = lazy(() =>
 const TechnicalReportsPage = lazy(() =>
   import("@/pages/technical/TechnicalReports")
 )
+const TechnicalCreateIncidentPage = lazy(() =>
+  import("@/pages/technical/TechnicalCreateIncident")
+)
 
 const CyberSecurityDashboardPage = lazy(() =>
   import("@/pages/cyber_security/CyberSecurityDashboard")
@@ -83,6 +87,9 @@ const CyberSecurityLeavePage = lazy(() =>
 )
 const CyberSecurityCreateAnnouncementPage = lazy(() =>
   import("@/pages/cyber_security/CyberSecurityCreateAnnouncement")
+)
+const CyberSecurityCreateIncidentPage = lazy(() =>
+  import("@/pages/cyber_security/CyberSecurityCreateIncident")
 )
 
 const SuperAdminDashboardPage = lazy(() =>
@@ -210,6 +217,10 @@ export default function App() {
             path="/admin-announcements"
             element={<AdminAnnouncementsPage />}
           />
+          <Route 
+            path="/admin/register-employee" 
+            element={<AdminEmployeeRegistrationPage />} 
+          />
           <Route path="/settings" element={<SettingsPage />} />
 
           <Route path="/employees" element={<HREmployees />} />
@@ -247,6 +258,7 @@ export default function App() {
               <Route path="tasks" element={<TechnicalTasksPage />} />
               <Route path="leave" element={<TechnicalLeavePage />} />
               <Route path="incidents" element={<TechnicalIncidentsPage />} />
+              <Route path="incidents/create" element={<TechnicalCreateIncidentPage />} />
               <Route path="bugs" element={<TechnicalBugsPage />} />
               <Route path="announcements" element={<TechnicalAnnouncementsPage />} />
               <Route path="reports" element={<TechnicalReportsPage />} />
@@ -265,6 +277,10 @@ export default function App() {
               <Route
                 path="create-announcement"
                 element={<CyberSecurityCreateAnnouncementPage />}
+              />
+              <Route
+                path="incidents/create"
+                element={<CyberSecurityCreateIncidentPage />}
               />
               <Route path="profile" element={<SettingsLegacyPage />} />
             </Route>

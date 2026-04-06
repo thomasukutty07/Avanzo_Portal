@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Link } from "react-router-dom"
 import { Bell, Search, Menu } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { toast } from "sonner"
@@ -46,7 +47,7 @@ export function CyberSecurityPortalHeader({ onMenuClick }: CyberSecurityPortalHe
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search logs, IPs, or ticket IDs..."
-            className="w-full rounded-xl border border-slate-100 bg-slate-50 py-2.5 pl-10 pr-4 text-[13px] font-bold text-slate-900 placeholder:text-slate-300 focus:border-violet-300 focus:bg-white focus:ring-4 focus:ring-violet-600/5 outline-none transition-all tracking-tight"
+            className="w-full rounded-xl border border-slate-100 bg-slate-50 py-2.5 pl-10 pr-4 text-[11px] font-bold text-slate-900 placeholder:text-slate-300 focus:border-violet-300 focus:bg-white focus:ring-4 focus:ring-violet-600/5 focus:border-violet-100 outline-none transition-all tracking-tight"
           />
         </form>
       </div>
@@ -65,17 +66,20 @@ export function CyberSecurityPortalHeader({ onMenuClick }: CyberSecurityPortalHe
 
         <div className="h-8 w-px bg-slate-100 hidden sm:block" />
 
-        <div className="flex items-center gap-3">
+        <Link 
+          to="/security/profile" 
+          className="flex items-center gap-3 group hover:opacity-80 transition-opacity"
+        >
           <div className="hidden sm:block text-right">
-            <p className="text-sm font-bold leading-none text-slate-900">{name}</p>
-            <p className="text-[11px] font-semibold text-slate-500 mt-1">{role}</p>
+            <p className="text-xs font-bold leading-none text-slate-900 group-hover:text-violet-600 transition-colors uppercase italic">{name}</p>
+            <p className="text-[9px] font-black text-slate-400 mt-1 uppercase tracking-widest italic">{role}</p>
           </div>
           <img
             alt=""
-            className="size-10 rounded-full object-cover shadow-sm ring-2 ring-white"
+            className="size-10 rounded-full object-cover shadow-sm ring-2 ring-white border border-slate-50"
             src={PROFILE_IMG}
           />
-        </div>
+        </Link>
       </div>
     </header>
   )

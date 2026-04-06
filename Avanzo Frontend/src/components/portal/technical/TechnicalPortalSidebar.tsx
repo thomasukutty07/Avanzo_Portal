@@ -1,6 +1,8 @@
+import { useState, useEffect } from "react"
 import { NavLink, useNavigate } from "react-router-dom"
 import { LogOut } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
+import { api } from "@/lib/axios"
 import { TECHNICAL_NAV_ITEMS } from "./technicalNavConfig"
 
 const linkBase =
@@ -11,6 +13,23 @@ const active = `${linkBase} bg-violet-600 text-white shadow-md shadow-violet-600
 export function TechnicalPortalSidebar({ onNavClick }: { onNavClick?: () => void }) {
   const { logout } = useAuth()
   const navigate = useNavigate()
+  const [announcementCount, setAnnouncementCount] = useState(0)
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await api.get("/api/notifications/broadcasts/")
+        const data = res.data
+        const items = Array.isArray(data) ? data : (data.results || [])
+        setAnnouncementCount(items.length)
+      } catch (e) {
+        console.error(e)
+      }
+    }
+    fetchStats()
+    const interval = setInterval(fetchStats, 60000)
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <aside className="flex h-full w-full shrink-0 flex-col bg-white border-r border-slate-100 font-display overflow-hidden">
@@ -24,7 +43,12 @@ export function TechnicalPortalSidebar({ onNavClick }: { onNavClick?: () => void
             className={({ isActive }) => (isActive ? active : inactive)}
           >
             <Icon className="size-5 shrink-0" />
-            {label}
+            <span className="flex-1">{label}</span>
+            {label === "Announcements" && announcementCount > 0 && (
+              <span className="bg-violet-600 text-white text-[10px] font-black px-2 py-0.5 rounded-lg shadow-sm animate-in zoom-in duration-300">
+                {announcementCount}
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>

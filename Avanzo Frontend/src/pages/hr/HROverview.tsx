@@ -84,14 +84,14 @@ export default function HROverview() {
 
   return (
     <HRPortalChrome>
-      <div className="p-4 md:p-10 space-y-12 pb-12 font-display bg-[#fcfcfc] min-h-screen animate-in fade-in duration-700">
+      <div className="space-y-12 font-display bg-[#fcfcfc] min-h-screen animate-in fade-in duration-700">
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-2">
             <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-violet-600 mb-2 leading-none">
-                    HR SECTOR COMMAND
+                <p className="text-[10px] font-black tracking-[0.3em] text-violet-600 mb-2 leading-none uppercase">
+                    HR Sector Command
                 </p>
-                <h1 className="text-3xl font-black text-slate-900 tracking-tight font-headline uppercase leading-none">
+                <h1 className="text-3xl font-black text-slate-900 tracking-tight font-headline leading-none">
                     Personnel Overview
                 </h1>
                 <p className="text-slate-500 mt-4 text-sm font-medium">Workforce analytics, leave compliance, and boarding status.</p>
@@ -139,7 +139,7 @@ export default function HROverview() {
           {/* Recent Employee Table */}
           <div className="lg:col-span-8 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden hover:shadow-xl transition-all duration-700">
             <div className="flex items-center justify-between px-10 py-8 border-b border-slate-50 bg-slate-50/10">
-              <h3 className="font-headline font-black text-xl text-slate-900 tracking-tight uppercase">Recent Talent Acquisition</h3>
+              <h3 className="font-headline font-black text-xl text-slate-900 tracking-tight">Recent Talent Acquisition</h3>
               <button 
                 onClick={() => navigate("/employees")}
                 className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-600 hover:text-violet-800 transition-colors flex items-center gap-3 bg-violet-50 px-5 py-2.5 rounded-xl border border-violet-100 shadow-sm"
@@ -201,7 +201,7 @@ export default function HROverview() {
              <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-10 hover:shadow-xl transition-all duration-700 overflow-hidden relative group">
                 <div className="absolute top-0 left-0 w-full h-1 bg-amber-500/10" />
                 <div className="flex items-center justify-between mb-10">
-                   <h3 className="font-black text-xl text-slate-900 font-headline uppercase tracking-tight">Compliance Queue</h3>
+                   <h3 className="font-black text-xl text-slate-900 font-headline tracking-tight">Compliance Queue</h3>
                    <span className="px-4 py-1.5 bg-amber-50 text-amber-600 rounded-xl text-[9px] font-black uppercase tracking-widest border border-amber-100 shadow-sm">PENDING TRIAGE</span>
                 </div>
                 <div className="space-y-6">

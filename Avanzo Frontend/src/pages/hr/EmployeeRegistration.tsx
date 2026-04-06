@@ -184,16 +184,16 @@ export default function EmployeeRegistrationPage() {
 
   return (
     <HRPortalChrome>
-      <div className="min-h-full bg-slate-50/50 p-6 md:p-10 space-y-10 animate-in fade-in duration-500 font-display">
+      <div className="min-h-full bg-slate-50/50 space-y-10 animate-in fade-in duration-500 font-display">
         {/* Step Header */}
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">New Registration</h1>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Employee registration</h1>
             <p className="text-sm font-medium text-slate-500 mt-1">Onboard a new team member to your organization.</p>
           </div>
           <div className="text-right">
             <p className="text-violet-600 font-bold text-sm">Step {currentStepIndex + 1} of 5</p>
-            <p className="text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-tighter">{steps[currentStepIndex].description}</p>
+            <p className="text-[10px] font-bold text-slate-400 mt-0.5 tracking-tighter">{steps[currentStepIndex].description}</p>
           </div>
         </div>
 
@@ -259,7 +259,7 @@ export default function EmployeeRegistrationPage() {
                                 <label className="text-[13px] font-bold text-slate-700 ml-1">Gender</label>
                                 <div className="relative">
                                   <select 
-                                    className={`w-full h-12 bg-slate-50 border-transparent rounded-xl px-4 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none appearance-none cursor-pointer ${errors.gender ? 'ring-2 ring-red-500/20 border-red-200 bg-red-50/10' : ''}`}
+                                    className={`w-full h-11 bg-slate-50 border-transparent rounded-xl px-4 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none appearance-none cursor-pointer ${errors.gender ? 'ring-2 ring-red-500/20 border-red-200 bg-red-50/10' : ''}`}
                                     value={formData.gender}
                                     onChange={(e) => updateForm('gender', e.target.value)}
                                   >
@@ -296,7 +296,7 @@ export default function EmployeeRegistrationPage() {
                             <div className="space-y-2">
                                 <label className="text-[13px] font-bold text-slate-700 ml-1">Department</label>
                                 <select 
-                                  className={`w-full h-12 bg-slate-50 border-transparent rounded-xl px-4 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none appearance-none cursor-pointer ${errors.department ? 'ring-2 ring-red-500/20 border-red-200 bg-red-50/10' : ''}`}
+                                  className={`w-full h-11 bg-slate-50 border-transparent rounded-xl px-4 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none appearance-none cursor-pointer ${errors.department ? 'ring-2 ring-red-500/20 border-red-200 bg-red-50/10' : ''}`}
                                   value={formData.department}
                                   onChange={(e) => updateForm('department', e.target.value)}
                                 >
@@ -307,7 +307,7 @@ export default function EmployeeRegistrationPage() {
                                                         <div className="space-y-2">
                                 <label className="text-[13px] font-bold text-slate-700 ml-1">Designation</label>
                                 <select 
-                                  className={`w-full h-12 bg-slate-50 border-transparent rounded-xl px-4 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none appearance-none cursor-pointer ${errors.jobTitle ? 'ring-2 ring-red-500/20 border-red-200 bg-red-50/10' : ''}`}
+                                  className={`w-full h-11 bg-slate-50 border-transparent rounded-xl px-4 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none appearance-none cursor-pointer ${errors.jobTitle ? 'ring-2 ring-red-500/20 border-red-200 bg-red-50/10' : ''}`}
                                   value={formData.jobTitle}
                                   onChange={(e) => updateForm('jobTitle', e.target.value)}
                                 >
@@ -318,7 +318,7 @@ export default function EmployeeRegistrationPage() {
                             <div className="space-y-2">
                                 <label className="text-[13px] font-bold text-slate-700 ml-1">Employment Type</label>
                                 <select 
-                                  className="w-full h-12 bg-slate-50 border-transparent rounded-xl px-4 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none appearance-none cursor-pointer"
+                                  className="w-full h-11 bg-slate-50 border-transparent rounded-xl px-4 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none appearance-none cursor-pointer"
                                   value={formData.employmentType}
                                   onChange={(e) => updateForm('employmentType', e.target.value)}
                                 >
@@ -334,7 +334,7 @@ export default function EmployeeRegistrationPage() {
                             <div className="space-y-2">
                                 <label className="text-[13px] font-bold text-slate-700 ml-1">Reporting Manager</label>
                                 <select 
-                                  className="w-full h-12 bg-slate-50 border-transparent rounded-xl px-4 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none appearance-none cursor-pointer"
+                                  className="w-full h-11 bg-slate-50 border-transparent rounded-xl px-4 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none appearance-none cursor-pointer"
                                   value={formData.manager}
                                   onChange={(e) => updateForm('manager', e.target.value)}
                                 >
@@ -360,7 +360,7 @@ export default function EmployeeRegistrationPage() {
                                 <div className="space-y-2">
                                   <label className="text-[13px] font-bold text-slate-700 ml-1">Portal Access Role</label>
                                   <select 
-                                    className={`w-full h-12 bg-slate-50 border-transparent rounded-xl px-4 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none appearance-none cursor-pointer ${errors.accessRole ? 'ring-2 ring-red-500/20 border-red-200 bg-red-50/10' : ''}`}
+                                    className={`w-full h-11 bg-slate-50 border-transparent rounded-xl px-4 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none appearance-none cursor-pointer ${errors.accessRole ? 'ring-2 ring-red-500/20 border-red-200 bg-red-50/10' : ''}`}
                                     value={formData.accessRole}
                                     onChange={(e) => updateForm('accessRole', e.target.value)}
                                   >
@@ -376,7 +376,7 @@ export default function EmployeeRegistrationPage() {
                                             <input 
                                               type={showPassword ? "text" : "password"}
                                               placeholder="••••••••" 
-                                              className={`w-full h-12 bg-slate-50 border-transparent rounded-xl px-4 pr-12 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none ${errors.password ? 'ring-2 ring-red-500/20 border-red-200 bg-red-50/10' : ''}`}
+                                              className={`w-full h-11 bg-slate-50 border-transparent rounded-xl px-4 pr-12 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none ${errors.password ? 'ring-2 ring-red-500/20 border-red-200 bg-red-50/10' : ''}`}
                                               value={formData.password}
                                               onChange={(e) => updateForm('password', e.target.value)}
                                             />
@@ -396,7 +396,7 @@ export default function EmployeeRegistrationPage() {
                                             <input 
                                               type={showPassword ? "text" : "password"}
                                               placeholder="••••••••" 
-                                              className={`w-full h-12 bg-slate-50 border-transparent rounded-xl px-4 pr-12 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none ${errors.confirmPassword ? 'ring-2 ring-red-500/20 border-red-200 bg-red-50/10' : ''}`}
+                                              className={`w-full h-11 bg-slate-50 border-transparent rounded-xl px-4 pr-12 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none ${errors.confirmPassword ? 'ring-2 ring-red-500/20 border-red-200 bg-red-50/10' : ''}`}
                                               value={formData.confirmPassword}
                                               onChange={(e) => updateForm('confirmPassword', e.target.value)}
                                             />
@@ -447,7 +447,7 @@ export default function EmployeeRegistrationPage() {
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6 items-end">
                                     <ReviewItem label="Login ID" value={formData.loginId} />
                                     <div className="space-y-1 text-left relative">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Security Password</p>
+                                        <p className="text-[10px] font-bold text-slate-400 tracking-widest leading-none mb-1">Security Password</p>
                                         <div className="flex items-center gap-3">
                                             <p className="text-[13px] font-bold text-slate-800 tracking-wider">
                                                 {showPassword ? formData.password : "••••••••"}
@@ -474,7 +474,7 @@ export default function EmployeeRegistrationPage() {
                         <Button 
                           variant="link" 
                           onClick={() => toast.info("Draft saved successfully!")}
-                          className="text-slate-400 font-bold text-xs p-0 h-auto hover:text-slate-600 hover:no-underline uppercase tracking-tight"
+                          className="text-slate-400 font-bold text-xs p-0 h-auto hover:text-slate-600 hover:no-underline tracking-tight"
                         >
                           Save for later
                         </Button>
@@ -509,7 +509,7 @@ export default function EmployeeRegistrationPage() {
             </Card>
 
             {/* Bottom Help */}
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-6 text-[10px] font-bold text-slate-400 tracking-widest">
                 <div className="flex items-center gap-2">
                     <Lock className="size-3" />
                     Secure Data Encryption
@@ -535,7 +535,7 @@ function FormField({ label, placeholder, type = "text", isDatePicker = false, va
               placeholder={placeholder}
               value={value}
               onChange={(e) => onChange?.(e.target.value)}
-              className={`w-full h-12 bg-slate-50 border-transparent rounded-xl px-4 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none ${error ? 'ring-2 ring-red-500/20 border-red-200 bg-red-50/10' : ''}`}
+              className={`w-full h-11 bg-slate-50 border-transparent rounded-xl px-4 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none ${error ? 'ring-2 ring-red-500/20 border-red-200 bg-red-50/10' : ''}`}
             />
             {isDatePicker && (
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
@@ -573,7 +573,7 @@ function DocumentUploadItem({ title, description }: { title: string, description
 function ReviewItem({ label, value }: { label: string, value: string }) {
     return (
         <div className="space-y-1 text-left">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</p>
+            <p className="text-[10px] font-bold text-slate-400 tracking-widest">{label}</p>
             <p className="text-[13px] font-bold text-slate-800">{value}</p>
         </div>
     )

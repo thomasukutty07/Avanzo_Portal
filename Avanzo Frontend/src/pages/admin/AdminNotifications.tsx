@@ -6,11 +6,7 @@ import { useEffect } from "react"
 import { toast } from "sonner"
 import { 
   Check, 
-  AlertCircle, 
-  Server, 
   History, 
-  UserPlus, 
-  Database
 } from "lucide-react"
 import { 
   Select, 
@@ -33,7 +29,7 @@ export default function AdminNotificationsPage() {
       try {
         const res = await api.get("/api/notifications/")
         const apiNotifs = extractResults(res.data)
-        const mapped = apiNotifs.map((n: any, idx: number) => ({
+        const mapped = apiNotifs.map((n: any) => ({
            id: n.id,
            title: n.title,
            message: n.message,
@@ -94,7 +90,7 @@ export default function AdminNotificationsPage() {
            </div>
            <button 
              onClick={() => toast.success("All notifications marked as read.")}
-             className="flex items-center gap-2.5 px-8 py-3.5 bg-[#a855f7] text-white rounded-2xl text-[11px] font-black shadow-lg shadow-[#a855f7]/20 hover:bg-[#9333ea] transition-all active:scale-95 uppercase tracking-widest"
+             className="flex items-center gap-2.5 px-8 py-3.5 bg-violet-600 text-white rounded-2xl text-[11px] font-black shadow-xl shadow-violet-900/20 hover:bg-violet-700 transition-all active:scale-95 uppercase tracking-widest"
            >
               <Check className="h-4 w-4 stroke-[3px]" />
               Mark all read
@@ -107,11 +103,11 @@ export default function AdminNotificationsPage() {
             <button 
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`text-[11px] font-black whitespace-nowrap relative py-4 uppercase tracking-widest transition-all ${ activeTab === tab ? 'text-[#a855f7]' : 'text-slate-300 hover:text-slate-600' }`}
+              className={`text-[11px] font-black whitespace-nowrap relative py-4 uppercase tracking-widest transition-all ${ activeTab === tab ? 'text-violet-600' : 'text-slate-300 hover:text-slate-600' }`}
             >
               {tab}
               {activeTab === tab && (
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#a855f7] rounded-full" />
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-violet-600 rounded-full" />
               )}
             </button>
           ))}

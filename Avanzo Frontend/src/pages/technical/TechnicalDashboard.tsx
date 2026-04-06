@@ -39,6 +39,11 @@ export default function TechnicalDashboardPage() {
         // Fetch personal tasks (assigned to me)
         const tasksRes = await projectsService.getTasks({ assignee: user?.id });
         const tasksList = Array.isArray(tasksRes) ? tasksRes : (tasksRes.results || []);
+        
+        // Fetch all team tasks for global sector stats
+        const allTasksRes = await projectsService.getTasks();
+        const allTasks = Array.isArray(allTasksRes) ? allTasksRes : (allTasksRes.results || []);
+
         setPersonalTasks(tasksList.filter((t: any) => t.status !== 'completed' && t.status !== 'resolved').slice(0, 3));
 
         // Fetch updates from broadcasts
@@ -52,7 +57,11 @@ export default function TechnicalDashboardPage() {
           ? projectsList.reduce((acc: number, curr: any) => acc + (curr.progress || curr.weighted_progress || 0), 0) / projectsList.length
           : 0;
         
-        const criticalCount = tasksList.filter((t: any) => (t.priority === 'high' || t.priority === 'urgent') && t.status !== 'completed').length;
+        const criticalCount = tasksList.filter((t: any) => (t.priority === 'high' || t.priority === 'urgent' || t.priority === 'critical') && t.status !== 'completed').length;
+
+        // Dynamic SLA calculation
+        const completedTasks = allTasks.filter((t: any) => t.status === 'completed' || t.status === 'resolved').length;
+        const slaVal = allTasks.length > 0 ? Math.round((completedTasks / allTasks.length) * 100) : 100;
 
         setStats([
           {
@@ -74,19 +83,19 @@ export default function TechnicalDashboardPage() {
             icon: "✓",
           },
           {
-            label: "OPEN BUGS",
+            label: "CRITICAL TASKS",
             value: criticalCount.toString().padStart(2, '0'),
-            sub: `Critical Focus: ${criticalCount}`,
+            sub: `SLA Priority: ${criticalCount}`,
             subColor: "text-red-400",
             accent: "text-red-500",
             icon: "⚠",
           },
           { 
             label: "SLA COMPLIANCE", 
-            value: "98.2%", 
-            sub: "Engineering wide", 
-            color: "text-emerald-500", 
-            val: 98,
+            value: `${slaVal}%`, 
+            sub: slaVal > 90 ? "Optimal Hub" : "Alert Protocol", 
+            color: slaVal > 90 ? "text-emerald-500" : "text-amber-500", 
+            val: slaVal,
             accent: "text-slate-900"
           },
         ]);
@@ -123,33 +132,31 @@ export default function TechnicalDashboardPage() {
   }
 
   return (
-    <div className="space-y-10 pb-12 font-display bg-[#fcfcfc] min-h-screen animate-in fade-in duration-700 p-4 md:p-8">
+    <div className="space-y-10 pb-12 font-sans bg-[#fcfcfc] min-h-screen animate-in fade-in duration-700 p-4 md:p-8">
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-4">
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-violet-600 mb-2 leading-none">
             TECHNICAL SECTOR
           </p>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight font-headline uppercase leading-none">
-            Operational Hub
-          </h1>
-          <p className="text-slate-500 mt-4 text-sm font-medium">Real-time engineering telemetry and mission health protocols.</p>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">Operational Hub</h1>
+          <p className="text-slate-500 mt-4 text-xs font-medium">Real-time engineering telemetry and mission health protocols.</p>
         </div>
         <div className="flex items-center gap-4 self-start md:self-auto">
           <button
             type="button"
             onClick={() => setIsTicketModalOpen(true)}
-            className="px-7 py-3 rounded-xl border border-slate-100 bg-white text-slate-900 text-[11px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all active:scale-95 shadow-sm font-headline"
+            className="px-7 py-3 rounded-xl border border-slate-100 bg-white text-slate-900 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all active:scale-95 shadow-sm"
           >
-            System Report
+            SYSTEM REPORT
           </button>
           <button
             type="button"
-            onClick={() => { navigate("/technical/incidents") }}
-            className="flex items-center gap-3 px-7 py-3 rounded-xl bg-violet-600 text-white text-[11px] font-black uppercase tracking-widest hover:bg-violet-700 transition-all shadow-lg shadow-violet-600/20 active:scale-95 shadow-md font-headline"
+            onClick={() => navigate("/technical/incidents/create")}
+            className="flex items-center gap-3 px-7 py-3 rounded-xl bg-violet-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-violet-700 transition-all shadow-lg shadow-violet-600/20 active:scale-95 shadow-md"
           >
             <Plus className="size-4 stroke-[3px]" />
-            Active Incidents
+            CREATE NEW INCIDENT
           </button>
         </div>
       </div>
@@ -164,7 +171,7 @@ export default function TechnicalDashboardPage() {
                 <span className={`text-[10px] font-black ${s.subColor} uppercase tracking-widest bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100/50`}>{s.sub}</span>
               )}
             </div>
-            <p className={`text-5xl font-black tracking-tight font-headline ${s.accent} leading-none`}>{s.value}</p>
+            <p className={`text-5xl font-black tracking-tight ${s.accent} leading-none`}>{s.value}</p>
             {s.bar && (
               <div className="mt-8 h-2 w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100 shadow-inner group-hover:border-violet-100 transition-colors">
                 <div
@@ -172,6 +179,11 @@ export default function TechnicalDashboardPage() {
                   style={{ width: `${s.barVal}%` }}
                 />
               </div>
+            )}
+            {!s.bar && s.val !== undefined && (
+               <div className="mt-8 h-1 w-full bg-slate-50 rounded-full overflow-hidden">
+                  <div className={`h-full bg-slate-200 transition-all duration-1000`} style={{ width: `${s.val}%` }} />
+               </div>
             )}
           </div>
         ))}
@@ -184,8 +196,8 @@ export default function TechnicalDashboardPage() {
           <div className="absolute top-0 left-0 w-full h-1 bg-violet-600/10" />
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-xl font-black text-slate-900 font-headline uppercase tracking-tight">Mission Burndown</h3>
-              <p className="text-[11px] font-medium text-slate-400 mt-2 uppercase tracking-widest opacity-60">
+              <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Mission Burndown</h3>
+              <p className="text-[10px] font-medium text-slate-400 mt-2 uppercase tracking-widest opacity-60">
                 Point velocity vs. projected mission trajectory
               </p>
             </div>
@@ -216,7 +228,7 @@ export default function TechnicalDashboardPage() {
                 />
                 <YAxis hide />
                 <Tooltip
-                  contentStyle={{ borderRadius: "20px", border: "none", boxShadow: "0 20px 40px rgba(0,0,0,0.1)", fontSize: "11px", fontWeight: "black", textTransform: 'uppercase' }}
+                  contentStyle={{ borderRadius: "20px", border: "none", boxShadow: "0 20px 40px rgba(0,0,0,0.1)", fontSize: "11px", fontWeight: "900", textTransform: 'uppercase' }}
                   cursor={{ stroke: "#7c3aed", strokeWidth: 1, strokeDasharray: "4 4" }}
                 />
                 <ReferenceLine
@@ -253,11 +265,11 @@ export default function TechnicalDashboardPage() {
         {/* Project Updates */}
         <div className="lg:col-span-3 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 flex flex-col hover:shadow-xl transition-all duration-500 overflow-hidden relative">
           <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500/10" />
-          <h3 className="text-[12px] font-black text-slate-900 mb-8 uppercase tracking-[0.2em] font-headline">Tactical Sync</h3>
+          <h3 className="text-[12px] font-black text-slate-900 mb-8 uppercase tracking-[0.2em]">Tactical Sync</h3>
           <div className="flex-1 space-y-8">
             {updates.length > 0 ? (
               updates.map((u: any, i: number) => (
-                <div key={i} className="flex gap-4 group cursor-pointer hover:translate-x-1 transition-transform">
+                <div key={i} className="flex gap-4 group cursor-pointer hover:translate-x-1 transition-transform" onClick={() => toast.info(`Accessing briefing: ${u.title}`)}>
                   <div className="mt-1 flex flex-col items-center">
                     <div className="size-2.5 rounded-full shrink-0 bg-violet-600 shadow-[0_0_8px_rgba(124,58,237,0.4)]" />
                     {i < updates.length - 1 && (
@@ -269,7 +281,7 @@ export default function TechnicalDashboardPage() {
                       {formatDistanceToNow(parseISO(u.created_at || new Date().toISOString()), { addSuffix: true }).toUpperCase()}
                     </p>
                     <p className="text-[12px] font-black text-slate-900 leading-tight mb-2 uppercase tracking-tight group-hover:text-violet-600 transition-colors truncate">{u.title}</p>
-                    <p className="text-[10px] font-medium text-slate-500 leading-relaxed line-clamp-2 opacity-80">{u.message}</p>
+                    <p className="text-[10px] font-medium text-slate-500 leading-relaxed line-clamp-2 opacity-80 italic">{u.message}</p>
                   </div>
                 </div>
               ))
@@ -295,7 +307,7 @@ export default function TechnicalDashboardPage() {
         {/* Personal Task List */}
         <div className="lg:col-span-9 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden hover:shadow-xl transition-all duration-700">
           <div className="flex items-center justify-between px-10 py-8 border-b border-slate-50 bg-slate-50/10">
-            <h3 className="font-headline font-black text-xl text-slate-900 tracking-tight uppercase">Assigned Directives</h3>
+            <h3 className="font-black text-xl text-slate-900 tracking-tight uppercase">Assigned Directives</h3>
             <button
               type="button"
               onClick={() => navigate("/technical/tasks")}
@@ -348,9 +360,8 @@ export default function TechnicalDashboardPage() {
         </div>
 
         {/* Node Integrity */}
-        <div className="lg:col-span-3 relative overflow-hidden rounded-[2.5rem] bg-indigo-600 p-8 text-white shadow-xl shadow-indigo-600/20 flex flex-col justify-between group hover:shadow-2xl hover:scale-[1.02] transition-all duration-700 min-h-[400px]" onClick={() => setIsTicketModalOpen(true)}>
-          {/* Decorative circles */}
-          <div className="pointer-events-none absolute -right-10 -top-10 size-48 rounded-full bg-white/10 blur-2xl group-hover:bg-white/20 transition-all duration-700" />
+        <div className="lg:col-span-3 relative overflow-hidden rounded-[2.5rem] bg-slate-900 p-8 text-white shadow-xl shadow-slate-900/20 flex flex-col justify-between group hover:shadow-2xl hover:scale-[1.02] transition-all duration-700 min-h-[400px]" onClick={() => setIsTicketModalOpen(true)}>
+          <div className="pointer-events-none absolute -right-10 -top-10 size-48 rounded-full bg-violet-600/10 blur-2xl group-hover:bg-violet-600/20 transition-all duration-700" />
           <div className="pointer-events-none absolute right-4 bottom-4 size-32 rounded-full bg-white/5 blur-xl" />
 
           <div className="flex items-start justify-between relative z-10">
@@ -368,7 +379,7 @@ export default function TechnicalDashboardPage() {
 
           <div className="relative z-10">
             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 mb-3 ml-1">SYSTEM PULSE</p>
-            <h3 className="text-3xl font-black mb-10 leading-tight font-headline uppercase tracking-tight">Technical Health Matrix</h3>
+            <h3 className="text-3xl font-black mb-10 leading-tight uppercase tracking-tight">Technical Health Matrix</h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between p-5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors shadow-inner">
                  <div className="flex items-center gap-3">
@@ -382,12 +393,12 @@ export default function TechnicalDashboardPage() {
                     <Clock className="size-4 text-white/40" />
                     <span className="text-[11px] font-black uppercase tracking-widest text-white/70">UPTIME</span>
                  </div>
-                 <span className="text-[10px] font-black text-white uppercase tracking-widest font-headline">99.9%</span>
+                 <span className="text-[10px] font-black text-white uppercase tracking-widest">99.9%</span>
               </div>
             </div>
           </div>
 
-          <button className="relative z-10 w-full mt-10 py-5 bg-white text-indigo-700 rounded-[1.5rem] text-[11px] font-black uppercase tracking-[0.3em] hover:bg-indigo-50 transition-all shadow-xl active:scale-95 font-headline">
+          <button className="relative z-10 w-full mt-10 py-5 bg-white text-slate-900 rounded-[1.5rem] text-[11px] font-black uppercase tracking-[0.3em] hover:bg-slate-50 transition-all shadow-xl active:scale-95">
             Register Pulse
           </button>
         </div>

@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom"
+import { Outlet, useLocation } from "react-router-dom"
 import { useState } from "react"
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
 import { TechnicalPortalHeader } from "./TechnicalPortalHeader"
@@ -12,9 +12,10 @@ import { Menu, X } from "lucide-react"
 export function TechnicalPortalLayout({ children }: { children?: React.ReactNode }) {
   useDesignPortalLightTheme()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const location = useLocation()
 
   return (
-    <div className="design-portal design-portal-light h-[100dvh] w-full bg-slate-50 overflow-hidden flex flex-col">
+    <div className="design-portal design-portal-light h-[100dvh] w-full bg-slate-50 overflow-hidden flex flex-col font-display">
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
@@ -45,7 +46,7 @@ export function TechnicalPortalLayout({ children }: { children?: React.ReactNode
             <X className="h-5 w-5" />
           </button>
         </aside>
-        <main className="min-h-0 flex-1 overflow-y-auto p-4 md:p-8">
+        <main key={location.pathname} className="min-h-0 flex-1 overflow-y-auto p-6 md:p-10 lg:p-12 animate-in fade-in slide-in-from-bottom-2 duration-700 ease-out">
           {children || <Outlet />}
         </main>
       </div>

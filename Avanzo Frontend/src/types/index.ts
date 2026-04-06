@@ -26,6 +26,7 @@ export interface User {
   avatar?: string // ← NEW: from /me schema
   /** Display name from list/detail serializers (e.g. EmployeeSerializer.role) */
   role?: UserRole
+  role_display?: string
   status: UserStatus
   employee_id?: string | null
   /** FK UUID for PATCH/POST employee forms */

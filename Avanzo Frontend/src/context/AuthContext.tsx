@@ -17,7 +17,7 @@ import {
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -49,20 +49,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     hydrateSession();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<User> => {
     const dummyUser = tryDummyLogin(email, password);
     if (dummyUser) {
       localStorage.setItem("access_token", DUMMY_ACCESS_TOKEN);
       localStorage.setItem("refresh_token", DUMMY_REFRESH_TOKEN);
       localStorage.setItem(DUMMY_USER_STORAGE_KEY, JSON.stringify(dummyUser));
       setUser(dummyUser);
-      return;
+      return dummyUser;
     }
     const response = await api.post("/api/auth/login/", { email, password });
     localStorage.setItem("access_token", response.data.access);
     localStorage.setItem("refresh_token", response.data.refresh);
     const profileRes = await api.get("/api/auth/me/");
     setUser(profileRes.data);
+    return profileRes.data;
   };
 
   const logout = () => {

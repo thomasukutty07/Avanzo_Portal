@@ -48,10 +48,21 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return qs.filter(team=user)
 
     def perform_create(self, serializer):
+        if not self.request.user.department:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError(
+                {"detail": "Your account has no department assigned. Contact your administrator."}
+            )
         project = serializer.save(
             owning_department=self.request.user.department, manager=self.request.user
         )
-        project.team.add(self.request.user)
+        # Add Team Lead and their entire department to the project so tasks can be assigned without explicitly managing members
+        if self.request.user.department:
+            from accounts.models import Employee
+            dept_members = Employee.objects.filter(department=self.request.user.department, is_active=True)
+            project.team.add(*dept_members)
+        else:
+            project.team.add(self.request.user)
 
     # ── A-14: Project Progress Summary ────────────────────────
     @action(
@@ -71,7 +82,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         tasks = project.tasks.all()
 
         total_tasks = tasks.count()
-        completed_tasks = tasks.filter(status=Task.Status.RESOLVED).count()
+        completed_tasks = tasks.filter(status=Task.Status.CLOSED).count()
 
         # Calculate weighted progress components
         earned_points = 0
@@ -179,8 +190,8 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         # Auto-update status based on completion
         if new_pct == 100:
-            task.status = Task.Status.RESOLVED
-        elif new_pct > 0:
+            task.status = Task.Status.IN_REVIEW
+        elif new_pct > 0 and task.status in [Task.Status.OPEN, Task.Status.REWORK]:
             task.status = Task.Status.IN_PROGRESS
 
         task.save()
@@ -189,3 +200,53 @@ class TaskViewSet(viewsets.ModelViewSet):
             TaskSerializer(task).data,
             status=status.HTTP_200_OK,
         )
+
+    @action(detail=True, methods=["post"], url_path="review", permission_classes=[IsAuthenticated, IsTeamLeadOrAbove])
+    def review_task(self, request, pk=None):
+        """
+        POST /api/projects/tasks/{id}/review/
+
+        Allows Team Lead to review completed work.
+        Payload: {"approved": true/false}
+        """
+        task = self.get_object()
+
+        # Verify task belongs to TL's department unless admin
+        if not (request.user.is_team_lead and task.project.owning_department == request.user.department) and not request.user.is_admin:
+            return Response(
+                {"detail": "Only the Team Lead from the project department can review this task."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if task.status != Task.Status.IN_REVIEW:
+            return Response(
+                {"detail": "Task is not in review status."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        approved = request.data.get("approved")
+        
+        if approved is None:
+            return Response({"detail": "Provide 'approved' boolean field."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if approved:
+            task.status = Task.Status.CLOSED
+            NotificationService.send(
+                recipient=task.assignee,
+                title="Task Approved",
+                message=f"Good job! '{task.title}' was approved and closed.",
+                n_type="success",
+            )
+        else:
+            task.status = Task.Status.REWORK
+            task.completion_pct = 0 # reset progress for rework
+            NotificationService.send(
+                recipient=task.assignee,
+                title="Task Needs Rework",
+                message=f"Your work on '{task.title}' was sent back for rework.",
+                n_type="warning",
+            )
+
+        task.save()
+
+        return Response(TaskSerializer(task).data, status=status.HTTP_200_OK)

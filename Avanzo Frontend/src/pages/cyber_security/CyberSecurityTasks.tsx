@@ -1,214 +1,176 @@
 import { 
+  CheckCircle2, 
   Clock, 
-  MoreVertical, 
-  Plus, 
-  Search, 
-  Filter,
-  CheckCircle2,
-  Timer,
-  ChevronRight,
-  LayoutGrid,
-  List
+  AlertCircle, 
+  MoreVertical,
+  Plus,
+  Search
 } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
 const STATS = [
-  { label: "Total Tasks", value: "24", sub: "Currently assigned", color: "text-slate-900" },
-  { label: "In Progress", value: "08", sub: "Active work", color: "text-violet-600" },
-  { label: "Completed", value: "12", sub: "Past 7 days", color: "text-emerald-500" },
-  { label: "High Priority", value: "04", sub: "Requires attention", color: "text-red-500" },
+  { label: "Active assignments", value: "12", sub: "Priority Alpha", color: "text-violet-600", icon: Clock },
+  { label: "Completed ops", value: "148", sub: "Last 30 days", color: "text-emerald-500", icon: CheckCircle2 },
+  { label: "Pending audit", value: "05", sub: "Compliance check", color: "text-amber-500", icon: AlertCircle },
 ]
 
 const TASKS = [
-  {
-    id: "SEC-TASK-102",
-    title: "Audit LDAP Server Logs",
-    description: "Perform a deep dive into LDAP access logs for the last 48 hours to identify suspicious binds.",
-    priority: "CRITICAL",
-    priorityColor: "text-red-600 bg-red-50 border-red-100",
-    status: "In Progress",
-    statusIcon: Timer,
-    progress: 65,
-    dueDate: "Today, 17:00",
-    assignee: "M. Lopez"
+  { 
+    id: "TSK-001", 
+    title: "Quarterly vulnerability assessment", 
+    due: "Today", 
+    priority: "High", 
+    status: "In progress",
+    assignee: "John Doe",
+    initial: "JD",
+    color: "text-orange-600 bg-orange-50 border-orange-100"
   },
-  {
-    id: "SEC-TASK-098",
-    title: "Update Firewall Rules",
-    description: "Apply new egress filtering rules for the production DMZ based on the approved change request #442.",
-    priority: "HIGH",
-    priorityColor: "text-orange-600 bg-orange-50 border-orange-100",
+  { 
+    id: "TSK-002", 
+    title: "Firewall rule cleanup", 
+    due: "Tomorrow", 
+    priority: "Medium", 
     status: "Pending",
-    statusIcon: Clock,
-    progress: 0,
-    dueDate: "Tomorrow",
-    assignee: "K. Wright"
+    assignee: "M. Lopez",
+    initial: "ML",
+    color: "text-amber-600 bg-amber-50 border-amber-100"
   },
-  {
-    id: "SEC-TASK-115",
-    title: "Phishing Drill Review",
-    description: "Compile and analyze results from the 'Operation Hook' phishing simulation for the HR department.",
-    priority: "MEDIUM",
-    priorityColor: "text-violet-600 bg-violet-50 border-violet-100",
-    status: "In Progress",
-    statusIcon: Timer,
-    progress: 30,
-    dueDate: "Oct 12, 2024",
-    assignee: "S. Chen"
+  { 
+    id: "TSK-003", 
+    title: "Phishing simulation campaign", 
+    due: "Oct 12", 
+    priority: "High", 
+    status: "In progress",
+    assignee: "S. Chen",
+    initial: "SC",
+    color: "text-orange-600 bg-orange-50 border-orange-100"
   },
-  {
-    id: "SEC-TASK-084",
-    title: "Patch SSL VPN Gateway",
-    description: "Apply emergency patch for CVE-2024-4422 on the primary and failover VPN concentrators.",
-    priority: "CRITICAL",
-    priorityColor: "text-red-600 bg-red-50 border-red-100",
-    status: "Completed",
-    statusIcon: CheckCircle2,
-    progress: 100,
-    dueDate: "Completed Oct 01",
-    assignee: "M. Lopez"
-  }
+  { 
+    id: "TSK-004", 
+    title: "SSL certificate renewal - Node 04", 
+    due: "Oct 15", 
+    priority: "Critical", 
+    status: "New",
+    assignee: "Unassigned",
+    initial: "??",
+    color: "text-red-600 bg-red-50 border-red-100"
+  },
 ]
 
 export default function CyberSecurityTasksPage() {
   return (
-    <div className="space-y-10 pt-4 pb-12 min-h-screen font-display bg-[#fcfcfc]">
-      {/* Header Area */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-2 font-headline">
-        <div className="space-y-1">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-600">
-            SECURITY OPERATIONS • MONITORING
-          </p>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none uppercase">Operation Tasks</h1>
-          <p className="text-slate-500 mt-2 text-sm font-medium">Execute and track high-priority security directives.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400 group-focus-within:text-violet-600" />
-            <input 
-              type="text" 
-              placeholder="Search tasks..." 
-              className="h-12 w-64 bg-white border border-slate-100 rounded-xl pl-12 pr-4 text-sm font-medium outline-none focus:ring-4 focus:ring-violet-600/5 focus:border-violet-100 transition-all"
-            />
+    <div className="space-y-6 pb-12 font-headline bg-[#fcfcfc] min-h-screen">
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+          <div>
+              <p className="text-[9px] font-black tracking-[0.2em] text-violet-600 mb-1">
+                  Tactical operations
+              </p>
+              <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+                  Task matrix
+              </h1>
+              <p className="text-slate-500 mt-2 text-xs font-medium">Coordinate and track cyber defense assignments and audit schedules.</p>
           </div>
-          <Button variant="outline" className="h-12 w-12 p-0 border-slate-100 bg-white hover:bg-slate-50 rounded-xl">
-             <Filter className="size-4 text-slate-400" />
-          </Button>
-          <Button className="bg-violet-600 hover:bg-violet-700 text-white font-black h-12 px-6 rounded-xl shadow-lg shadow-violet-600/20 active:scale-95 transition-all text-[11px] uppercase tracking-widest font-headline">
-             <Plus className="size-4 mr-2" />
-             Create Task
-          </Button>
-        </div>
+          <div className="flex items-center gap-3">
+              <Button variant="outline" className="h-10 rounded-xl border-slate-200 text-[11px] font-bold text-slate-600 px-5 bg-white hover:bg-slate-50">
+                  Filters
+              </Button>
+              <Button className="h-10 rounded-xl bg-violet-600 text-white text-[11px] font-bold px-5 shadow-lg shadow-violet-600/20 hover:bg-violet-700">
+                  <Plus className="mr-2 size-3.5" /> Initialize task
+              </Button>
+          </div>
       </div>
 
-      {/* KPI Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* KPI Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {STATS.map((s, i) => (
-          <Card key={i} className="border-none shadow-sm shadow-slate-100 rounded-2xl overflow-hidden bg-white">
-            <CardContent className="p-7 font-headline">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 leading-none">{s.label}</p>
-              <div className="flex items-baseline gap-2">
-                <h3 className={`text-4xl font-black ${s.color} tracking-tight font-headline uppercase italic`}>{s.value}</h3>
-              </div>
-              <p className="text-[10px] font-black text-slate-300 mt-2 uppercase tracking-tight italic">{s.sub}</p>
-            </CardContent>
-          </Card>
+          <div key={i} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 hover:shadow-md transition-all group">
+             <div className="flex items-center justify-between mb-4">
+                <p className="text-[9px] font-black tracking-[0.18em] text-slate-400">{s.label}</p>
+                <div className={`size-7 rounded-lg ${s.color.replace('text-', 'bg-').replace('-600', '-50').replace('text-red-500', 'bg-red-50 text-red-600').replace('text-violet-600', 'bg-violet-50 text-violet-600').replace('text-emerald-500', 'bg-emerald-50 text-emerald-600').replace('text-amber-500', 'bg-amber-50 text-amber-600')} flex items-center justify-center`}>
+                   <s.icon className="size-3.5" />
+                </div>
+             </div>
+             <p className={`text-3xl font-black tracking-tight ${s.color.includes('violet') ? 'text-slate-900' : s.color}`}>{s.value}</p>
+             <div className="mt-3 flex items-center justify-between">
+                <span className="text-[9px] font-bold text-slate-400 tracking-tighter">{s.sub}</span>
+                <div className="size-1 bg-slate-100 rounded-full" />
+             </div>
+          </div>
         ))}
       </div>
 
-      {/* Tasks Controls */}
-      <div className="flex items-center justify-between border-b border-slate-50 pb-4">
-        <div className="flex items-center gap-8">
-           {['All Tasks', 'Assigned to Me', 'Team Tasks'].map((tab, i) => (
-             <button 
-               key={tab} 
-               className={`text-[11px] font-black uppercase tracking-[0.2em] relative pb-4 transition-colors font-headline ${i === 1 ? 'text-violet-600' : 'text-slate-400 hover:text-slate-600'}`}
-             >
-               {tab}
-               {i === 1 && <div className="absolute bottom-0 left-0 w-full h-1 bg-violet-600 rounded-full" />}
-             </button>
-           ))}
+      {/* Search and Filters */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="relative max-w-md w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-slate-400" />
+              <input 
+                  placeholder="Search tactics..." 
+                  className="w-full h-10 bg-slate-50 border-slate-100 rounded-xl pl-10 pr-4 text-xs font-bold text-slate-600 outline-none focus:bg-white focus:ring-4 focus:ring-violet-600/5 transition-all"
+              />
+          </div>
+          <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black text-slate-300 tracking-widest mr-2">Sort by:</span>
+              <button className="px-3 py-1.5 rounded-lg bg-violet-50 text-violet-600 text-[10px] font-black tracking-tight">Recent</button>
+              <button className="px-3 py-1.5 rounded-lg hover:bg-slate-50 text-slate-400 text-[10px] font-black tracking-tight transition-colors">Priority</button>
+          </div>
+      </div>
+
+      {/* Task Table */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mb-12">
+        <div className="px-6 py-4 border-b border-slate-50 flex items-center justify-between">
+          <h4 className="font-black text-slate-900 tracking-tight text-sm">Active mission registry</h4>
+          <span className="text-[9px] font-black text-slate-400 tracking-widest bg-slate-50 px-2.5 py-1 rounded-lg italic">Operational feed</span>
         </div>
-        <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-100">
-           <Button variant="ghost" className="h-8 w-8 p-0 bg-white shadow-sm border border-slate-100">
-              <List className="size-4 text-violet-600" />
-           </Button>
-           <Button variant="ghost" className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600">
-              <LayoutGrid className="size-4" />
-           </Button>
+        
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-slate-50/50 text-[8px] font-black text-slate-400 tracking-[0.2em] border-b border-slate-50">
+              <tr>
+                <th className="px-6 py-5">Intel-ID</th>
+                <th className="px-6 py-5">Tactical assignment</th>
+                <th className="px-6 py-5">Triage</th>
+                <th className="px-6 py-5">Status</th>
+                <th className="px-6 py-5">Assigned to</th>
+                <th className="px-6 py-5 text-right">Matrix</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {TASKS.map((task, i) => (
+                <tr key={i} className="group hover:bg-slate-50 transition-colors cursor-pointer">
+                  <td className="px-6 py-6 font-black text-[11px] text-violet-700 tracking-tight">{task.id}</td>
+                  <td className="px-6 py-6">
+                    <p className="text-[12px] font-black text-slate-900 group-hover:text-violet-700 transition-colors leading-none tracking-tight">{task.title}</p>
+                    <p className="text-[9px] text-slate-400 font-black mt-2 leading-none tracking-widest tabular-nums">Due {task.due}</p>
+                  </td>
+                  <td className="px-6 py-6">
+                    <span className={`px-2 py-1 rounded-lg text-[8px] font-black tracking-widest border shadow-sm ${task.color}`}>
+                      {task.priority}
+                    </span>
+                  </td>
+                  <td className="px-6 py-6">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`size-1.5 rounded-full ${task.status === 'In progress' ? 'bg-violet-500 animate-pulse' : task.status === 'Pending' ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+                      <span className="text-[11px] font-black text-slate-700 tracking-tight">{task.status}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-6">
+                    <div className="flex items-center gap-2.5">
+                      <div className="size-8 rounded-xl bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400 border border-slate-100 group-hover:bg-violet-600 group-hover:text-white transition-all">{task.initial}</div>
+                      <span className="text-[11px] font-black tracking-tight text-slate-700">{task.assignee}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-6 text-right">
+                    <button className="p-2.5 text-slate-200 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all">
+                      <MoreVertical className="size-3.5" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
-
-      {/* Task Cards */}
-      <div className="space-y-4">
-        {TASKS.map((task, i) => (
-          <Card key={i} className="border border-slate-100 shadow-sm rounded-2xl overflow-hidden bg-white hover:shadow-md transition-shadow cursor-pointer group">
-            <CardContent className="p-8">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                
-                {/* Title and Badge */}
-                <div className="lg:col-span-5 space-y-3">
-                   <div className="flex items-center gap-3 font-headline">
-                      <span className={`px-2 py-1 rounded-[6px] text-[8px] font-black tracking-widest border ${task.priorityColor} uppercase italic shadow-sm`}>
-                        {task.priority}
-                      </span>
-                      <span className="text-[10px] font-black text-slate-300 tabular-nums uppercase">{task.id} Unit</span>
-                   </div>
-                   <h3 className="text-xl font-black text-slate-900 group-hover:text-violet-700 transition-colors tracking-tight leading-none uppercase italic font-headline">{task.title}</h3>
-                   <p className="text-[12px] text-slate-500 font-bold line-clamp-1 italic font-headline uppercase tracking-tight">{task.description}</p>
-                </div>
-
-                {/* Status and Progress */}
-                <div className="lg:col-span-4 flex items-center gap-12">
-                    <div className="space-y-3 min-w-[120px] font-headline">
-                       <div className="flex items-center gap-2">
-                         <task.statusIcon className={`size-4 ${task.status === 'In Progress' ? 'text-violet-600 animate-pulse' : task.status === 'Completed' ? 'text-emerald-500' : 'text-slate-300'}`} />
-                         <span className={`text-[11px] font-black uppercase tracking-widest ${task.status === 'In Progress' ? 'text-violet-700' : 'text-slate-500'}`}>{task.status}</span>
-                       </div>
-                      <div className="h-1.5 w-full bg-slate-50 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full ${task.status === 'Completed' ? 'bg-emerald-500' : 'bg-violet-600'} transition-all duration-1000`} 
-                          style={{ width: `${task.progress}%` }} 
-                        />
-                      </div>
-                   </div>
-                   <div className="text-right">
-                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none mb-1">Due Date</p>
-                      <p className="text-[12px] font-black text-slate-900 group-hover:text-violet-700 transition-colors uppercase tracking-tight font-headline">{task.dueDate}</p>
-                   </div>
-                </div>
-
-                {/* Assignee and Action */}
-                <div className="lg:col-span-3 flex items-center justify-between pl-6 border-l border-slate-50">
-                   <div className="flex items-center gap-3">
-                       <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-[10px] font-black text-slate-400 border border-slate-100 group-hover:border-violet-100 group-hover:bg-violet-50 group-hover:text-violet-600 transition-colors uppercase shadow-sm">
-                         {task.assignee.split(' ').map(n => n[0]).join('')}
-                       </div>
-                       <div>
-                         <p className="text-[12px] font-black text-slate-900 leading-none group-hover:text-violet-700 transition-colors uppercase font-headline">{task.assignee}</p>
-                         <p className="text-[9px] font-black text-slate-400 uppercase mt-1 tracking-widest font-headline">Assigned Analyst</p>
-                       </div>
-                   </div>
-                   <Button variant="ghost" className="text-slate-200 hover:text-slate-400 group-hover:text-slate-700">
-                     <MoreVertical className="size-5" />
-                   </Button>
-                </div>
-
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Load More */}
-      <div className="flex justify-center pt-8">
-         <button className="flex items-center gap-2 text-[10px] font-black text-violet-600 hover:text-violet-800 uppercase tracking-widest italic group">
-           Load More Tasks
-           <ChevronRight className="size-4 group-hover:translate-x-1 transition-transform" />
-         </button>
-      </div>
-
     </div>
   )
 }

@@ -1,8 +1,9 @@
-import { useState, useRef } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
+import { projectsService } from "@/services/projects"
 import { 
   Dialog, 
-  DialogContent, 
+  DialogContent,
   DialogDescription,
   DialogTitle, 
 } from "@/components/ui/dialog"
@@ -17,119 +18,189 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select"
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu"
 import { toast } from "sonner"
 import { 
-  Plus,
-  UserPlus, 
-  FolderPlus,
-  Calendar,
   Loader2,
-  Users,
   Zap,
   Search,
   CheckSquare,
   Folder,
-  Megaphone
+  Megaphone,
+  Globe,
+  ImageIcon,
+  Paperclip,
+  UserCheck,
+  CheckCircle2,
+  Target,
+  Users,
+  X,
 } from "lucide-react"
+import NewTaskModal from "./NewTaskModal"
 
-export function NewTaskModal({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
+
+export { NewTaskModal }
+
+export function ReviewTaskModal({ open, onOpenChange, task, onSuccess }: { open: boolean, onOpenChange: (open: boolean) => void, task: any, onSuccess?: () => void }) {
   const [loading, setLoading] = useState(false)
+  const [approved, setApproved] = useState<boolean | null>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (approved === null) {
+      toast.error("Please explicitly approve or reject the work.")
+      return
+    }
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
-      toast.success("Task created successfully and assigned to lead unit.")
+    try {
+      await projectsService.reviewTask(task.id, { approved })
+      toast.success(approved ? "Task successfully closed." : "Task sent back for rework.")
+      onSuccess?.()
       onOpenChange(false)
-    }, 1000)
+    } catch (err: any) {
+      toast.error("Failed to review task.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] font-body p-0 overflow-hidden rounded-3xl border-slate-200 shadow-2xl">
-        <div className="bg-violet-600 p-8 text-white">
-          <div className="flex items-center gap-3 mb-2">
-            <Plus className="h-6 w-6" />
-            <DialogTitle className="font-headline text-2xl font-black">Initialize Mission Unit</DialogTitle>
+      <DialogContent showCloseButton={false} className="w-[95vw] sm:max-w-xl rounded-2xl sm:rounded-3xl p-0 border border-violet-100 overflow-hidden bg-white shadow-[0_20px_50px_rgba(109,40,217,0.08)] font-sans outline-none">
+        <DialogTitle className="sr-only">Review submission</DialogTitle>
+        <DialogDescription className="sr-only">Review unit sector work and close task or request rework.</DialogDescription>
+        
+        <div className="bg-white px-5 sm:px-8 pt-5 pb-4 flex items-center gap-3 border-b border-violet-50 shrink-0">
+          <div className="size-8 bg-violet-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-violet-600/30 shrink-0">
+            <CheckCircle2 className="size-4" />
           </div>
-          <DialogDescription className="text-violet-100 font-medium">
-            Define high-level parameters and tactical assignments for the upcoming operational task.
-          </DialogDescription>
+          <div>
+            <h2 className="text-sm font-black tracking-tight text-slate-900 leading-none">Review submission</h2>
+            <p className="text-[11px] font-medium text-slate-400 mt-0.5">Evaluate task completion and assign final status.</p>
+          </div>
         </div>
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
-          <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-2 col-span-2">
-              <Label htmlFor="title" className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Mission Label / Tactical Identifier</Label>
-              <Input id="title" placeholder="e.g. CORE-441: API Layer Optimization" required className="rounded-xl border-slate-200 h-12 focus:ring-violet-600/20" />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="priority" className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Urgency Level</Label>
-              <Select defaultValue="medium">
-                <SelectTrigger className="rounded-xl border-slate-200 h-12">
-                  <SelectValue placeholder="Select level" />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl border-slate-200">
-                  <SelectItem value="low">Low Impact (Standard)</SelectItem>
-                  <SelectItem value="medium">Medium Urgency (Tactical)</SelectItem>
-                  <SelectItem value="high">Critical Path (Immediate)</SelectItem>
-                </SelectContent>
-              </Select>
+
+        <div className="overflow-y-auto">
+          <form onSubmit={handleSubmit} className="px-5 sm:px-8 py-6 space-y-6 bg-white">
+            <div className="space-y-1">
+              <h3 className="text-sm font-black text-slate-800">{task?.title}</h3>
+              <p className="text-xs font-bold text-slate-400">{task?.project_name}</p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="assignee" className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Tactical Assignment</Label>
-              <Select defaultValue="unassigned">
-                <SelectTrigger className="rounded-xl border-slate-200 h-12">
-                  <SelectValue placeholder="Select unit" />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl border-slate-200">
-                  <SelectItem value="unassigned">Unassigned (Pool)</SelectItem>
-                  <SelectItem value="sarah">Sarah Miller (Design Lead)</SelectItem>
-                  <SelectItem value="james">James Chen (Tech Staff)</SelectItem>
-                  <SelectItem value="mike">Mike Ross (Infra)</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+               <button 
+                 type="button"
+                 onClick={() => setApproved(true)}
+                 className={`flex flex-col items-center justify-center gap-2 h-24 rounded-2xl border-2 transition-all ${approved === true ? 'border-emerald-500 bg-emerald-50' : 'border-slate-100 bg-slate-50 hover:border-slate-200'}`}
+               >
+                 <CheckCircle2 className={`size-6 ${approved === true ? 'text-emerald-500' : 'text-slate-400'}`} />
+                 <span className={`text-[10px] font-black uppercase tracking-widest ${approved === true ? 'text-emerald-600' : 'text-slate-500'}`}>Approve & Close</span>
+               </button>
+
+               <button 
+                 type="button"
+                 onClick={() => setApproved(false)}
+                 className={`flex flex-col items-center justify-center gap-2 h-24 rounded-2xl border-2 transition-all ${approved === false ? 'border-amber-500 bg-amber-50' : 'border-slate-100 bg-slate-50 hover:border-slate-200'}`}
+               >
+                 <X className={`size-6 ${approved === false ? 'text-amber-500' : 'text-slate-400'}`} />
+                 <span className={`text-[10px] font-black uppercase tracking-widest ${approved === false ? 'text-amber-600' : 'text-slate-500'}`}>Sent for Rework</span>
+               </button>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="due" className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Projected Completion</Label>
-              <Input id="due" type="date" required className="rounded-xl border-slate-200 h-12" />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="estimated" className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Estimated Effort (Story Points)</Label>
-              <Input id="estimated" type="number" placeholder="5" className="rounded-xl border-slate-200 h-12" />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description" className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Operational Briefing / Requirements</Label>
-            <Textarea id="description" placeholder="Detail the objective, technical constraints, and desired outcomes..." className="rounded-xl border-slate-200 min-h-[120px] p-4 text-sm" />
-          </div>
-
-          <div className="flex items-center justify-between pt-4">
-            <div className="flex items-center gap-2 text-slate-400">
-               <Users className="h-4 w-4" />
-               <span className="text-[10px] font-bold uppercase tracking-widest">3 Units Available</span>
-            </div>
-            <div className="flex gap-3">
-              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="rounded-xl font-bold uppercase text-[10px] tracking-widest text-slate-400">Abort</Button>
-              <Button type="submit" disabled={loading} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl px-10 h-12 font-black uppercase text-[10px] tracking-widest shadow-xl shadow-violet-900/20">
-                {loading ? "Transmitting..." : "Initialize Task"}
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3 pt-2 border-t border-slate-50 mt-4">
+              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="w-full sm:flex-1 h-10 text-slate-400 font-medium text-[10px] uppercase tracking-widest rounded-xl hover:bg-slate-50 transition-all">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={loading || approved === null} className="w-full sm:flex-[2] h-10 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-md active:scale-95 transition-all">
+                {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
+                Finalize Review
               </Button>
             </div>
+          </form>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+export function SearchModal({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
+  const [query, setQuery] = useState("")
+  const navigate = useNavigate()
+
+  const suggestions = [
+    { label: "Team Tasks", icon: CheckSquare, path: "/tasks", hint: "Manage assignments" },
+    { label: "Projects", icon: Folder, path: "/projects", hint: "Track mission projects" },
+    { label: "Team Members", icon: Users, path: "/team", hint: "View personnel registry" },
+    { label: "Announcements", icon: Megaphone, path: "/team-announcements", hint: "Broadcast updates" },
+  ]
+
+  const filtered = query.trim()
+    ? suggestions.filter(s =>
+        s.label.toLowerCase().includes(query.toLowerCase()) ||
+        s.hint.toLowerCase().includes(query.toLowerCase())
+      )
+    : suggestions
+
+  const handleSelect = (path: string) => {
+    navigate(path)
+    onOpenChange(false)
+    setQuery("")
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-[95vw] sm:w-full max-w-lg rounded-3xl p-0 border border-slate-100 overflow-hidden bg-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] font-sans outline-none">
+        <DialogTitle className="sr-only">Search</DialogTitle>
+        <DialogDescription className="sr-only">Search for pages and actions</DialogDescription>
+        <div className="flex flex-col">
+          <div className="flex items-center gap-4 px-6 pt-6 pb-4 border-b border-slate-50">
+            <Search className="size-5 text-slate-400 shrink-0" />
+            <input
+              autoFocus
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") { onOpenChange(false); setQuery("") }
+                if (e.key === "Enter" && filtered.length > 0) handleSelect(filtered[0].path)
+              }}
+              placeholder="Search pages, tasks, projects..."
+              className="flex-1 text-base font-bold text-slate-900 placeholder:text-slate-300 bg-transparent outline-none"
+            />
+            {query && (
+              <button onClick={() => setQuery("")} className="text-slate-300 hover:text-slate-500 transition-colors">
+                <X className="size-4" />
+              </button>
+            )}
           </div>
-        </form>
+          <div className="py-3 px-3">
+            {filtered.length > 0 ? (
+              filtered.map((item) => (
+                <button
+                  key={item.path}
+                  onClick={() => handleSelect(item.path)}
+                  className="w-full flex items-center gap-4 rounded-2xl px-4 py-3 hover:bg-slate-50 transition-all group text-left"
+                >
+                  <div className="size-9 rounded-xl bg-slate-100 flex items-center justify-center group-hover:bg-violet-600 group-hover:text-white text-slate-500 transition-colors shrink-0">
+                    <item.icon className="size-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-slate-900 truncate">{item.label}</p>
+                    <p className="text-xs text-slate-400 font-medium truncate">{item.hint}</p>
+                  </div>
+                  <Zap className="size-3.5 text-slate-200 group-hover:text-violet-400 ml-auto shrink-0 transition-colors" />
+                </button>
+              ))
+            ) : (
+              <div className="py-10 text-center text-slate-400 text-xs font-bold uppercase tracking-widest">
+                No results found
+              </div>
+            )}
+          </div>
+          <div className="px-6 py-3 border-t border-slate-50 flex items-center gap-4 text-[10px] text-slate-300 font-bold uppercase tracking-widest">
+            <span>↑↓ Navigate</span>
+            <span>↵ Open</span>
+            <span>Esc Close</span>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   )
@@ -143,413 +214,80 @@ export function AddMemberModal({ open, onOpenChange }: { open: boolean, onOpenCh
     setLoading(true)
     setTimeout(() => {
       setLoading(false)
-      toast.success("New team member has been successfully added.")
+      toast.success("Team member successfully onboarded.")
       onOpenChange(false)
     }, 1000)
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px] font-body p-0 overflow-hidden rounded-[24px] border-slate-200 shadow-2xl bg-white">
+      <DialogContent showCloseButton={false} className="w-[95vw] sm:max-w-3xl rounded-2xl sm:rounded-3xl p-0 border border-violet-100 overflow-hidden bg-white shadow-[0_20px_50px_rgba(109,40,217,0.08)] font-sans outline-none max-h-[90vh] flex flex-col">
+        <DialogTitle className="sr-only">Onboard member</DialogTitle>
+        <DialogDescription className="sr-only">Invite a new professional to join your unit registry.</DialogDescription>
         {/* Header */}
-        <div className="bg-violet-600 px-8 py-10 text-white relative">
-          <div className="relative z-10 flex items-center gap-5">
-             <div className="size-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm shadow-sm ring-1 ring-white/10">
-                <UserPlus className="h-7 w-7" />
-             </div>
-             <div>
-                <DialogTitle className="font-headline text-2xl font-black tracking-tight">Add New Member</DialogTitle>
-                <DialogDescription className="text-violet-100 font-medium mt-0.5">Invite a new professional to join your team registry.</DialogDescription>
-             </div>
+        <div className="bg-white px-5 sm:px-8 pt-5 pb-4 flex items-center gap-3 border-b border-violet-50 shrink-0">
+          <div className="size-8 bg-violet-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-violet-600/30 shrink-0">
+            <UserCheck className="size-4" />
+          </div>
+          <div>
+            <h2 className="text-sm font-black tracking-tight text-slate-900 leading-none">Onboard member</h2>
+            <p className="text-[11px] font-medium text-slate-400 mt-0.5">Invite a new professional to join your unit registry.</p>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-8">
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <Label htmlFor="first_name" className="text-xs font-bold uppercase tracking-widest text-slate-500">First Name</Label>
-                <Input id="first_name" placeholder="First Name" required className="rounded-xl border-slate-200 h-11 focus:ring-violet-600/10" />
+        <div className="overflow-y-auto">
+          <form onSubmit={handleSubmit} className="px-5 sm:px-8 py-6 space-y-5 bg-white">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Given name</Label>
+                <Input placeholder="Candidate name..." required className="rounded-xl border-slate-100 bg-slate-50 h-10 text-sm font-medium focus:border-violet-500 focus:bg-white transition-all placeholder:text-slate-300" />
               </div>
-              <div className="space-y-4">
-                <Label htmlFor="last_name" className="text-xs font-bold uppercase tracking-widest text-slate-500">Last Name</Label>
-                <Input id="last_name" placeholder="Last Name" required className="rounded-xl border-slate-200 h-11 focus:ring-violet-600/10" />
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Surname</Label>
+                <Input placeholder="Candidate surname..." required className="rounded-xl border-slate-100 bg-slate-50 h-10 text-sm font-medium focus:border-violet-500 focus:bg-white transition-all placeholder:text-slate-300" />
               </div>
-            </div>
-
-            <div className="space-y-4">
-              <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-slate-500">Professional Email Address</Label>
-              <Input id="email" type="email" placeholder="example@avanzo.com" required className="rounded-xl border-slate-200 h-11 focus:ring-violet-600/10" />
-            </div>
-
-            <div className="space-y-4">
-              <Label htmlFor="dept" className="text-xs font-bold uppercase tracking-widest text-slate-500">Primary Department</Label>
-              <Select defaultValue="engineering">
-                <SelectTrigger className="rounded-xl border-slate-200 h-11">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl font-body">
-                  <SelectItem value="engineering">Engineering</SelectItem>
-                  <SelectItem value="design">Design Unit</SelectItem>
-                  <SelectItem value="product">Product Laboratory</SelectItem>
-                  <SelectItem value="security">Cyber Security</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-6">
-               <div className="space-y-4">
-                <Label htmlFor="role" className="text-xs font-bold uppercase tracking-widest text-slate-500">Departmental Role</Label>
+              <div className="space-y-2 sm:col-span-2">
+                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Contact email</Label>
+                <Input type="email" placeholder="professional@avanzo.com" required className="rounded-xl border-slate-100 bg-slate-50 h-10 text-sm font-medium focus:border-violet-500 focus:bg-white transition-all placeholder:text-slate-300" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sector assignment</Label>
+                <Select defaultValue="engineering">
+                  <SelectTrigger className="rounded-xl border-slate-100 bg-slate-50 h-10 text-sm font-medium">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    <SelectItem value="engineering">Engineering Unit</SelectItem>
+                    <SelectItem value="design">Strategic Design</SelectItem>
+                    <SelectItem value="product">Core Product</SelectItem>
+                    <SelectItem value="security">Cyber Security</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mission role</Label>
                 <Select defaultValue="dev">
-                  <SelectTrigger className="rounded-xl border-slate-200 h-11">
+                  <SelectTrigger className="rounded-xl border-slate-100 bg-slate-50 h-10 text-sm font-medium">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="rounded-xl font-body">
-                    <SelectItem value="dev">Software Engineer</SelectItem>
-                    <SelectItem value="design">Product Designer</SelectItem>
-                    <SelectItem value="qa">QA / SDET</SelectItem>
-                    <SelectItem value="pm">Product Manager</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-4">
-                <Label htmlFor="team" className="text-xs font-bold uppercase tracking-widest text-slate-500">Assign To Team</Label>
-                <Select defaultValue="core">
-                  <SelectTrigger className="rounded-xl border-slate-200 h-11">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl font-body">
-                    <SelectItem value="core">Core Platform</SelectItem>
-                    <SelectItem value="mobile">Mobile Engineering</SelectItem>
-                    <SelectItem value="infra">Cloud / Infrastructure</SelectItem>
+                  <SelectContent className="rounded-xl">
+                    <SelectItem value="dev">Software Operative</SelectItem>
+                    <SelectItem value="lead">Technical Lead</SelectItem>
+                    <SelectItem value="qa">QA / Analyst</SelectItem>
+                    <SelectItem value="pm">Mission Manager</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
-          </div>
 
-          <div className="flex gap-4 pt-4 border-t border-slate-50">
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="flex-1 rounded-xl h-11 font-bold text-slate-400 hover:text-slate-600">Cancel</Button>
-            <Button type="submit" disabled={loading} className="flex-[2] bg-violet-600 hover:bg-violet-700 text-white rounded-xl h-11 font-bold shadow-lg shadow-violet-900/10 transition-all">
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Adding Member...
-                </span>
-              ) : "Add Team Member"}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-export function CreateProjectModal({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
-  const [loading, setLoading] = useState(false)
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
-      toast.success("New project has been successfully created.")
-      onOpenChange(false)
-    }, 1000)
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] font-body p-0 overflow-hidden rounded-[24px] border-slate-200 shadow-2xl bg-white">
-        {/* Header Section */}
-        <div className="bg-slate-900 px-8 py-10 text-white relative">
-          <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-             <FolderPlus className="size-24" />
-          </div>
-          <div className="relative z-10 flex items-center gap-6">
-             <div className="size-14 bg-violet-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <Plus className="h-7 w-7" />
-             </div>
-             <div>
-                <DialogTitle className="font-headline text-3xl font-black tracking-tight">Create New Project</DialogTitle>
-                <DialogDescription className="text-slate-400 font-medium mt-1">Fill in the details below to launch a new team project.</DialogDescription>
-             </div>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-10 space-y-8">
-          <div className="space-y-6">
-            {/* Basic Information */}
-            <div className="space-y-4">
-              <Label htmlFor="proj_name" className="text-xs font-bold uppercase tracking-widest text-slate-500">Project Name</Label>
-              <Input id="proj_name" placeholder="Enter a descriptive project title..." required className="rounded-xl border-slate-200 h-12 text-base focus:ring-violet-600/10 placeholder:text-slate-300" />
-            </div>
-
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <Label htmlFor="category" className="text-xs font-bold uppercase tracking-widest text-slate-500">Strategic Category</Label>
-                <Select defaultValue="internal">
-                  <SelectTrigger className="rounded-xl border-slate-200 h-12">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl font-body">
-                    <SelectItem value="internal">Internal Project</SelectItem>
-                    <SelectItem value="client">Client Deliverable</SelectItem>
-                    <SelectItem value="research">R&D / Innovation</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-4">
-                <Label htmlFor="deadline" className="text-xs font-bold uppercase tracking-widest text-slate-500">Target Deadline</Label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                  <Input id="deadline" type="date" required className="rounded-xl border-slate-200 h-12 pl-10" />
-                </div>
-              </div>
-            </div>
-
-            {/* Description */}
-            <div className="space-y-4">
-              <Label htmlFor="brief" className="text-xs font-bold uppercase tracking-widest text-slate-500">Project Description</Label>
-              <Textarea id="brief" placeholder="Provide a brief overview of the project goals and core requirements..." className="rounded-xl border-slate-200 min-h-[120px] p-4 text-sm resize-none focus:ring-violet-600/10" />
-            </div>
-
-            {/* Team Selection */}
-            <div className="space-y-4">
-              <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Involved Departments</Label>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {['Engineering', 'Product', 'Security', 'Design', 'DevOps', 'Legal'].map(dept => (
-                  <label key={dept} className="flex items-center gap-3 p-4 rounded-xl border border-slate-100 bg-slate-50/30 text-sm font-semibold text-slate-600 hover:bg-violet-50 hover:border-violet-100 transition-all cursor-pointer group">
-                    <input type="checkbox" className="accent-violet-600 size-4 rounded-md" />
-                    {dept}
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Footer Actions */}
-          <div className="pt-8 border-t border-slate-100 flex gap-4">
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="px-8 rounded-xl font-bold text-slate-400 hover:text-slate-600">Cancel</Button>
-            <div className="flex-1 flex gap-4">
-              <Button type="button" variant="outline" className="flex-1 rounded-xl h-12 font-bold shadow-sm border-slate-200 hover:bg-slate-50">Save as Draft</Button>
-              <Button type="submit" disabled={loading} className="flex-[1.5] bg-violet-600 hover:bg-violet-700 text-white rounded-xl h-12 font-bold shadow-xl shadow-violet-900/10">
-                {loading ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Creating Project...
-                  </span>
-                ) : "Create Project"}
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="w-full sm:flex-1 h-10 text-slate-400 font-medium text-[10px] uppercase tracking-widest rounded-xl hover:bg-violet-50 hover:text-violet-600 transition-all">
+                Cancel
               </Button>
-            </div>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-export function CreateDepartmentModal({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
-  const [loading, setLoading] = useState(false)
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
-      toast.success("New department has been successfully initialized.")
-      onOpenChange(false)
-    }, 1000)
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] font-body p-0 overflow-hidden rounded-[24px] border-slate-200 shadow-2xl bg-white">
-        <div className="bg-slate-900 px-8 py-10 text-white relative">
-          <div className="relative z-10 flex items-center gap-5">
-             <div className="size-14 bg-violet-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <Users className="h-7 w-7 text-white" />
-             </div>
-             <div>
-                <DialogTitle className="font-headline text-2xl font-black tracking-tight">New Department</DialogTitle>
-                <DialogDescription className="text-slate-400 font-medium mt-0.5">Initialize a new organizational unit within the core team.</DialogDescription>
-             </div>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
-          <div className="space-y-4">
-            <Label htmlFor="dept_name" className="text-xs font-bold uppercase tracking-widest text-slate-500">Department Title</Label>
-            <Input id="dept_name" placeholder="e.g. Infrastructure, Design Lab, R&D..." required className="rounded-xl border-slate-200 h-11 focus:ring-violet-600/10" />
-          </div>
-
-          <div className="flex gap-4 pt-4 border-t border-slate-50">
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="flex-1 rounded-xl h-11 font-bold text-slate-400 hover:text-slate-600">Cancel</Button>
-            <Button type="submit" disabled={loading} className="flex-[2] bg-violet-600 hover:bg-violet-700 text-white rounded-xl h-11 font-bold shadow-lg shadow-violet-900/10 transition-all">
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Initializing...
-                </span>
-              ) : "Create Department"}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-export function NewUpdateModal({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
-  const [loading, setLoading] = useState(false)
-  const [content, setContent] = useState("")
-  const [attachments, setAttachments] = useState<{ name: string, type: string }[]>([])
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const mediaInputRef = useRef<HTMLInputElement>(null)
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
-      toast.success("Operational update transmitted with " + (attachments.length ? attachments.length + " attachments" : "no attachments"))
-      onOpenChange(false)
-      setContent("")
-      setAttachments([])
-    }, 1500)
-  }
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, type: string) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setAttachments(prev => [...prev, { name: file.name, type }])
-      toast.success(`${type === 'media' ? 'Media' : 'Document'} attached: ${file.name}`)
-    }
-  }
-
-  const removeAttachment = (index: number) => {
-    setAttachments(prev => prev.filter((_, i) => i !== index))
-  }
-
-  const addEmoji = (emoji: string) => {
-    setContent(prev => prev + emoji)
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[850px] font-body p-0 overflow-hidden rounded-[32px] border-slate-100 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.15)] bg-[#fcfcfd]">
-        <div className="p-10 space-y-10">
-          <div className="space-y-2">
-            <DialogTitle className="font-headline text-4xl font-black text-slate-900 tracking-tight">Draft Transmission</DialogTitle>
-            <DialogDescription className="text-slate-500 font-medium text-lg leading-relaxed">Compose a critical update for your team units.</DialogDescription>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-8">
-            <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => handleFileUpload(e, 'document')} />
-            <input type="file" accept="image/*" ref={mediaInputRef} className="hidden" onChange={(e) => handleFileUpload(e, 'media')} />
-            
-            <div className="bg-white rounded-[28px] border border-slate-100 shadow-sm p-8 space-y-10">
-              <div className="space-y-4">
-                <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Subject Heading</Label>
-                <Input placeholder="Enter a compelling title..." required className="border-none p-0 h-10 text-2xl font-black placeholder:text-slate-200 focus-visible:ring-0 shadow-none bg-transparent" />
-              </div>
-
-              <div className="space-y-4">
-                <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Update Content</Label>
-                <Textarea 
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="Broadcast your message here..." 
-                  required 
-                  className="border-none p-0 min-h-[200px] text-lg font-medium leading-relaxed placeholder:text-slate-200 focus-visible:ring-0 shadow-none resize-none bg-transparent" 
-                />
-              </div>
-
-              {attachments.length > 0 && (
-                <div className="flex flex-wrap gap-3 pt-6 border-t border-slate-50">
-                  {attachments.map((file, i) => (
-                    <div key={i} className="flex items-center gap-3 px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl group animate-in fade-in slide-in-from-bottom-2">
-                      {file.type === 'media' ? <Plus className="h-4 w-4 text-violet-600" /> : <Users className="h-4 w-4 text-blue-600" />}
-                      <span className="text-xs font-bold text-slate-700 truncate max-w-[150px]">{file.name}</span>
-                      <button type="button" onClick={() => removeAttachment(i)} className="text-slate-300 hover:text-red-500 transition-colors">
-                        <Plus className="h-4 w-4 rotate-45" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="flex items-center justify-between pt-6 border-t border-slate-50">
-                 <div className="flex items-center gap-2">
-                    <button type="button" onClick={() => mediaInputRef.current?.click()} className="p-3 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all" title="Add Media">
-                      <Plus className="h-5 w-5" />
-                    </button>
-                    <button type="button" onClick={() => fileInputRef.current?.click()} className="p-3 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all" title="Attach Document">
-                      <Users className="h-5 w-5" />
-                    </button>
-                    
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button type="button" className="p-3 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all" title="Add Emoji">
-                          <Calendar className="h-5 w-5" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="p-2 grid grid-cols-4 gap-1 w-fit rounded-2xl border-slate-100 shadow-2xl">
-                        {['👍', '🚀', '🔥', '✅', '⚠️', '📈', '💡', '🗓️'].map(emoji => (
-                          <button key={emoji} type="button" onClick={() => addEmoji(emoji)} className="size-10 flex items-center justify-center hover:bg-slate-50 rounded-xl transition-colors text-xl">
-                            {emoji}
-                          </button>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-
-                    <div className="w-px h-8 bg-slate-100 mx-2" />
-                    <button type="button" className="p-3 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all" onClick={() => toast.info("Rich-text editing engaged.")}>
-                      <span className="font-serif italic font-bold text-xl text-slate-600">T</span>
-                    </button>
-                 </div>
-                 
-                 <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-100 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-500">
-                       <span className="size-2 rounded-full bg-emerald-500" />
-                       Everyone
-                    </div>
-                    <Button type="submit" disabled={loading} className="bg-violet-600 hover:bg-violet-700 text-white rounded-[20px] px-10 h-14 font-black uppercase text-[11px] tracking-[0.15em] shadow-[0_12px_32px_rgba(124,58,237,0.3)] transition-all transform hover:-translate-y-1 active:scale-95">
-                      {loading ? (
-                         <span className="flex items-center gap-3">
-                            <Loader2 className="h-5 w-5 animate-spin" />
-                            Transmitting...
-                         </span>
-                      ) : (
-                         <span className="flex items-center gap-3">
-                            <Zap className="h-5 w-5" />
-                            Transmit Update
-                         </span>
-                      )}
-                    </Button>
-                 </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-6">
-               <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm flex items-center gap-5 group hover:border-violet-100 transition-all cursor-help">
-                  <div className="size-12 bg-violet-50 rounded-2xl flex items-center justify-center text-violet-600 group-hover:bg-violet-600 group-hover:text-white transition-all">
-                     <Plus className="h-6 w-6" />
-                  </div>
-                  <div>
-                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-900">Global Visibility</p>
-                     <p className="text-[11px] text-slate-400 font-medium leading-relaxed mt-0.5">Visible to all members of the team across their unified dashboards.</p>
-                  </div>
-               </div>
-               <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm flex items-center gap-5 group hover:border-amber-100 transition-all cursor-help">
-                  <div className="size-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 group-hover:bg-amber-500 group-hover:text-white transition-all">
-                     <Calendar className="h-6 w-6" />
-                  </div>
-                  <div>
-                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-900">Immutable Record</p>
-                     <p className="text-[11px] text-slate-400 font-medium leading-relaxed mt-0.5">Once transmitted, a cryptographically signed copy is stored in departmental audit logs.</p>
-                  </div>
-               </div>
+              <Button type="submit" disabled={loading} className="w-full sm:flex-[2] h-10 bg-violet-600 hover:bg-violet-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-md shadow-violet-600/25 active:scale-95 transition-all">
+                {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : <CheckCircle2 className="size-4 mr-2" />}
+                {loading ? "Onboarding..." : "Authorize member"}
+              </Button>
             </div>
           </form>
         </div>
@@ -558,73 +296,212 @@ export function NewUpdateModal({ open, onOpenChange }: { open: boolean, onOpenCh
   )
 }
 
-export function SearchModal({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
-  const navigate = useNavigate()
-  
+export function CreateProjectModal({ open, onOpenChange, onSuccess }: { open: boolean, onOpenChange: (open: boolean) => void, onSuccess?: () => void }) {
+  const [loading, setLoading] = useState(false)
+  const [clients, setClients] = useState<any[]>([])
+  const [formData, setFormData] = useState({
+    title: "",
+    is_internal: true,
+    client: "",
+    target_end_date: "",
+  })
+
+  useEffect(() => {
+    if (open) {
+      projectsService.getClients()
+        .then(data => setClients(Array.isArray(data) ? data : (data.results || [])))
+        .catch(() => setClients([]))
+    }
+  }, [open])
+
+  const reset = () => setFormData({ title: "", is_internal: true, client: "", target_end_date: "" })
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!formData.is_internal && !formData.client) {
+      toast.error("External projects require a client.")
+      return
+    }
+    setLoading(true)
+    try {
+      const payload: any = {
+        title: formData.title,
+        is_internal: formData.is_internal,
+        target_end_date: formData.target_end_date || null,
+      }
+      if (!formData.is_internal && formData.client) payload.client = formData.client
+      await projectsService.createProject(payload)
+      toast.success("Project successfully initialized.")
+      onSuccess?.()
+      onOpenChange(false)
+      reset()
+    } catch (err: any) {
+      const data = err.response?.data
+      console.error("[CreateProject] 400 response:", data)
+      const raw = data?.detail || data?.non_field_errors?.[0]
+        || (typeof data === "object" ? Object.values(data).flat()[0] : null)
+        || "Failed to create project."
+      const msg = Array.isArray(raw) ? raw[0] : raw
+      toast.error(String(msg))
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden rounded-[24px] border-slate-100 shadow-2xl bg-white/95 backdrop-blur-xl">
-        <div className="relative">
-           <Search className="absolute left-6 top-6 h-6 w-6 text-slate-400" />
-           <Input 
-             placeholder="Search tasks, projects, or personnel..." 
-             className="w-full border-none h-20 pl-16 pr-10 text-xl font-medium focus-visible:ring-0 bg-transparent placeholder:text-slate-300"
-             autoFocus
-           />
-           <div className="absolute right-6 top-7 px-2 py-1 bg-slate-100 rounded text-[10px] font-bold text-slate-400 uppercase tracking-widest">Esc</div>
+      <DialogContent showCloseButton={false} className="w-[95vw] sm:max-w-3xl rounded-2xl sm:rounded-3xl p-0 border border-violet-100 overflow-hidden bg-white shadow-[0_20px_50px_rgba(109,40,217,0.08)] font-sans outline-none max-h-[90vh] flex flex-col">
+        <DialogTitle className="sr-only">Initialize project</DialogTitle>
+        <DialogDescription className="sr-only">Launch a new tactical project module for the unit sector.</DialogDescription>
+        {/* Header */}
+        <div className="bg-white px-5 sm:px-8 pt-5 pb-4 flex items-center gap-3 border-b border-violet-50 shrink-0">
+          <div className="size-8 bg-violet-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-violet-600/30 shrink-0">
+            <Target className="size-4" />
+          </div>
+          <div>
+            <h2 className="text-sm font-black tracking-tight text-slate-900 leading-none">Initialize project</h2>
+            <p className="text-[11px] font-medium text-slate-400 mt-0.5">Launch a new tactical project module for the unit sector.</p>
+          </div>
         </div>
-        
-        <div className="p-4 border-t border-slate-50 bg-slate-50/30">
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-4">
-                 <h3 className="px-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Quick Navigation</h3>
-                 <div className="space-y-1">
-                    {[
-                      { label: "View Active Tasks", icon: <CheckSquare className="h-4 w-4" />, path: "/tasks" },
-                      { label: "Project Portfolio", icon: <Folder className="h-4 w-4" />, path: "/projects" },
-                      { label: "Team Roster", icon: <Users className="h-4 w-4" />, path: "/team" },
-                      { label: "Communications Hub", icon: <Megaphone className="h-4 w-4" />, path: "/team-announcements" },
-                    ].map((link, i) => (
-                      <button 
-                        key={i} 
-                        onClick={() => { navigate(link.path); onOpenChange(false); }}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white hover:shadow-sm transition-all text-sm font-bold text-slate-700 group text-left"
-                      >
-                         <div className="p-2 rounded-lg bg-slate-100 text-slate-400 group-hover:bg-violet-600 group-hover:text-white transition-all">
-                            {link.icon}
-                         </div>
-                         {link.label}
-                      </button>
-                    ))}
-                 </div>
+
+        <div className="overflow-y-auto">
+          <form onSubmit={handleSubmit} className="px-5 sm:px-8 py-6 space-y-5 bg-white">
+            {/* Title */}
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Project title</Label>
+              <input
+                required
+                placeholder="e.g. Project Aurora: API Core Refresh"
+                value={formData.title}
+                onChange={e => setFormData({ ...formData, title: e.target.value })}
+                className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium text-slate-900 placeholder:text-slate-300 focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-500/10 outline-none transition-all"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Internal / External toggle */}
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Deployment type</Label>
+                <select
+                  className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium text-slate-900 focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-500/10 outline-none transition-all appearance-none cursor-pointer"
+                  value={formData.is_internal ? "internal" : "external"}
+                  onChange={e => setFormData({ ...formData, is_internal: e.target.value === "internal", client: "" })}
+                >
+                  <option value="internal">Internal Infrastructure</option>
+                  <option value="external">Operational Delivery (External)</option>
+                </select>
               </div>
-              
-              <div className="space-y-4">
-                 <h3 className="px-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Tactical Actions</h3>
-                 <div className="space-y-1">
-                    {[
-                      { label: "New Task Transmission", icon: <Plus className="h-4 w-4" /> },
-                      { label: "Global Announcement", icon: <Zap className="h-4 w-4" /> },
-                      { label: "Recruit New Member", icon: <Users className="h-4 w-4" /> },
-                    ].map((action, i) => (
-                      <button key={i} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white hover:shadow-sm transition-all text-sm font-bold text-slate-500 hover:text-slate-900 group text-left">
-                         <div className="p-2 rounded-lg bg-slate-50 text-slate-300 group-hover:bg-blue-50 group-hover:text-blue-600 transition-all">
-                            {action.icon}
-                         </div>
-                         {action.label}
-                      </button>
-                    ))}
-                 </div>
+
+              {/* Target deadline */}
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Target deadline</Label>
+                <input
+                  type="date"
+                  value={formData.target_end_date}
+                  onChange={e => setFormData({ ...formData, target_end_date: e.target.value })}
+                  className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium text-slate-900 focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-500/10 outline-none transition-all cursor-pointer"
+                />
               </div>
-           </div>
+            </div>
+
+            {/* Client — only shown for external projects */}
+            {!formData.is_internal && (
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Client</Label>
+                <select
+                  required
+                  value={formData.client}
+                  onChange={e => setFormData({ ...formData, client: e.target.value })}
+                  className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium text-slate-900 focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-500/10 outline-none transition-all appearance-none cursor-pointer"
+                >
+                  <option value="" disabled>Select client...</option>
+                  {clients.length === 0
+                    ? <option value="" disabled>No clients available</option>
+                    : clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)
+                  }
+                </select>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+              <Button type="button" variant="ghost" onClick={() => { onOpenChange(false); reset() }} className="w-full sm:flex-1 h-10 text-slate-400 font-medium text-[10px] uppercase tracking-widest rounded-xl hover:bg-violet-50 hover:text-violet-600 transition-all">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={loading} className="w-full sm:flex-[2] h-10 bg-violet-600 hover:bg-violet-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-md shadow-violet-600/25 active:scale-95 transition-all">
+                {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : <CheckCircle2 className="size-4 mr-2" />}
+                {loading ? "Deploying..." : "Initialize mission project"}
+              </Button>
+            </div>
+          </form>
         </div>
-        
-        <div className="px-8 py-4 border-t border-slate-50 flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-           <div className="flex items-center gap-4">
-              <span>↑↓ to navigate</span>
-              <span>⏎ to select</span>
-           </div>
-           <span>Advanced Search Mode</span>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+export function NewUpdateModal({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
+  const [loading, setLoading] = useState(false)
+  const [content, setContent] = useState("")
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setTimeout(() => {
+      setLoading(false)
+      toast.success("Tactical update successfully broadcasted.")
+      onOpenChange(false)
+      setContent("")
+    }, 1500)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent showCloseButton={false} className="w-[95vw] sm:max-w-3xl rounded-2xl sm:rounded-3xl p-0 border border-violet-100 overflow-hidden bg-white shadow-[0_20px_50px_rgba(109,40,217,0.08)] font-sans outline-none max-h-[90vh] flex flex-col">
+        <DialogTitle className="sr-only">Draft transmission</DialogTitle>
+        <DialogDescription className="sr-only">Compose a strategic broadcast update for the unit sector.</DialogDescription>
+        {/* Header */}
+        <div className="bg-white px-5 sm:px-8 pt-5 pb-4 flex items-center gap-3 border-b border-violet-50 shrink-0">
+          <div className="size-8 bg-violet-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-violet-600/30 shrink-0">
+            <Megaphone className="size-4" />
+          </div>
+          <div>
+            <h2 className="text-sm font-black tracking-tight text-slate-900 leading-none">Draft transmission</h2>
+            <p className="text-[11px] font-medium text-slate-400 mt-0.5">Compose a strategic broadcast update for the unit sector.</p>
+          </div>
+        </div>
+
+        <div className="overflow-y-auto">
+          <form onSubmit={handleSubmit} className="px-5 sm:px-8 py-6 space-y-5 bg-white">
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Broadcast headline</Label>
+              <input placeholder="Enter a descriptive subject..." required className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium text-slate-900 placeholder:text-slate-300 focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-500/10 outline-none transition-all" />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Transmission detail</Label>
+              <Textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Synchronize your message with the tactical teams..."
+                required
+                className="rounded-xl border-slate-100 bg-slate-50 min-h-[120px] p-3 text-sm font-medium resize-none focus:border-violet-500 focus:bg-white outline-none transition-all"
+              />
+            </div>
+
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+              <div className="flex items-center gap-2">
+                <button type="button" className="p-2 text-slate-300 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all"><ImageIcon className="size-4" /></button>
+                <button type="button" className="p-2 text-slate-300 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all"><Paperclip className="size-4" /></button>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-full text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+                  <Globe className="size-3 text-emerald-500" />Everyone
+                </div>
+              </div>
+              <Button type="submit" disabled={loading} className="sm:ml-auto h-10 px-6 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-md shadow-violet-600/25 active:scale-95 transition-all">
+                {loading ? <Loader2 className="size-4 animate-spin" /> : "Transmit update"}
+              </Button>
+            </div>
+          </form>
         </div>
       </DialogContent>
     </Dialog>

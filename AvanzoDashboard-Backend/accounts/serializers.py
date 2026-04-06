@@ -77,6 +77,9 @@ class EmployeeSerializer(serializers.ModelSerializer):
     """Used by Admin and HR for managing users."""
 
     password = serializers.CharField(write_only=True, required=False)
+    department_name = serializers.CharField(source="department.name", read_only=True, default=None)
+    designation_name = serializers.CharField(source="designation.name", read_only=True, default=None)
+    role = serializers.CharField(source="role_name", read_only=True)
 
     class Meta:
         model = Employee
@@ -90,8 +93,11 @@ class EmployeeSerializer(serializers.ModelSerializer):
             "employee_id",
             "access_role",
             "department",
+            "department_name",
             "designation",
+            "designation_name",
             "team_lead",
+            "role",
             "status",
             "date_of_joining",
         ]
@@ -114,6 +120,15 @@ class EmployeeSerializer(serializers.ModelSerializer):
             return value
 
         raise serializers.ValidationError("You do not have permission to assign roles.")
+
+    def get_fields(self):
+        fields = super().get_fields()
+        # On update (PATCH/PUT), access_role is read-only — role changes
+        # require a dedicated admin action, not a general employee edit.
+        if self.instance is not None:
+            fields["access_role"].read_only = True
+        return fields
+
 
     def create(self, validated_data):
         password = validated_data.pop("password", None)

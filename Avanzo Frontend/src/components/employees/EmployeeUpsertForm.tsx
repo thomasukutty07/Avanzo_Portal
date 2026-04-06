@@ -2,12 +2,9 @@ import { useState, useEffect, type FormEvent } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { api } from "@/lib/axios"
 import { extractResults } from "@/lib/apiResults"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
-import type { Department, Designation, Role, UserRole, User } from "@/types"
+import type { Department, Designation, Role, UserRole } from "@/types"
 
 export type EmployeeRow = {
   id: string
@@ -122,22 +119,31 @@ export function EmployeeUpsertForm({
 
     setSubmitting(true)
     try {
+      const isEdit = !!initialData?.id
+
       const payload: any = {
-        email: email.trim(),
         first_name: firstName.trim(),
         last_name: lastName.trim(),
-        phone: phone.trim() || undefined,
-        employee_id: employeeId.trim() || undefined,
-        access_role: accessRoleId,
+        phone: phone.trim() || null,
+        employee_id: employeeId.trim() || null,
         department: departmentId || null,
         designation: designationId || null,
         team_lead: teamLeadId || null,
-        status: "active",
         date_of_joining: dateOfJoining || null,
       }
+
+      // Only include access_role on create — PATCH never changes role
+      // (backend validate_access_role rejects non-admin/HR callers)
+      if (!isEdit) {
+        payload.access_role = accessRoleId
+        payload.email = email.trim()
+        payload.status = "active"
+      }
+
       if (password) payload.password = password
 
-      if (initialData?.id) {
+      if (isEdit) {
+        console.log("[EmployeeUpsertForm] PATCH payload:", payload)
         await api.patch(`/api/auth/employees/${initialData.id}/`, payload)
         toast.success(`Updated ${firstName} ${lastName}`)
       } else {
@@ -145,16 +151,11 @@ export function EmployeeUpsertForm({
         toast.success(`Registered ${firstName} ${lastName}`)
       }
       onSuccess()
+
     } catch (err: unknown) {
-      const msg =
-        err &&
-        typeof err === "object" &&
-        "response" in err &&
-        err.response &&
-        typeof err.response === "object" &&
-        "data" in err.response
-          ? JSON.stringify((err.response as { data: unknown }).data)
-          : "Could not save employee"
+      const data = (err as any)?.response?.data
+      console.error("[EmployeeUpsertForm] 400 error response:", data)
+      const msg = data ? JSON.stringify(data) : "Could not save employee"
       toast.error(msg)
     } finally {
       setSubmitting(false)
@@ -170,158 +171,181 @@ export function EmployeeUpsertForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="emp-email">Email address</Label>
-          <Input
-            id="emp-email"
-            type="email"
-            placeholder="john@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="emp-password">Password {initialData ? "(leave blank to keep current)" : ""}</Label>
-          <Input
-            id="emp-password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+    <form onSubmit={handleSubmit} className="space-y-8 animate-in fade-in duration-500">
+      <div className="grid gap-6 sm:grid-cols-2">
+        <EliteFormField 
+           label="Email address" 
+           type="email" 
+           placeholder="john@example.com"
+           value={email}
+           onChange={setEmail}
+        />
+        <EliteFormField 
+           label={`Password ${initialData ? "(leave blank to keep current)" : ""}`} 
+           type="password" 
+           placeholder="••••••••"
+           value={password}
+           onChange={setPassword}
+        />
+      </div>
+
+      <div className="grid gap-6 sm:grid-cols-2">
+        <EliteFormField 
+           label="First name" 
+           placeholder="e.g. John"
+           value={firstName}
+           onChange={setFirstName}
+        />
+        <EliteFormField 
+           label="Last name" 
+           placeholder="e.g. Doe"
+           value={lastName}
+           onChange={setLastName}
+        />
+      </div>
+
+      <div className="grid gap-6 sm:grid-cols-2">
+        <EliteFormField 
+           label="Employee ID (Optional)" 
+           placeholder="EMP-0000"
+           value={employeeId}
+           onChange={setEmployeeId}
+        />
+        <EliteFormField 
+           label="Phone number" 
+           placeholder="+91 00000 00000"
+           value={phone}
+           onChange={setPhone}
+        />
+      </div>
+
+      <div className="space-y-2 text-left">
+        <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.15em] ml-1">Access role</label>
+        <div className="relative">
+          <select
+            className="w-full h-12 bg-slate-50 border-none rounded-2xl px-5 text-sm font-black text-slate-900 focus:ring-2 focus:ring-violet-600/10 focus:bg-white transition-all outline-none appearance-none cursor-pointer"
+            value={accessRoleId}
+            onChange={(e) => setAccessRoleId(e.target.value)}
+          >
+            <option value="">Select a role</option>
+            {roleChoices.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
+          </select>
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="size-4"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="emp-fname">First name</Label>
-          <Input
-            id="emp-fname"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-          />
+      <div className="grid gap-6 sm:grid-cols-2">
+        <div className="space-y-2 text-left">
+          <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.15em] ml-1">Department</label>
+          <div className="relative">
+            <select
+              className="w-full h-12 bg-slate-50 border-none rounded-2xl px-5 text-sm font-black text-slate-900 focus:ring-2 focus:ring-violet-600/10 focus:bg-white transition-all outline-none appearance-none cursor-pointer"
+              value={departmentId}
+              onChange={(e) => setDepartmentId(e.target.value)}
+            >
+              <option value="">Select department</option>
+              {departments.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
+              ))}
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="size-4"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+          </div>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="emp-lname">Last name</Label>
-          <Input
-            id="emp-lname"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-          />
+        <div className="space-y-2 text-left">
+          <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.15em] ml-1">Designation</label>
+          <div className="relative">
+            <select
+              className="w-full h-12 bg-slate-50 border-none rounded-2xl px-5 text-sm font-black text-slate-900 focus:ring-2 focus:ring-violet-600/10 focus:bg-white transition-all outline-none appearance-none cursor-pointer"
+              value={designationId}
+              onChange={(e) => setDesignationId(e.target.value)}
+            >
+              <option value="">Select designation</option>
+              {designations.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
+              ))}
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="size-4"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="emp-id">Employee ID (Optional)</Label>
-          <Input
-            id="emp-id"
-            value={employeeId}
-            onChange={(e) => setEmployeeId(e.target.value)}
-          />
+      <div className="grid gap-6 sm:grid-cols-2">
+        <div className="space-y-2 text-left">
+          <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.15em] ml-1">Team lead (optional)</label>
+          <div className="relative">
+            <select
+              className="w-full h-12 bg-slate-50 border-none rounded-2xl px-5 text-sm font-black text-slate-900 focus:ring-2 focus:ring-violet-600/10 focus:bg-white transition-all outline-none appearance-none cursor-pointer"
+              value={teamLeadId}
+              onChange={(e) => setTeamLeadId(e.target.value)}
+            >
+              <option value="">None</option>
+              {teamLeadOptions.map((tl) => (
+                <option key={tl.id} value={tl.id}>
+                  {tl.first_name} {tl.last_name} ({tl.email})
+                </option>
+              ))}
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="size-4"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+          </div>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="emp-phone">Phone number</Label>
-          <Input
-            id="emp-phone"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
-        </div>
+        <EliteFormField 
+           label="Date of joining" 
+           type="date" 
+           value={dateOfJoining}
+           onChange={setDateOfJoining}
+        />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="emp-role">Access role</Label>
-        <select
-          id="emp-role"
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-          value={accessRoleId}
-          onChange={(e) => setAccessRoleId(e.target.value)}
+      <div className="flex flex-wrap gap-3 pt-6">
+        <button 
+          type="submit" 
+          disabled={submitting}
+          className="h-12 px-10 bg-violet-600 hover:bg-violet-700 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-violet-900/10 transition-all active:scale-95 disabled:opacity-70 flex items-center gap-3"
         >
-          <option value="">Select a role</option>
-          {roleChoices.map((r) => (
-            <option key={r.id} value={r.id}>
-              {r.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="emp-dept">Department</Label>
-          <select
-            id="emp-dept"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-            value={departmentId}
-            onChange={(e) => setDepartmentId(e.target.value)}
-          >
-            <option value="">Select department</option>
-            {departments.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="emp-desig">Designation</Label>
-          <select
-            id="emp-desig"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-            value={designationId}
-            onChange={(e) => setDesignationId(e.target.value)}
-          >
-            <option value="">Select designation</option>
-            {designations.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="emp-tl">Team lead (optional)</Label>
-          <select
-            id="emp-tl"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-            value={teamLeadId}
-            onChange={(e) => setTeamLeadId(e.target.value)}
-          >
-            <option value="">None</option>
-            {teamLeadOptions.map((tl) => (
-              <option key={tl.id} value={tl.id}>
-                {tl.first_name} {tl.last_name} ({tl.email})
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="emp-doj">Date of joining</Label>
-          <Input
-            id="emp-doj"
-            type="date"
-            value={dateOfJoining}
-            onChange={(e) => setDateOfJoining(e.target.value)}
-          />
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-2 pt-2">
-        <Button type="submit" disabled={submitting}>
-          {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {submitting && <Loader2 className="h-4 w-4 animate-spin stroke-[3px]" />}
           {submitLabel}
-        </Button>
+        </button>
         {onCancel && (
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <button 
+            type="button" 
+            onClick={onCancel}
+            className="h-12 px-10 bg-white border border-slate-100 text-slate-500 text-[11px] font-black uppercase tracking-widest rounded-2xl hover:bg-slate-50 transition-all active:scale-95"
+          >
             Cancel
-          </Button>
+          </button>
         )}
       </div>
     </form>
+  )
+}
+
+function EliteFormField({ label, placeholder, type = "text", value, onChange }: { label: string, placeholder?: string, type?: string, value: string, onChange: (val: string) => void }) {
+  return (
+    <div className="space-y-2 text-left animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.15em] ml-1">{label}</label>
+      <input 
+        type={type}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full h-12 bg-slate-50 border-none rounded-2xl px-5 text-sm font-black text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-violet-600/10 focus:bg-white transition-all outline-none shadow-sm shadow-slate-900/5 group-hover:scale-[1.02]"
+      />
+    </div>
   )
 }

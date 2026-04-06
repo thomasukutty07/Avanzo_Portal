@@ -1,177 +1,132 @@
+import { useState, useEffect } from "react"
+import { Link } from "react-router-dom"
 import { 
-  MessageSquare,
-  ChevronRight,
-  FileText,
-  ShieldCheck,
-  Phone,
-  Lock,
-  ExternalLink
+  Megaphone, 
+  Calendar, 
+  User, 
+  Clock, 
+  ExternalLink,
+  Plus
 } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
-
-const ANNOUNCEMENTS = [
-  {
-    tag: "URGENT ACTION",
-    tagColor: "text-red-500 bg-red-50 border-red-100",
-    date: "Today at 09:30 AM",
-    author: "A. Smith (Lead SecOps)",
-    initials: "AS",
-    title: "Emergency Patching: CVE-2024-X12 Server Farm Vulnerability",
-    content: "A critical vulnerability has been identified in the central Linux kernel used across our primary cloud nodes. All sysadmins must begin staggered reboots after applying the hotfix provided in Jira ticket #SEC-992. No exceptions for downtime during the 12:00-14:00 maintenance window.",
-    linkText: "View Mitigation Steps",
-    comments: 14,
-    accent: "border-l-red-500"
-  },
-  {
-    tag: "POLICY CHANGE",
-    tagColor: "text-violet-600 bg-violet-50 border-violet-100",
-    date: "Yesterday at 14:15 PM",
-    author: "R. Baker (Compliance)",
-    initials: "RB",
-    title: "New Password Rotation Schedule for Q3",
-    content: "Starting October 1st, we are transitioning to a 90-day rotation for all internal service accounts. Please review the updated documentation in the Confluence 'CyberSecurity Guidelines' space to ensure your scripts are updated for automated rotation.",
-    file: "Q3_Compliance_Protocol.pdf",
-    accent: "border-l-violet-600"
-  },
-  {
-    tag: "INTERNAL NEWS",
-    tagColor: "text-slate-500 bg-slate-50 border-slate-100",
-    date: "Sep 18, 2024",
-    author: "M. Lopez (Manager)",
-    initials: "ML",
-    title: "Welcome New Team Members",
-    content: "Join us in welcoming three new analysts joining our threat hunting team next Monday. We will be hosting a brief introductory coffee session in the lounge at 10:00 AM.",
-    accent: "border-l-slate-200"
-  }
-]
-
-const COMPANY_UPDATES = [
-  { dept: "HR DEPT", time: "2d ago", title: "Annual Health Benefits Enrollment", desc: "Please ensure you've selected your plan for the next fiscal year by Friday..." },
-  { dept: "IT / ADMIN", time: "4d ago", title: "Office Maintenance: East Wing", desc: "HVAC maintenance will take place this Saturday from 8 AM to 4 PM..." },
-  { dept: "FINANCE", time: "Sep 15", title: "New Expense Reimbursement Portal", desc: "We are migrating to 'SpendFlow' for all travel and office expense claims..." }
-]
+import { api } from "@/lib/axios"
+import { extractResults } from "@/lib/apiResults"
+import { Button } from "@/components/ui/button"
 
 export default function CyberSecurityAnnouncementsPage() {
+  const [announcements, setAnnouncements] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await api.get("/api/notifications/broadcasts/")
+        setAnnouncements(extractResults(res.data))
+        setLoading(false)
+      } catch (e) {
+        console.error(e)
+        setLoading(false)
+      }
+    }
+    load()
+  }, [])
+
+  if (loading) return <div className="p-10 text-slate-400 font-bold font-headline animate-pulse text-xs italic">Synchronizing broadcast feed...</div>
+
   return (
-    <div className="space-y-10 pt-4 min-h-screen pb-12 font-display bg-[#fcfcfc]">
-      <div className="mb-10 font-headline space-y-1">
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-600">
-          SECURITY INTELLIGENCE • BROADCASTS
-        </p>
-        <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none uppercase">Operation Alerts</h1>
-        <p className="text-slate-500 mt-2 text-sm font-medium">Internal updates, CyberSecurity alerts, and organizational intelligence.</p>
+    <div className="space-y-8 pt-4 pb-12 font-headline bg-[#fcfcfc] min-h-screen">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-none italic">Operational broadcasts</h1>
+          <p className="text-slate-500 mt-2 text-xs font-medium italic italic">Real-time intelligence and official cybersecurity bulletins.</p>
+        </div>
+        <Link to="/security/create-announcement">
+          <Button className="h-10 px-6 bg-violet-600 hover:bg-violet-700 text-white font-black text-[10px] tracking-[0.2em] rounded-xl shadow-lg shadow-violet-600/20 active:scale-95 transition-all">
+            <Plus className="size-3.5 mr-2" />
+            New broadcast
+          </Button>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* News Feed */}
+        {/* Main Feed */}
         <div className="lg:col-span-8 space-y-6">
-          <div className="flex items-center justify-between px-2 mb-4">
-             <h4 className="font-black text-slate-900 tracking-tight font-headline uppercase italic">CyberSecurity Department Updates</h4>
-             <button className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-violet-600 transition-colors bg-slate-50 px-3 py-1 rounded-lg font-headline">Sort By: Newest</button>
-          </div>
-
-          {ANNOUNCEMENTS.map((news, i) => (
-            <Card key={i} className={`border border-slate-100 shadow-sm rounded-2xl overflow-hidden bg-white border-l-4 ${news.accent}`}>
-              <CardContent className="p-8">
-                <div className="flex items-center justify-between mb-6 font-headline">
-                  <div className="flex items-center gap-4">
-                    <span className={`px-2.5 py-1 rounded-[6px] text-[9px] font-black tracking-widest border ${news.tagColor} shadow-sm uppercase italic`}>
-                      {news.tag}
-                    </span>
-                    <span className="text-[10px] font-black text-slate-300 tracking-tight uppercase tabular-nums">{news.date}</span>
-                  </div>
+          {announcements.length > 0 ? (
+            announcements.map((item, i) => (
+              <div key={i} className="group bg-white rounded-3xl border border-slate-100 p-8 shadow-sm hover:shadow-md transition-all">
+                <div className="flex justify-between items-start mb-6">
                   <div className="flex items-center gap-3">
-                    <div className="text-right hidden sm:block">
-                      <p className="text-[11px] font-black text-slate-900 leading-none uppercase italic">{news.author}</p>
+                    <div className="size-9 rounded-xl bg-violet-50 flex items-center justify-center text-violet-600 shadow-sm border border-violet-100 group-hover:scale-105 transition-transform">
+                      <Megaphone className="size-4.5" />
                     </div>
-                    <div className="size-8 rounded-lg bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400 border border-slate-200/50 shadow-sm uppercase italic">
-                      {news.initials}
+                    <div>
+                      <p className="text-[11px] font-black text-slate-900 group-hover:text-violet-700 transition-colors uppercase tracking-[0.1em]">{item.title}</p>
+                      <div className="flex items-center gap-3 mt-1.5 font-bold text-[9px] text-slate-400 italic">
+                        <span className="flex items-center gap-1"><User className="size-3" /> {item.created_by_name}</span>
+                        <span className="flex items-center gap-1"><Calendar className="size-3" /> {new Date(item.created_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <span className="px-3 py-1 bg-violet-50 text-violet-600 text-[8px] font-black tracking-widest rounded-lg border border-violet-100 uppercase tabular-nums">
+                    Ref: BC-00{i+1}
+                  </span>
+                </div>
+                <p className="text-[13px] text-slate-600 leading-relaxed font-medium italic opacity-80 group-hover:opacity-100 transition-opacity">
+                  {item.message}
+                </p>
+                <div className="mt-8 flex items-center justify-between pt-6 border-t border-slate-50">
+                  <button className="text-[9px] font-black text-violet-600 hover:underline tracking-widest flex items-center gap-2">
+                    Intelligence briefing <ExternalLink className="size-2.5" />
+                  </button>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1.5">
+                       <div className="size-1.5 rounded-full bg-emerald-500 shadow-sm" />
+                       <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Active broadcast</span>
                     </div>
                   </div>
                 </div>
-
-                <h3 className="text-xl font-black text-slate-900 mb-4 tracking-tight leading-tight font-headline">{news.title}</h3>
-                <p className="text-[14px] text-slate-600 font-medium leading-relaxed mb-8">
-                  {news.content}
-                </p>
-
-                <div className="flex items-center gap-6 pt-6 border-t border-slate-50 font-headline">
-                  {news.linkText && (
-                    <button className="text-[11px] font-black text-violet-700 hover:underline flex items-center gap-2 group italic uppercase tracking-tight">
-                      {news.linkText}
-                      <ChevronRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
-                    </button>
-                  )}
-                  {news.comments && (
-                    <button className="text-[11px] font-black text-slate-400 hover:text-slate-600 flex items-center gap-2 uppercase italic tracking-tight">
-                       <MessageSquare className="size-3.5" />
-                       {news.comments} Comments
-                    </button>
-                  )}
-                  {news.file && (
-                    <div className="flex-1 flex justify-between items-center p-3 px-5 bg-slate-50 rounded-xl group cursor-pointer hover:bg-slate-100 transition-colors font-headline">
-                       <div className="flex items-center gap-3">
-                         <FileText className="size-4 text-violet-600" />
-                         <span className="text-[11px] font-black text-slate-900 uppercase tracking-tight">{news.file}</span>
-                       </div>
-                       <button className="text-[10px] font-black text-violet-600 uppercase tracking-widest group-hover:scale-105 transition-transform">Download</button>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+            ))
+          ) : (
+            <div className="flex flex-col items-center justify-center py-24 bg-white rounded-3xl border border-dotted border-slate-200">
+               <div className="size-14 rounded-2xl bg-slate-50 flex items-center justify-center mb-4">
+                  <Megaphone className="size-6 text-slate-200" />
+               </div>
+               <p className="text-slate-400 font-bold text-sm italic">No active tactical broadcasts identified</p>
+               <p className="text-slate-300 text-[10px] mt-2 italic">Official intelligence will appear in this registry.</p>
+            </div>
+          )}
         </div>
 
-        {/* Sidebar */}
-        <div className="lg:col-span-4 space-y-8">
-          {/* Company Updates */}
-          <div className="bg-white rounded-2xl border border-slate-100 p-8 shadow-sm">
-            <div className="flex items-center gap-3 mb-8">
-               <ShieldCheck className="size-5 text-violet-600" />
-               <h4 className="font-black text-[12px] uppercase tracking-[0.2em] text-slate-900 font-headline">Company-wide Updates</h4>
+        {/* Sidebar Info */}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="bg-slate-900 rounded-3xl p-8 shadow-xl relative overflow-hidden group">
+            <div className="absolute -right-8 -bottom-8 size-40 bg-violet-600/10 rounded-full blur-3xl group-hover:bg-violet-600/20 transition-colors" />
+            <h4 className="text-white font-black text-[11px] tracking-[0.2em] mb-6 uppercase">System Health</h4>
+            <div className="space-y-6 relative z-10">
+              {[
+                { label: "Transmission node", val: "Operational", tone: "text-emerald-400" },
+                { label: "Alert cadence", val: "Real-time", tone: "text-emerald-400" },
+                { label: "Protocol", val: "XA-99-ALPHA", tone: "text-violet-400" },
+              ].map((info, i) => (
+                <div key={i} className="flex justify-between items-baseline border-b border-white/5 pb-4">
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{info.label}</span>
+                  <span className={`text-[10px] font-black italic ${info.tone} uppercase`}>{info.val}</span>
+                </div>
+              ))}
             </div>
-            
-            <div className="space-y-8">
-                {COMPANY_UPDATES.map((upd, i) => (
-                  <div key={i} className="group cursor-pointer font-headline">
-                     <div className="flex justify-between items-center mb-1.5 text-[9px] font-black uppercase tracking-widest">
-                        <span className="text-violet-600">{upd.dept}</span>
-                        <span className="text-slate-300 group-hover:text-slate-400 transition-colors">{upd.time}</span>
-                     </div>
-                     <h5 className="text-[13px] font-black text-slate-900 group-hover:text-violet-700 transition-colors mb-1 font-headline uppercase italic tracking-tight">{upd.title}</h5>
-                     <p className="text-[11px] text-slate-500 font-bold line-clamp-2 leading-relaxed italic pr-2 uppercase tracking-tight">
-                       {upd.desc}
-                     </p>
-                  </div>
-                ))}
-            </div>
-
-            <button className="mt-10 w-full py-2 text-[10px] font-black text-violet-700 hover:text-violet-800 uppercase tracking-widest border-t border-slate-50 pt-4 text-center transition-colors font-headline">
-              View All Company News
-            </button>
           </div>
 
-          {/* Quick Resources */}
-          <div className="bg-white rounded-2xl border border-slate-100 p-8 shadow-sm">
-             <h4 className="font-black text-[12px] uppercase tracking-[0.2em] text-slate-900 mb-8 font-headline">Quick Resources</h4>
-             <div className="space-y-2">
-                {[
-                  { label: "Incident Playbooks", icon: ShieldCheck },
-                  { label: "Emergency Contact List", icon: Phone },
-                  { label: "Compliance Certifications", icon: Lock },
-                  { label: "Knowledge Base", icon: ExternalLink },
-                ].map((res, i) => (
-                  <button key={i} className="w-full flex items-center justify-between p-3 px-4 rounded-xl hover:bg-slate-50 transition-all group text-left">
-                    <span className="text-[12px] font-bold text-slate-600 group-hover:text-slate-900 transition-colors">{res.label}</span>
-                    <ChevronRight className="size-4 text-slate-300 group-hover:text-violet-600 group-hover:translate-x-1 transition-all" />
-                  </button>
-                ))}
-             </div>
-          </div>
-          
-          <div className="px-8 text-[9px] font-bold uppercase tracking-[0.1em] text-slate-300">
-             © 2024 Avanzo Cyber Defense Group. Confidential.
+          <div className="bg-white rounded-3xl border border-slate-100 p-8 shadow-sm">
+            <h4 className="text-slate-900 font-black text-[11px] tracking-[0.2em] mb-6 uppercase italic">Operational Cadence</h4>
+            <div className="flex items-center gap-4">
+              <div className="size-10 rounded-xl bg-violet-50 flex items-center justify-center text-violet-600">
+                <Clock className="size-5" />
+              </div>
+              <div>
+                <p className="text-[11px] font-black text-slate-800 uppercase italic">Last Sync</p>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1 tabular-nums">0.4s ago</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

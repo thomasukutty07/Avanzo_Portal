@@ -145,6 +145,12 @@ class TaskSerializer(serializers.ModelSerializer):
 
         return data
 
+    def create(self, validated_data):
+        force_assign = validated_data.pop("force_assign", False)
+        instance = super().create(validated_data)
+        validated_data["force_assign"] = force_assign
+        return instance
+
 
 class TaskProgressSerializer(serializers.Serializer):
     """Used for the PATCH /tasks/{id}/progress/ endpoint."""

@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
 type Priority = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW"
-type Status = "In Progress" | "To Do" | "Review"
+type Status = "In Progress" | "To Do" | "Review" | "Rework" | "Closed"
 
 type Task = {
   id: string
@@ -66,7 +66,9 @@ export default function TechnicalTasksPage() {
         const mappedTasks: Task[] = data.map((t: any) => {
             let status: Status = "To Do";
             if (t.status === "progress") status = "In Progress";
-            if (t.status === "resolved") status = "Review";
+            if (t.status === "review") status = "Review";
+            if (t.status === "rework") status = "Rework";
+            if (t.status === "closed") status = "Closed";
 
             let priority: Priority = "MEDIUM";
             if (t.priority === "critical") priority = "CRITICAL";
@@ -102,6 +104,26 @@ export default function TechnicalTasksPage() {
     const val = e.target.value;
     setSelectedProject(val);
     fetchTasks(val === "All Projects" ? undefined : val);
+  };
+
+  const handleTaskClick = async (task: Task) => {
+    if (task.status === "Closed" || task.status === "Review") {
+        toast.info("Task is currently waiting for review or is closed.");
+        return;
+    }
+    
+    try {
+        if (task.status === "To Do") {
+            await projectsService.updateTaskProgress(task.id, 10);
+            toast.success("Task started (In Progress).");
+        } else if (task.status === "In Progress" || task.status === "Rework") {
+            await projectsService.updateTaskProgress(task.id, 100);
+            toast.success("Task marked as ready for review.");
+        }
+        fetchTasks(selectedProject === "All Projects" ? undefined : selectedProject);
+    } catch (err) {
+        toast.error("Failed to update task.");
+    }
   };
 
   if (loading) {
@@ -212,7 +234,7 @@ export default function TechnicalTasksPage() {
                 <tbody className="divide-y divide-slate-50">
                     {tasks.length > 0 ? (
                         tasks.map((task: Task) => (
-                            <tr key={task.id} className="hover:bg-slate-50/50 transition-colors group">
+                            <tr key={task.id} onClick={() => handleTaskClick(task)} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
                                 <td className="px-6 py-4">
                                     <div className="flex items-start gap-4">
                                         <div className="mt-1.5 shrink-0">
@@ -231,15 +253,20 @@ export default function TechnicalTasksPage() {
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-1.5">
-                                        {task.status === "In Progress" ? (
+                                        {task.status === "In Progress" || task.status === "Rework" ? (
                                             <>
-                                                <div className="size-3 rounded-full border-[3px] border-amber-500 overflow-hidden"></div>
-                                                <span className="text-[11px] font-bold text-amber-500">{task.status}</span>
+                                                <div className={`size-3 rounded-full border-[3px] ${task.status === 'Rework' ? 'border-red-500' : 'border-amber-500'} overflow-hidden`}></div>
+                                                <span className={`text-[11px] font-bold ${task.status === 'Rework' ? 'text-red-500' : 'text-amber-500'}`}>{task.status}</span>
                                             </>
                                         ) : task.status === "To Do" ? (
                                             <>
                                                 <div className="size-3 rounded-full border-2 border-slate-300"></div>
                                                 <span className="text-[11px] font-bold text-slate-500">{task.status}</span>
+                                            </>
+                                        ) : task.status === "Closed" ? (
+                                            <>
+                                                <div className="size-3 rounded-full bg-emerald-500"></div>
+                                                <span className="text-[11px] font-bold text-emerald-600">{task.status}</span>
                                             </>
                                         ) : (
                                             <>

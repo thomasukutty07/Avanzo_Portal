@@ -1,7 +1,8 @@
-import { NavLink, useNavigate } from "react-router-dom"
+import { useState, useEffect } from "react"
+import { NavLink, useNavigate, useLocation } from "react-router-dom"
 import { LogOut, Search, Bell, Menu, X, Settings as SettingsIcon, Download } from "lucide-react"
-import { useState } from "react"
 import { useAuth } from "@/context/AuthContext"
+import { api } from "@/lib/axios"
 import { toast } from "sonner"
 import { purplePortalPalette } from "@/components/design/portalPalettes"
 import { HR_PORTAL_NAV } from "./hrPortalNavConfig"
@@ -10,7 +11,26 @@ export function HRPortalChrome({ children }: { children: React.ReactNode }) {
   const { logout, user } = useAuth()
   const navigate = useNavigate()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [announcementCount, setAnnouncementCount] = useState(0)
   const style = purplePortalPalette as React.CSSProperties
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await api.get("/api/notifications/broadcasts/")
+        const data = res.data
+        const items = Array.isArray(data) ? data : (data.results || [])
+        setAnnouncementCount(items.length)
+      } catch (e) {
+        console.error(e)
+      }
+    }
+    fetchStats()
+    const interval = setInterval(fetchStats, 60000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const location = useLocation()
 
   const inactive =
     "flex items-center gap-3 rounded-xl px-4 py-3 text-[13px] font-bold text-slate-500 transition-all duration-200 hover:bg-slate-50 hover:text-slate-900 font-headline"
@@ -23,7 +43,7 @@ export function HRPortalChrome({ children }: { children: React.ReactNode }) {
 
   return (
     <div
-      className="design-portal design-portal-light flex min-h-screen w-full bg-[#fcfcfc] text-slate-900 overflow-x-hidden font-display"
+      className="design-portal design-portal-light flex min-h-screen w-full bg-[#fcfcfc] text-slate-900 overflow-x-hidden font-display transition-colors duration-500"
       style={style}
     >
       {/* Mobile Sidebar Overlay */}
@@ -61,7 +81,12 @@ export function HRPortalChrome({ children }: { children: React.ReactNode }) {
               className={({ isActive }) => (isActive ? active : inactive)}
             >
               <Icon className="h-5 w-5 shrink-0" />
-              {label}
+              <span className="flex-1">{label}</span>
+              {label === "Announcements" && announcementCount > 0 && (
+                <span className="bg-violet-600 text-white text-[10px] font-black px-2 py-0.5 rounded-lg shadow-sm animate-in zoom-in duration-300">
+                  {announcementCount}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>
@@ -142,7 +167,7 @@ export function HRPortalChrome({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="min-h-0 flex-1 overflow-y-auto p-4 md:p-8">
+        <main key={location.pathname} className="min-h-0 flex-1 overflow-y-auto p-6 md:p-10 lg:p-12 animate-in fade-in slide-in-from-bottom-2 duration-700 ease-out">
           {children}
         </main>
       </div>

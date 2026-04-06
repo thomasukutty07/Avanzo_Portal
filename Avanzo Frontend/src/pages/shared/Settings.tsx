@@ -1,7 +1,7 @@
 import { useAuth } from "@/context/AuthContext"
 import { OrganizationAdminChrome } from "@/components/portal/organizationadmin/OrganizationAdminChrome"
 import { HRPortalChrome } from "@/components/portal/hr/HRPortalChrome"
-import { TeamLeadChrome } from "@/components/portal/teamlead/TeamLeadChrome"
+import TeamLeadChrome from "@/components/portal/teamlead/TeamLeadChrome"
 import { TechnicalPortalLayout } from "@/components/portal/technical/TechnicalPortalLayout"
 import { CyberSecurityPortalLayout } from "@/components/portal/cyber_security/CyberSecurityPortalLayout"
 import { 

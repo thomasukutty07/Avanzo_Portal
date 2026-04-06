@@ -43,8 +43,8 @@
   --sidebar-border: #e7e0ef;
   --sidebar-ring: #6200ee;
   --radius: 0.625rem;
-  /* Override any shadcn default font to enforce design system font */
-  --default-font-family: "Plus Jakarta Sans", "Public Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* Enforce Elite Roman (Plus Jakarta Sans) as the singular design system font */
+  --default-font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
 .dark {
@@ -84,9 +84,9 @@
 }
 
 @theme inline {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Plus Jakarta Sans", "Public Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-headline: "Plus Jakarta Sans", "Public Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-headline: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -152,15 +152,18 @@
   * {
     @apply border-border outline-ring/50;
     box-sizing: border-box;
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif !important;
   }
   body {
-    @apply bg-background text-foreground;
-    font-family: "Plus Jakarta Sans", "Public Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+    @apply bg-background text-foreground font-display;
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif !important;
     -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.015em;
   }
   html {
     @apply font-display;
     line-height: 1.6;
+    font-family: "Plus Jakarta Sans", sans-serif;
   }
   .material-symbols-outlined {
     font-family: "Material Symbols Outlined", sans-serif;

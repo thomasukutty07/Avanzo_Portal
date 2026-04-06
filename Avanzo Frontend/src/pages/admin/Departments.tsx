@@ -16,10 +16,7 @@ import { Label } from "@/components/ui/label"
 import { api } from "@/lib/axios"
 import { extractResults } from "@/lib/apiResults"
 
-const UPDATES = [
-  { id: "UP-1", dept: "Technical", head: "Dr. Sarah Chen", status: "OPTIMAL", time: "2 hours ago", color: "bg-violet-50 text-violet-600" },
-  { id: "UP-2", dept: "Cybersecurity", head: "Marcus Thorne", status: "MAINTENANCE", time: "5 hours ago", color: "bg-amber-50 text-amber-600" },
-]
+
 
 export default function DepartmentsPage() {
   const [adding, setAdding] = useState(false)
@@ -197,7 +194,7 @@ export default function DepartmentsPage() {
         {/* Recent Updates Table */}
         <section className="bg-white rounded-[40px] border border-slate-50 shadow-sm overflow-hidden flex flex-col">
            <div className="p-10 border-b border-slate-50 flex items-center justify-between bg-slate-50/10">
-              <h3 className="text-xl font-black text-slate-900 font-display">Recent Department Updates</h3>
+              <h3 className="text-xl font-black text-slate-900 font-display">Organizational Infrastructure Summary</h3>
               <button 
                 className="text-[10px] font-black text-violet-700 uppercase tracking-widest hover:text-violet-900 transition-colors flex items-center gap-2"
                 onClick={() => toast.info("Deep audit log coming soon.")}
@@ -210,33 +207,33 @@ export default function DepartmentsPage() {
              <table className="w-full text-left">
                <thead className="bg-slate-50/20 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] border-b border-slate-50">
                  <tr>
-                   <th className="px-10 py-6">Department</th>
-                   <th className="px-10 py-6">Head of Department</th>
+                   <th className="px-10 py-6">Department Unit</th>
+                   <th className="px-10 py-6">Operational Code</th>
                    <th className="px-10 py-6 text-center">Status</th>
-                   <th className="px-10 py-6 text-right">Last Modified</th>
+                   <th className="px-10 py-6 text-right">Latency</th>
                  </tr>
                </thead>
                <tbody className="divide-y divide-slate-50">
-                 {UPDATES.map((up) => (
-                   <tr key={up.id} className="group hover:bg-slate-50/50 transition-all cursor-pointer">
+                 {departments.slice(0, 5).map((dept) => (
+                   <tr key={dept.id} className="group hover:bg-slate-50/50 transition-all cursor-pointer">
                      <td className="px-10 py-8">
                         <div className="flex items-center gap-5">
-                           <div className={`size-10 rounded-2xl flex items-center justify-center font-black text-xs ${up.color} shadow-sm group-hover:scale-110 transition-transform`}>
+                           <div className={`size-10 rounded-2xl flex items-center justify-center font-black text-xs bg-violet-50 text-violet-600 shadow-sm group-hover:scale-110 transition-transform`}>
                               <Building2 className="h-4 w-4" />
                            </div>
-                           <span className="font-bold text-slate-900 group-hover:text-violet-600 transition-colors uppercase tracking-tight">{up.dept}</span>
+                           <span className="font-bold text-slate-900 group-hover:text-violet-600 transition-colors uppercase tracking-tight">{dept.name}</span>
                         </div>
                      </td>
                      <td className="px-10 py-8">
-                        <span className="text-sm font-bold text-slate-900">{up.head}</span>
+                        <span className="text-sm font-bold text-slate-900">{dept.badge}</span>
                      </td>
                      <td className="px-10 py-8 text-center">
-                        <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${ up.status === 'OPTIMAL' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600' }`}>
-                           {up.status}
+                        <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 border border-emerald-100`}>
+                           ACTIVE
                         </span>
                      </td>
                      <td className="px-10 py-8 text-right">
-                        <span className="text-xs font-medium text-slate-400">{up.time}</span>
+                        <span className="text-xs font-medium text-slate-400">System Ready</span>
                      </td>
                    </tr>
                  ))}

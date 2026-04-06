@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { 
   Megaphone, 
@@ -16,7 +16,6 @@ import {
 import { OrganizationAdminChrome } from "@/components/portal/organizationadmin/OrganizationAdminChrome"
 import { api } from "@/lib/axios"
 import { extractResults } from "@/lib/apiResults"
-import { useEffect } from "react"
 import { 
   Dialog, 
   DialogContent, 
@@ -24,6 +23,7 @@ import {
   DialogTitle, 
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { organizationService } from "@/services/organization"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { 
@@ -40,6 +40,7 @@ export default function AdminAnnouncementsPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [sending, setSending] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [departments, setDepartments] = useState<any[]>([])
 
   const [newAnn, setNewAnn] = useState({
     title: "",
@@ -68,6 +69,9 @@ export default function AdminAnnouncementsPage() {
 
   useEffect(() => {
     loadAnnouncements()
+    organizationService.getDepartments().then(data => {
+      setDepartments(Array.isArray(data) ? data : data.results || []);
+    }).catch(e => console.error("Failed to load departments:", e))
   }, [])
 
   const handleSend = () => {
@@ -79,13 +83,13 @@ export default function AdminAnnouncementsPage() {
     setSending(true)
     
     // Map frontend state to backend model
-    const isDeptScoped = newAnn.target === "HR";
+    const isDeptScoped = newAnn.target !== "All";
     const payload = {
       title: newAnn.title,
       message: newAnn.content,
       target_scope: isDeptScoped ? "department" : "org_wide",
       severity: "info",
-      department: isDeptScoped ? "6e159a6d-e44b-4b21-884c-0d331908b982" : null
+      department: isDeptScoped ? newAnn.target : null
     }
 
     api.post("/api/notifications/broadcasts/", payload).then(() => {
@@ -146,7 +150,7 @@ export default function AdminAnnouncementsPage() {
                 </button>
               </DialogTrigger>
 
-              <div className="bg-[#8b3dff] px-8 pt-10 pb-8 text-white relative">
+              <div className="bg-violet-600 px-8 pt-10 pb-8 text-white relative">
                  <DialogHeader>
                    <DialogTitle className="text-[26px] font-black tracking-tight flex items-center gap-2.5 uppercase">
                       <Megaphone className="h-6 w-6 stroke-[2.5px]" />
@@ -175,8 +179,9 @@ export default function AdminAnnouncementsPage() {
                      </SelectTrigger>
                      <SelectContent className="rounded-2xl border-slate-100 shadow-xl">
                        <SelectItem value="All" className="rounded-lg p-3 cursor-pointer text-[11px] font-black uppercase tracking-tight">Whole Company (All Staff)</SelectItem>
-                       <SelectItem value="HR" className="rounded-lg p-3 cursor-pointer text-[11px] font-black uppercase tracking-tight">HR Department Only</SelectItem>
-                       <SelectItem value="Team Lead" className="rounded-lg p-3 cursor-pointer text-[11px] font-black uppercase tracking-tight">Team Leads & Managers</SelectItem>
+                       {departments.map((dept: any) => (
+                          <SelectItem key={dept.id} value={dept.id} className="rounded-lg p-3 cursor-pointer text-[11px] font-black uppercase tracking-tight">{dept.name} Department</SelectItem>
+                       ))}
                      </SelectContent>
                    </Select>
                 </div>
@@ -196,7 +201,7 @@ export default function AdminAnnouncementsPage() {
                 <button 
                   onClick={handleSend}
                   disabled={sending}
-                  className="w-full flex items-center justify-center gap-3 py-4 bg-[#8b3dff] text-white rounded-[16px] text-[11px] font-black uppercase tracking-widest hover:bg-[#7b36e3] transition-all shadow-md shadow-[#8b3dff]/20 active:scale-95 disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-3 py-4 bg-violet-600 text-white rounded-[16px] text-[11px] font-black uppercase tracking-widest hover:bg-violet-700 transition-all shadow-xl shadow-violet-900/20 active:scale-95 disabled:opacity-50"
                 >
                   {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                   {sending ? "Broadcasting..." : "Confirm & Send"}

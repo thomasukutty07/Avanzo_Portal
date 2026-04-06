@@ -124,7 +124,9 @@ class Task(TimeStampedModel):
     class Status(models.TextChoices):
         OPEN = "open", "Open"
         IN_PROGRESS = "progress", "In Progress"
-        RESOLVED = "resolved", "Resolved"
+        IN_REVIEW = "review", "In Review"
+        REWORK = "rework", "Rework"
+        CLOSED = "closed", "Closed"
 
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)

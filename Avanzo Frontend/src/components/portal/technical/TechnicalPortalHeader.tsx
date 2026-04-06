@@ -40,7 +40,7 @@ export function TechnicalPortalHeader() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search tasks, bugs, or projects..."
-            className="w-full rounded-2xl border border-slate-100 bg-slate-50/50 py-2.5 pl-11 pr-4 text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-600/20 focus:border-violet-200 transition-all"
+            className="w-full rounded-2xl border border-slate-100 bg-slate-50/50 py-2.5 pl-11 pr-4 text-[11px] font-semibold text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-600/20 focus:border-violet-200 transition-all"
           />
         </form>
       </div>
@@ -63,10 +63,10 @@ export function TechnicalPortalHeader() {
           className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer group"
         >
           <div className="hidden sm:block text-right">
-            <p className="text-sm font-bold leading-none text-slate-900 group-hover:text-violet-600 transition-colors">
+            <p className="text-xs font-bold leading-none text-slate-900 group-hover:text-violet-600 transition-colors uppercase italic">
               {name}
             </p>
-            <p className="text-[11px] font-semibold text-slate-500 mt-1">{role}</p>
+            <p className="text-[9px] font-black text-slate-400 mt-1 uppercase tracking-widest italic">{role}</p>
           </div>
           <img
             alt=""
