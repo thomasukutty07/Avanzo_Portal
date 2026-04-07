@@ -2,15 +2,7 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { api } from "@/lib/axios"
 import { extractResults } from "@/lib/apiResults"
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  Tooltip, 
-  ResponsiveContainer, 
-  Cell 
-} from 'recharts'
-import { 
+import {
   AlertTriangle, 
   MoreVertical,
   ShieldCheck,
@@ -96,23 +88,7 @@ export default function CyberSecurityDashboardPage() {
       color: i.ticket_type === "compliance" ? "bg-orange-50 text-orange-600 border-orange-100" : "bg-red-50 text-red-600 border-red-100"
     }));
 
-  // Generate chart data based on recent incidents
-  const CHART_DATA = (() => {
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const now = new Date();
-    const data = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(now.getDate() - i);
-      const dayName = days[d.getDay()];
-      const count = incidents.filter(inc => {
-        const incDate = new Date(inc.created_at);
-        return incDate.toLocaleDateString() === d.toLocaleDateString();
-      }).length;
-      data.push({ name: dayName, value: count || 0 });
-    }
-    return data;
-  })();
+
 
   return (
     <div className="space-y-6 pb-12 font-headline bg-[#fcfcfc] min-h-screen">
@@ -227,18 +203,9 @@ export default function CyberSecurityDashboardPage() {
           <div className="flex-1 grid grid-cols-1 md:grid-cols-5 gap-10">
             <div className="md:col-span-3">
               <p className="text-[9px] font-black text-slate-400 tracking-widest mb-6 leading-none">Attack trend analysis</p>
-              <div className="h-56 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={CHART_DATA}>
-                    <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontWeight: 'bold', fontSize: '10px' }} />
-                    <Bar dataKey="value" radius={[6, 6, 0, 0]} barSize={28}>
-                      {CHART_DATA.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.value > 0 ? '#7c3aed' : '#f1efff'} />
-                      ))}
-                    </Bar>
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 8, fontWeight: 700, fill: '#94a3b8' }} dy={10} />
-                  </BarChart>
-                </ResponsiveContainer>
+              <div className="h-56 w-full flex flex-col items-center justify-center bg-slate-50/50 rounded-3xl border border-slate-100">
+                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Trend Telemetry</p>
+                 <p className="text-4xl font-black text-slate-900 tracking-tight">Active Pulse</p>
               </div>
             </div>
 

@@ -8,7 +8,7 @@ import { X } from "lucide-react"
 /** Cybersecurity portal: sidebar + sticky header + main outlet. */
 export function CyberSecurityPortalLayout({ children }: { children?: React.ReactNode }) {
   useDesignPortalLightTheme()
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const location = useLocation()
 
   return (
@@ -23,7 +23,7 @@ export function CyberSecurityPortalLayout({ children }: { children?: React.React
 
       {/* Sidebar */}
       <div className={`fixed inset-y-0 left-0 z-50 transition-transform duration-300 md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <CyberSecurityPortalSidebar onNavClick={() => setIsSidebarOpen(false)} />
+        <CyberSecurityPortalSidebar onNavClick={() => window.innerWidth < 1024 && setIsSidebarOpen(false)} />
         <button
           onClick={() => setIsSidebarOpen(false)}
           className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 md:hidden"
@@ -33,9 +33,9 @@ export function CyberSecurityPortalLayout({ children }: { children?: React.React
       </div>
 
       {/* Main column */}
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden md:pl-72">
+      <div className={`flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden transition-all duration-300 ${isSidebarOpen ? 'md:pl-72' : ''}`}>
         {/* Shared sticky header */}
-        <CyberSecurityPortalHeader onMenuClick={() => setIsSidebarOpen(true)} />
+        <CyberSecurityPortalHeader onMenuClick={() => setIsSidebarOpen(true)} onToggleSidebar={setIsSidebarOpen} />
 
         <div key={location.pathname} className="min-h-0 flex-1 overflow-y-auto p-6 md:p-10 lg:p-12 animate-in fade-in slide-in-from-bottom-2 duration-700 ease-out">
           {children || <Outlet />}

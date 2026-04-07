@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Plus, RotateCcw, ChevronLeft, ChevronRight, Zap, Loader2 } from "lucide-react"
+import { Plus, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { projectsService } from "@/services/projects";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
@@ -30,17 +30,12 @@ export default function TechnicalTasksPage() {
   const [activePage, setActivePage] = useState(1)
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [projectsList, setProjectsList] = useState<any[]>([]);
-  const [selectedProject, setSelectedProject] = useState("All Projects");
   const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     const initData = async () => {
         try {
-            setLoading(true);
-            const projectsRes = await projectsService.getProjects();
-            setProjectsList(Array.isArray(projectsRes) ? projectsRes : (projectsRes.results || []));
-            
+            // Primary task registry synchronization
             await fetchTasks();
         } catch (error) {
             console.error("Failed to init tasks page:", error);
@@ -100,11 +95,7 @@ export default function TechnicalTasksPage() {
     }
   }
 
-  const handleProjectFilter = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
-    setSelectedProject(val);
-    fetchTasks(val === "All Projects" ? undefined : val);
-  };
+  // Project filtering decommissioned per UX standards
 
   const handleTaskClick = async (task: Task) => {
     if (task.status === "Closed" || task.status === "Review") {
@@ -120,7 +111,7 @@ export default function TechnicalTasksPage() {
             await projectsService.updateTaskProgress(task.id, 100);
             toast.success("Task marked as ready for review.");
         }
-        fetchTasks(selectedProject === "All Projects" ? undefined : selectedProject);
+        fetchTasks();
     } catch (err) {
         toast.error("Failed to update task.");
     }
@@ -158,65 +149,7 @@ export default function TechnicalTasksPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Filters */}
-        <div className="col-span-1 lg:col-span-8 bg-white border border-slate-100 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row items-end gap-6 justify-between">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1 w-full">
-                <div className="space-y-2 relative">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Project</label>
-                    <select 
-                        value={selectedProject}
-                        onChange={handleProjectFilter}
-                        className="w-full appearance-none border-b border-slate-200 bg-transparent py-1.5 text-sm font-bold text-slate-700 outline-none focus:border-violet-600 cursor-pointer pr-6"
-                    >
-                        <option>All Projects</option>
-                        {projectsList.map((p: any) => (
-                            <option key={p.id} value={p.id}>{p.title}</option>
-                        ))}
-                    </select>
-                    <div className="absolute right-0 bottom-2 pointer-events-none text-slate-400">
-                        <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    </div>
-                </div>
-                <div className="space-y-2 relative">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Due Date</label>
-                    <select className="w-full appearance-none border-b border-slate-200 bg-transparent py-1.5 text-sm font-bold text-slate-700 outline-none focus:border-violet-600 cursor-pointer pr-6">
-                        <option>Anytime</option>
-                    </select>
-                    <div className="absolute right-0 bottom-2 pointer-events-none text-slate-400">
-                        <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="2.5" width="11" height="10" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M4 1V4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M10 1V4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M1.5 6.5H12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-                    </div>
-                </div>
-                <div className="space-y-2 relative">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</label>
-                    <select className="w-full appearance-none border-b border-slate-200 bg-transparent py-1.5 text-sm font-bold text-slate-700 outline-none focus:border-violet-600 cursor-pointer pr-6">
-                        <option>All Statuses</option>
-                    </select>
-                    <div className="absolute right-0 bottom-2 pointer-events-none text-slate-400">
-                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M1 3H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M3 6H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M5 9H7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-                    </div>
-                </div>
-            </div>
-            <button 
-                onClick={() => { setSelectedProject("All Projects"); fetchTasks(); }}
-                className="flex items-center gap-1.5 text-violet-600 hover:text-violet-800 text-[11px] font-bold pb-2 pl-4 shrink-0 transition-colors"
-            >
-                <RotateCcw className="size-3.5" />
-                <span>Reset<br/>Filters</span>
-            </button>
-        </div>
-
-        {/* Completion Velocity */}
-        <div className="col-span-1 lg:col-span-4 bg-[#4a148c] text-white rounded-2xl p-6 shadow-sm flex flex-col justify-center">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-300 mb-1">Completion Velocity</p>
-            <p className="text-4xl font-black font-headline mb-3">
-                {totalCount > 0 ? Math.round((tasks.filter(t => t.status === "Review").length / totalCount) * 100) : 0}%
-            </p>
-            <p className="text-sm font-medium text-violet-200">
-                You have <span className="underline decoration-violet-400 decoration-2 underline-offset-4">{tasks.filter(t => t.priority === "CRITICAL").length} critical</span> tasks assigned.
-            </p>
-        </div>
-      </div>
+      {/* Task List Section is handled below */}
 
       {/* Task List */}
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden flex flex-col">
@@ -325,44 +258,7 @@ export default function TechnicalTasksPage() {
           </div>
       </div>
 
-      {/* Bottom Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recommendation */}
-        <div className="bg-slate-100 border border-slate-200 rounded-2xl p-6 flex gap-4 items-start">
-            <div className="bg-white size-14 rounded-xl flex items-center justify-center shrink-0 shadow-sm border border-slate-100">
-                <Zap className="size-6 text-violet-700" fill="currentColor" />
-            </div>
-            <div>
-                <h3 className="text-sm font-bold text-slate-900 mb-1">Daily Recommendation</h3>
-                <p className="text-xs font-semibold text-slate-500 leading-relaxed">
-                    {tasks.length > 0 ? (
-                        <>System analysis suggests starting with <span className="text-violet-700 font-bold">{tasks[0].taskId}</span> to clear bottlenecks.</>
-                    ) : (
-                        <>All systems clear. Check back later for task prioritization recommendations.</>
-                    )}
-                </p>
-            </div>
-        </div>
-
-        {/* Collaboration */}
-        <div className="bg-violet-100 border border-violet-200 rounded-2xl p-6 flex flex-col justify-center relative overflow-hidden">
-            <h3 className="text-sm font-bold text-violet-900 mb-1 z-10">Team Collaboration</h3>
-            <p className="text-xs font-semibold text-violet-700 max-w-[200px] z-10">
-                You are currently collaborating on {totalCount} task{totalCount !== 1 ? 's' : ''}.
-            </p>
-            <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center">
-                <div className="size-8 rounded-full border-2 border-violet-100 relative -mr-3 z-[3]">
-                    <img src="https://i.pravatar.cc/150?u=1" alt="Avatar" className="size-full rounded-full object-cover" />
-                </div>
-                <div className="size-8 rounded-full border-2 border-violet-100 relative -mr-3 z-[2]">
-                    <img src="https://i.pravatar.cc/150?u=2" alt="Avatar" className="size-full rounded-full object-cover" />
-                </div>
-                <div className="size-8 rounded-full border-2 border-violet-100 bg-violet-700 text-white flex items-center justify-center text-[10px] font-bold relative z-[1]">
-                    +3
-                </div>
-            </div>
-        </div>
-      </div>
+      {/* Cards Removed */}
     </div>
   )
 }

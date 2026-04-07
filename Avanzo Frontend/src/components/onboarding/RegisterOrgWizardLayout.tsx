@@ -59,8 +59,8 @@ export function RegisterOrgWizardLayout({
           </div>
         </div>
       </aside>
-      <section className="flex flex-1 flex-col bg-white px-8 py-8 pb-12 md:px-20 md:py-10 md:pb-16">
-        <nav className="mx-auto mb-5 w-full max-w-xl">
+      <section className="flex flex-1 flex-col bg-white px-8 py-8 pb-12 md:px-20 md:py-10 md:pb-16 overflow-y-auto">
+        <nav className="mx-auto mb-5 w-full max-w-5xl">
           <div className="relative flex items-center justify-between">
             <div className="absolute left-5 right-5 top-5 z-0 h-0.5 -translate-y-1/2 bg-[#e7e8e9]" />
             <div
@@ -106,7 +106,7 @@ export function RegisterOrgWizardLayout({
         </nav>
         <div
           key={step}
-          className="mx-auto w-full max-w-xl"
+          className="mx-auto w-full max-w-5xl"
           style={{
             animation: "fadeSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both",
           }}

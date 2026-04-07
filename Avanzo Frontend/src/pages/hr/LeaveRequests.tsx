@@ -2,7 +2,6 @@ import { HRPortalChrome } from "@/components/portal/hr/HRPortalChrome"
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
 import { toast } from "sonner"
 import { 
-  Stethoscope, 
   User as UserIcon, 
   Check, 
   Calendar, 
@@ -14,51 +13,86 @@ import {
 
 import { leavesService } from "@/services/leaves"
 import { useState, useEffect } from "react"
-import { format, parseISO } from "date-fns"
-
-const SUMMARY = [
-  { label: "Annual Leave", value: "24 Days", sub: "Allocated", color: "blue", icon: Calendar },
-  { label: "Sick Leave", value: "10 Days", sub: "Standard", color: "red", icon: Stethoscope },
-  { label: "Personal Leave", value: "05 Days", sub: "Allocated", color: "amber", icon: UserIcon },
-]
+import { format, parseISO, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from "date-fns"
 
 export default function HRLeaveRequests() {
   useDesignPortalLightTheme()
   const [requests, setRequests] = useState<any[]>([])
+  const [stats, setStats] = useState<any>(null)
+  const [whoIsOut, setWhoIsOut] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [currentMonth, setCurrentMonth] = useState(new Date())
+
+  const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1))
+  const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1))
+
+  const calendarDays = eachDayOfInterval({
+    start: startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 1 }),
+    end: endOfWeek(endOfMonth(currentMonth), { weekStartsOn: 1 })
+  })
 
   useEffect(() => {
-    fetchRequests()
+    fetchData()
   }, [])
+
+  const fetchData = async () => {
+    setLoading(true)
+    await Promise.all([
+      fetchRequests(),
+      fetchStats(),
+      fetchWhoIsOut()
+    ])
+    setLoading(false)
+  }
 
   const fetchRequests = async () => {
     try {
-      setLoading(true)
       const data = await leavesService.getLeaveRequests()
       setRequests(Array.isArray(data) ? data : (data.results || []))
     } catch (error) {
       console.error("Fetch error:", error)
-      toast.error("Failed to synchronize leave requests.")
-    } finally {
-      setLoading(false)
+    }
+  }
+
+  const fetchStats = async () => {
+    try {
+      const data = await leavesService.getStats()
+      setStats(data)
+    } catch (error) {
+      console.error("Stats error:", error)
+    }
+  }
+
+  const fetchWhoIsOut = async () => {
+    try {
+      const data = await leavesService.getWhoIsOut()
+      setWhoIsOut(data)
+    } catch (error) {
+      console.error("WhoIsOut error:", error)
     }
   }
 
   const handleAction = async (id: string, action: 'approve' | 'reject', name: string) => {
     try {
       if (action === 'approve') {
-        await leavesService.hrApprove(id, { hr_comment: "System approved via HR Portal." })
+        await leavesService.hrApprove(id, { comment: "System approved via HR Portal." })
         toast.success(`Leave request for ${name} has been fully approved.`)
       } else {
-        await leavesService.rejectRequest(id, { hr_comment: "Declined by HR Management." })
+        await leavesService.rejectRequest(id, { comment: "Declined by HR Management." })
         toast.info(`Leave request for ${name} has been declined.`)
       }
-      fetchRequests()
+      fetchData()
     } catch (error) {
       console.error("Action error:", error)
       toast.error(`Operation failed: Tier 2 authentication required or network error.`)
     }
   }
+
+  const SUMMARY_CARDS = [
+    { label: "Actionable Ready", value: stats?.tl_approved?.toString().padStart(2, "0") || "00", sub: "Tier 1 Cleared", color: "blue", icon: Check },
+    { label: "Wait for TL", value: stats?.total_pending?.toString().padStart(2, "0") || "00", sub: "Pending Review", color: "amber", icon: Clock },
+    { label: "Today - Out", value: stats?.out_today?.toString().padStart(2, "0") || "00", sub: "Active Nodes", color: "red", icon: UserIcon },
+  ]
 
   return (
     <HRPortalChrome>
@@ -79,7 +113,7 @@ export default function HRLeaveRequests() {
 
         {/* Summary Section */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {SUMMARY.map((stat, i) => (
+          {SUMMARY_CARDS.map((stat, i) => (
             <div key={i} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 group">
               <div className={`h-12 w-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${
                 stat.color === 'blue' ? 'bg-blue-50 text-blue-600' :
@@ -163,16 +197,15 @@ export default function HRLeaveRequests() {
                         Decline Request
                       </button>
                       <button 
-                        disabled={req.status === 'pending'}
                         onClick={() => handleAction(req.id, 'approve', req.employee_name)}
                         className={`px-10 py-3 rounded-xl text-[11px] font-black shadow-lg transition-all flex items-center justify-center gap-3 active:scale-95 uppercase tracking-widest ${
                            req.status === 'pending' 
-                           ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none' 
+                           ? 'bg-amber-100/50 hover:bg-amber-100 text-amber-700 shadow-none border border-amber-200' 
                            : 'bg-violet-600 hover:bg-violet-700 text-white shadow-violet-600/20'
                         }`}
                       >
                         <Check className="h-4 w-4 stroke-[3px]" /> 
-                        {req.status === 'pending' ? 'Waiting for TL' : 'Process Approval'}
+                        {req.status === 'pending' ? 'Force Approve (Bypass TL)' : 'Process Approval'}
                       </button>
                     </div>
                   )}
@@ -186,10 +219,10 @@ export default function HRLeaveRequests() {
             
             <div className="bg-white rounded-2xl border border-slate-100 p-8 shadow-sm">
               <div className="flex items-center justify-between mb-8">
-                <span className="font-black text-[13px] uppercase tracking-[0.2em] text-slate-900">OCTOBER 2023</span>
+                <span className="font-black text-[13px] uppercase tracking-[0.2em] text-slate-900">{format(currentMonth, 'MMMM yyyy')}</span>
                 <div className="flex gap-1">
-                  <button onClick={() => toast.info("Last Month")} className="p-1.5 hover:bg-slate-50 rounded-lg border border-slate-100 text-slate-400 transition-colors"><ChevronLeft className="h-4 w-4" /></button>
-                  <button onClick={() => toast.info("Next Month")} className="p-1.5 hover:bg-slate-50 rounded-lg border border-slate-100 text-slate-400 transition-colors"><ChevronRight className="h-4 w-4" /></button>
+                  <button onClick={prevMonth} className="p-1.5 hover:bg-slate-50 rounded-lg border border-slate-100 text-slate-400 transition-colors"><ChevronLeft className="h-4 w-4" /></button>
+                  <button onClick={nextMonth} className="p-1.5 hover:bg-slate-50 rounded-lg border border-slate-100 text-slate-400 transition-colors"><ChevronRight className="h-4 w-4" /></button>
                 </div>
               </div>
               
@@ -197,49 +230,57 @@ export default function HRLeaveRequests() {
                 {['M','T','W','T','F','S','S'].map((d, i) => (
                   <div key={i} className="text-[10px] font-bold text-slate-300 uppercase">{d}</div>
                 ))}
-                {Array.from({length: 18}, (_, i) => (
-                  <div key={i} className={`py-1.5 text-xs font-bold relative ${i + 1 === 9 ? 'text-violet-700' : 'text-slate-600'}`}>
-                    {i + 1}
-                    {i + 1 === 9 && <div className="absolute inset-0 bg-violet-700/10 rounded-lg -z-10" />}
-                    {(i + 1 === 12 || i + 1 === 13) && <div className="absolute bottom-0 left-1/2 -distance-x-1/2 w-1 h-1 bg-red-500 rounded-full" />}
-                  </div>
-                ))}
+                {calendarDays.map((day, i) => {
+                  const isCurrentMonth = isSameMonth(day, currentMonth)
+                  const isToday = isSameDay(day, new Date())
+                  // Simple logic to show a red dot if someone is out on this day
+                  // We'll leave the red dot out for now, to fully remove dummy dots
+                  return (
+                    <div key={i} className={`py-1.5 text-xs font-bold relative ${!isCurrentMonth ? 'text-slate-300' : isToday ? 'text-violet-700' : 'text-slate-600'}`}>
+                      {format(day, 'd')}
+                      {isToday && <div className="absolute inset-0 bg-violet-700/10 rounded-lg -z-10" />}
+                    </div>
+                  )
+                })}
               </div>
 
               <div className="pt-4 border-t border-slate-100 space-y-4">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Who's Out Today</p>
-                {[
-                  { name: "Jordan Lee", status: "Back Wednesday", img: "https://lh3.googleusercontent.com/aida-public/AB6AXuAERV9ltSqxU9_VIHc2RXasWyRTIFzYzdDuARsNRx8U_ne7zZ_lpmQhZHfroqtVWPTe33w0Hl_3Aw3TqN2JxiQd0mi43pyRCosysC97tD4-LwD4xXsygkZOXHeb4RWE2OwN9rsfLEX1EBV7OG74VNmlYt8zV7UzEwTReOZTIGHXTL1HRdsogOdbAOYD5056yMvaQPdhB7n3Lw38hCOmeEy3vI8QUFuxg_ciwTG_OMu40LuaR4u8PTkjI5ueRKUltQws-2ZdikZfZmY" },
-                  { name: "Elena Vasquez", status: "Sabbatical (Until Jan 5)", img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCjRK-zbPVXAm2j3Wzz356bzamXYy_JDTMjyyboYcO7QKO09kIUzEH1csNc4i7Jg0SqBircfGOJENKFTdWmDZUh7_jq2kUDTYEcFk-rAm04iy9B-vmfgFDs_i89YIBNSiWMiUmORzrl2Kn0NNj_wfubYOUHRm6cUeM9Dsuc2n8Owc-uHXtKGzmfXfrn9w_yfzDUABPkrMejD40-VfAXbb7EoYFpRjqH-Nc2GIvO_1nnSQYVaZBgIjXEMH9B7eToDYMZp-oo7qg0gJs" }
-                ].map((p, i) => (
-                  <div key={i} className="flex items-center gap-3 cursor-pointer group" onClick={() => toast.info(`Viewing profile for ${p.name}`)}>
-                    <img className="h-9 w-9 rounded-xl object-cover shadow-sm ring-2 ring-white group-hover:scale-105 transition-transform" src={p.img} alt={p.name} />
+                {whoIsOut.length > 0 ? whoIsOut.map((p, i) => (
+                  <div key={i} className="flex items-center gap-3 cursor-pointer group" onClick={() => toast.info(`Viewing status: ${p.leave_type}`)}>
+                    <div className="h-9 w-9 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center text-[11px] font-black text-violet-700 shadow-sm ring-2 ring-white group-hover:scale-105 transition-transform">
+                      {p.employee_name?.split(' ').map((n: string) => n[0]).join('')}
+                    </div>
                     <div className="overflow-hidden">
-                      <p className="text-sm font-bold text-slate-800 leading-tight truncate group-hover:text-violet-600 transition-colors">{p.name}</p>
-                      <p className="text-[10px] text-slate-400 font-bold truncate">{p.status}</p>
+                      <p className="text-sm font-bold text-slate-800 leading-tight truncate group-hover:text-violet-600 transition-colors uppercase tracking-tight">{p.employee_name}</p>
+                      <p className="text-[10px] text-slate-400 font-bold truncate uppercase">{p.leave_type} (Until {format(parseISO(p.end_date), 'MMM dd')})</p>
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <p className="text-[10px] font-bold text-slate-300 italic uppercase">All personnel reporting active.</p>
+                )}
               </div>
             </div>
 
             <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4 font-display">
               <h4 className="text-xs font-bold text-slate-900 tracking-widest">Leave Distribution</h4>
-              {[
-                { label: "Annual", val: 64, color: "bg-blue-500" },
-                { label: "Sick Leave", val: 22, color: "bg-red-500" },
-                { label: "Unpaid", val: 14, color: "bg-amber-500" }
-              ].map((item, i) => (
-                <div key={i}>
-                  <div className="flex justify-between text-[11px] font-bold mb-1.5">
-                    <span className="text-slate-500 uppercase tracking-tighter">{item.label}</span>
-                    <span className="text-slate-900">{item.val}%</span>
+              {stats?.type_distribution?.length > 0 ? stats.type_distribution.map((item: any, i: number) => {
+                const total = stats.type_distribution.reduce((acc: number, cur: any) => acc + cur.count, 0);
+                const percent = Math.round((item.count / total) * 100);
+                return (
+                  <div key={i}>
+                    <div className="flex justify-between text-[11px] font-bold mb-1.5">
+                      <span className="text-slate-500 uppercase tracking-tighter">{item.leave_type}</span>
+                      <span className="text-slate-900">{percent}%</span>
+                    </div>
+                    <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden">
+                      <div className={`h-full transition-all duration-1000 ${i === 0 ? 'bg-blue-500' : i === 1 ? 'bg-red-500' : 'bg-amber-500'}`} style={{ width: `${percent}%` }}></div>
+                    </div>
                   </div>
-                  <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden">
-                    <div className={`h-full transition-all duration-1000 ${item.color}`} style={{ width: `${item.val}%` }}></div>
-                  </div>
-                </div>
-              ))}
+                );
+              }) : (
+                <p className="text-[10px] font-bold text-slate-300 italic uppercase">No distribution matrix data.</p>
+              )}
             </div>
           </div>
         </div>

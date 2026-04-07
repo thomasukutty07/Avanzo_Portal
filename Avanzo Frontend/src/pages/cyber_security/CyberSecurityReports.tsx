@@ -1,11 +1,4 @@
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  Tooltip, 
-  ResponsiveContainer, 
-  CartesianGrid
-} from 'recharts'
+
 import { 
   FileDown,
   Calendar,
@@ -22,14 +15,7 @@ const STATS = [
   { label: "Compliance score", value: "92/100", sub: "Excellent", color: "text-violet-600", barColor: "bg-violet-700", val: 92, thick: true },
 ]
 
-const CHART_DATA = [
-  { name: 'W1', resolved: 400, new: 240 },
-  { name: 'W2', resolved: 300, new: 139 },
-  { name: 'W3', resolved: 200, new: 980 },
-  { name: 'W4', resolved: 278, new: 390 },
-  { name: 'W5', resolved: 189, new: 480 },
-  { name: 'W6', resolved: 239, new: 380 },
-]
+
 
 const HISTORY = [
   { 
@@ -114,19 +100,10 @@ export default function CyberSecurityReportsPage() {
             </div>
           </div>
 
-          <div className="flex-1 w-full mt-4">
-             <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={CHART_DATA} barGap={6}>
-                  <CartesianGrid vertical={false} stroke="#f1f5f9" strokeDasharray="3 3" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 8, fontWeight: 700, fill: '#cbd5e1' }} dy={10} />
-                  <Tooltip 
-                    cursor={{ fill: '#f8fafc' }}
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: '10px' }}
-                  />
-                  <Bar dataKey="resolved" fill="#7c3aed" radius={[4, 4, 0, 0]} barSize={10} />
-                  <Bar dataKey="new" fill="#f87171" opacity={0.7} radius={[4, 4, 0, 0]} barSize={10} />
-                </BarChart>
-             </ResponsiveContainer>
+          <div className="flex-1 w-full mt-10 flex flex-col items-center justify-center bg-slate-50/50 rounded-3xl border border-slate-100">
+             <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Resolution Efficiency</p>
+             <p className="text-7xl font-black text-slate-900 tracking-tight">84.2%</p>
+             <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mt-4">+5.2% ABOVE QUOTA</p>
           </div>
         </div>
 

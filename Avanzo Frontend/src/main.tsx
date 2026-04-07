@@ -7,6 +7,7 @@ import { AuthProvider } from "@/context/AuthContext"
 import { NotificationProvider } from "@/context/NotificationContext"
 import { Toaster } from "@/components/ui/sonner"
 
+import "@fontsource-variable/geist"
 import "./index.css"
 import App from "./App"
 

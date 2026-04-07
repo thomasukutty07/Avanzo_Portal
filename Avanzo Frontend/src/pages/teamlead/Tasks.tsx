@@ -58,7 +58,7 @@ export default function LeadTasksPage() {
             className="flex items-center gap-2 px-6 py-3 bg-violet-600 text-white font-black rounded-xl hover:bg-violet-700 hover:shadow-xl hover:shadow-violet-600/20 transition-all text-[11px] uppercase tracking-widest active:scale-95 shadow-md shadow-violet-600/10"
           >
             <Plus className="size-4 stroke-[3px]" />
-            New Mission
+            Assign Task
           </button>
         </div>
 

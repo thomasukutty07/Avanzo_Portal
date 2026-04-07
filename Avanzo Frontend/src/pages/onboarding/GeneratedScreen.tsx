@@ -23,62 +23,30 @@ export default function GeneratedScreenPage() {
           </p>
         </header>
 
-        <div className="mb-10 max-w-sm mx-auto overflow-hidden rounded-2xl border border-amber-100 bg-amber-50/30 p-6">
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <span className="material-symbols-outlined text-amber-600">
-              pending_actions
-            </span>
-            <span className="text-xs font-bold uppercase tracking-[0.2em] text-amber-800">
-              Current Status
-            </span>
-          </div>
-          <p className="text-2xl font-black text-amber-900 tracking-tight">PENDING APPROVAL</p>
-          <p className="mt-3 text-xs leading-relaxed text-amber-800/70">
-            A Super Admin is currently reviewing your organization profile. You will be notified via email once your account is activated.
-          </p>
-        </div>
+        <div className="mt-12 mb-12 flex justify-center">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-amber-100 bg-amber-50/30 p-10 text-center shadow-lg shadow-amber-600/5">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <span className="material-symbols-outlined text-amber-600 size-5">pending_actions</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-800">Current Status</span>
+            </div>
+            
+            <p className="text-3xl font-black text-amber-900 tracking-tight mb-4">PENDING APPROVAL</p>
+            
+            <p className="text-[13px] leading-relaxed text-amber-800/70 mb-10">
+              A Super Admin is currently reviewing your organization profile. You will be notified via email once your account is activated.
+            </p>
 
-        <div className="mb-12 text-left bg-slate-50/50 rounded-2xl p-8 border border-slate-100">
-          <h3 className="mb-6 text-sm font-bold uppercase tracking-widest text-[#191c1d] flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#4800b2]"></span>
-            Next Steps
-          </h3>
-          <div className="space-y-6">
-            <div className="flex gap-4">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm border border-slate-100 text-[#4800b2] font-bold text-sm">1</div>
-              <div>
-                <p className="font-bold text-[#191c1d] text-sm">Admin Verification</p>
-                <p className="text-xs text-[#494456] mt-1">Our team verifies your business details and security compliance.</p>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm border border-slate-100 text-[#4800b2] font-bold text-sm">2</div>
-              <div>
-                <p className="font-bold text-[#191c1d] text-sm">Account Activation</p>
-                <p className="text-xs text-[#494456] mt-1">Once approved, your status changes to <span className="text-emerald-600 font-bold">ACTIVE</span> and you can sign in.</p>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm border border-slate-100 text-[#4800b2] font-bold text-sm">3</div>
-              <div>
-                <p className="font-bold text-[#191c1d] text-sm">Onboarding</p>
-                <p className="text-xs text-[#494456] mt-1">Set up your departments, invite your HR team, and start managing your workspace.</p>
-              </div>
-            </div>
+            <Link
+              to="/login"
+              className="group flex w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-6 py-4 font-bold text-white shadow-xl shadow-amber-600/20 transition-all hover:bg-amber-700 active:scale-[0.98]"
+            >
+              Return to Login
+              <span className="material-symbols-outlined text-sm transition-transform group-hover:translate-x-0.5">arrow_forward</span>
+            </Link>
           </div>
         </div>
 
-        <div className="flex flex-col items-center gap-6">
-          <Link
-            to="/login"
-            className="group flex w-full max-w-xs items-center justify-center gap-2 rounded-xl bg-[#4800b2] px-8 py-4 font-bold text-white shadow-xl shadow-[#4800b2]/20 transition-all hover:bg-[#39008d] active:scale-[0.98]"
-          >
-            Go to Login
-            <span className="material-symbols-outlined transition-transform group-hover:translate-x-1">
-              arrow_forward
-            </span>
-          </Link>
-          
+        <div className="flex flex-col items-center gap-4 text-center mt-8">
           <p className="text-xs text-[#7a7488]">
             Need help? Contact <a href="mailto:support@avanzo.com" className="text-[#4800b2] font-semibold hover:underline">Support Team</a>
           </p>

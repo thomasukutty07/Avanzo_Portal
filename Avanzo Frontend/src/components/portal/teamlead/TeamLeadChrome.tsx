@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { extractResults } from "@/lib/apiResults"
 import { api } from "@/lib/axios"
+import { AttendanceClockWidget } from "@/components/shared/AttendanceClockWidget"
 
 const NAV_ITEMS = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -23,7 +24,7 @@ export default function TeamLeadChrome({ children }: { children: React.ReactNode
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false)
   const [isNewUpdateOpen, setIsNewUpdateOpen] = useState(false)
   const [isNewProjectOpen, setIsNewProjectOpen] = useState(false)
@@ -53,7 +54,7 @@ export default function TeamLeadChrome({ children }: { children: React.ReactNode
     }
     fetchNotifs()
     fetchAnnouncements()
-    const interval = setInterval(fetchAnnouncements, 60000)
+    const interval = setInterval(fetchAnnouncements, 300000) // 5 minutes polling to avoid 429 errors
     return () => clearInterval(interval)
   }, [])
 
@@ -76,17 +77,16 @@ export default function TeamLeadChrome({ children }: { children: React.ReactNode
         />
       )}
 
-      {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col border-r border-slate-100 bg-white transition-transform duration-300 ease-in-out md:translate-x-0 ${isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}>
+      {/* Sidebar - Full height anchor */}
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 shrink-0 flex-col border-r border-slate-100 bg-white transition-transform duration-300 ease-in-out md:translate-x-0 md:relative ${isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}>
         <div className="flex h-20 items-center justify-between px-6">
-          <div className="flex items-center gap-2.5">
-             <div className="flex size-9 items-center justify-center rounded-xl bg-violet-600 text-base font-black text-white shadow-lg shadow-violet-600/20">
-               A
-             </div>
-             <div className="font-headline">
-               <h1 className="text-lg font-black tracking-tight text-slate-900 leading-tight">Avanzo</h1>
-               <p className="text-[9px] font-black uppercase tracking-widest leading-none mt-1">Team Management</p>
-             </div>
+          <div className="flex flex-col gap-2">
+             <img 
+               src="/src/assets/Avanzo Logo corrected and final-png.png" 
+               alt="Avanzo" 
+               className="w-32 h-auto object-contain"
+             />
+             <p className="text-[9px] font-black uppercase tracking-[0.2em] leading-none text-violet-600 italic">Team Lead Dashboard</p>
           </div>
           <button onClick={() => setIsSidebarOpen(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-50 md:hidden">
             <X className="h-4 w-4" />
@@ -100,7 +100,7 @@ export default function TeamLeadChrome({ children }: { children: React.ReactNode
               key={item.to}
               to={item.to}
               end={item.end}
-              onClick={() => setIsSidebarOpen(false)}
+              onClick={() => window.innerWidth < 1024 && setIsSidebarOpen(false)}
               className={({ isActive }) => (isActive ? active : inactive)}
             >
               <item.icon className="h-4.5 w-4.5 shrink-0" />
@@ -147,8 +147,8 @@ export default function TeamLeadChrome({ children }: { children: React.ReactNode
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden md:pl-64">
+      {/* Main Workspace Frame */}
+      <div className="flex flex-1 flex-col min-w-0">
         {/* Header */}
         <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between bg-white/80 border-b border-slate-100 px-6 md:px-8 backdrop-blur-md">
           <div className="flex items-center gap-5 flex-1 max-w-2xl">
@@ -171,6 +171,7 @@ export default function TeamLeadChrome({ children }: { children: React.ReactNode
 
           <div className="flex items-center gap-3.5">
             <div className="flex items-center gap-2">
+              <AttendanceClockWidget onToggleSidebar={setIsSidebarOpen} />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button 
@@ -262,7 +263,7 @@ export default function TeamLeadChrome({ children }: { children: React.ReactNode
           </div>
         </header>
 
-        <main key={location.pathname} className="min-h-0 flex-1 overflow-y-auto p-6 md:p-8 lg:p-10 animate-in fade-in slide-in-from-bottom-2 duration-700 ease-out">
+        <main key={location.pathname} className="min-h-0 flex-1 overflow-y-auto p-6 md:p-8 lg:p-10">
           {children}
         </main>
       </div>

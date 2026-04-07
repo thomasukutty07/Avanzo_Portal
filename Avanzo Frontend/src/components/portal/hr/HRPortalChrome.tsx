@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react"
 import { NavLink, useNavigate, useLocation } from "react-router-dom"
-import { LogOut, Search, Bell, Menu, X, Settings as SettingsIcon, Download } from "lucide-react"
+import { LogOut, Search, Bell, Menu, X, Settings as SettingsIcon } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { api } from "@/lib/axios"
 import { toast } from "sonner"
 import { purplePortalPalette } from "@/components/design/portalPalettes"
 import { HR_PORTAL_NAV } from "./hrPortalNavConfig"
+import { AttendanceClockWidget } from "@/components/shared/AttendanceClockWidget"
 
 export function HRPortalChrome({ children }: { children: React.ReactNode }) {
   const { logout, user } = useAuth()
   const navigate = useNavigate()
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [announcementCount, setAnnouncementCount] = useState(0)
   const style = purplePortalPalette as React.CSSProperties
 
@@ -26,7 +27,7 @@ export function HRPortalChrome({ children }: { children: React.ReactNode }) {
       }
     }
     fetchStats()
-    const interval = setInterval(fetchStats, 60000)
+    const interval = setInterval(fetchStats, 300000) // 5 minutes polling to avoid 429 errors
     return () => clearInterval(interval)
   }, [])
 
@@ -55,16 +56,15 @@ export function HRPortalChrome({ children }: { children: React.ReactNode }) {
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 shrink-0 flex-col border-r border-slate-100 bg-white transition-transform duration-300 ease-in-out md:translate-x-0 ${isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 shrink-0 flex-col border-r border-slate-100 bg-white transition-all duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0 shadow-2xl md:translate-x-0' : '-translate-x-full md:translate-x-0 md:-ml-72'}`}>
         <div className="flex h-24 items-center justify-between px-6">
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-violet-600 text-lg font-black text-white shadow-lg shadow-violet-600/20">
-              A
-            </div>
-            <div className="font-headline">
-              <h1 className="text-xl font-black tracking-tight text-slate-900 leading-tight">Avanzo</h1>
-              <p className="text-[10px] font-black uppercase tracking-widest leading-none mt-1">HR Management</p>
-            </div>
+          <div className="flex flex-col gap-2.5">
+            <img 
+              src="/src/assets/Avanzo Logo corrected and final-png.png" 
+              alt="Avanzo" 
+              className="w-32 h-auto object-contain"
+            />
+            <p className="text-[9px] font-black uppercase tracking-[0.2em] leading-none text-violet-600 italic">Personnel: HR Admin Hub</p>
           </div>
           <button onClick={() => setIsSidebarOpen(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-50 md:hidden">
             <X className="h-5 w-5" />
@@ -77,7 +77,7 @@ export function HRPortalChrome({ children }: { children: React.ReactNode }) {
               key={to}
               to={to}
               end={end}
-              onClick={() => setIsSidebarOpen(false)}
+              onClick={() => window.innerWidth < 1024 && setIsSidebarOpen(false)}
               className={({ isActive }) => (isActive ? active : inactive)}
             >
               <Icon className="h-5 w-5 shrink-0" />
@@ -119,7 +119,7 @@ export function HRPortalChrome({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Content Area */}
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col md:pl-72">
+      <div className={`flex min-h-0 min-w-0 flex-1 flex-col transition-all duration-300 ${isSidebarOpen ? 'md:pl-72' : ''}`}>
         <header className="flex h-16 shrink-0 items-center justify-between bg-white border-b border-slate-100 px-6 md:px-8 sticky top-0 z-20">
           <div className="flex items-center gap-6 flex-1 max-w-2xl">
             <button 
@@ -139,7 +139,9 @@ export function HRPortalChrome({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-6 font-headline">
+          <div className="flex items-center gap-6 font-headline text-right">
+            <AttendanceClockWidget onToggleSidebar={setIsSidebarOpen} />
+            
             <button
               onClick={() => toast.info("No unread HR notifications")}
               className="relative flex items-center justify-center size-10 rounded-full border border-slate-100 text-slate-500 hover:bg-slate-50 transition-colors"
@@ -151,16 +153,16 @@ export function HRPortalChrome({ children }: { children: React.ReactNode }) {
             
             <div className="h-8 w-px bg-slate-100 hidden sm:block" />
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 h-full">
               <div className="hidden sm:block text-right">
-                <p className="text-sm font-bold leading-none text-slate-900">
+                <p className="text-sm font-bold leading-none text-slate-900 uppercase">
                   {user?.first_name} {user?.last_name}
                 </p>
-                <p className="text-[11px] font-semibold text-slate-500 mt-1">
+                <p className="text-[10px] font-black text-slate-400 mt-1.5 uppercase tracking-widest leading-none">
                   {user?.designation_name || user?.role || "HR Admin"}
                 </p>
               </div>
-              <div className="size-10 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-slate-400 font-black overflow-hidden shadow-sm uppercase">
+              <div className="size-10 rounded-full bg-slate-50 border-2 border-white flex items-center justify-center text-slate-400 font-black overflow-hidden shadow-sm uppercase shrink-0 ring-1 ring-slate-100">
                 {user?.first_name?.[0]}{user?.last_name?.[0]}
               </div>
             </div>

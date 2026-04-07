@@ -3,15 +3,17 @@ import { Link } from "react-router-dom"
 import { Bell, Search, Menu } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { toast } from "sonner"
+import { AttendanceClockWidget } from "@/components/shared/AttendanceClockWidget"
 
 const PROFILE_IMG =
   "https://lh3.googleusercontent.com/aida-public/AB6AXuDzgVkabVGiXiA6U8CKH1uEo2cviFMMhGE3m61Lf-HlkVCFU0mxSigT7qAoTykRrl1baKV1YIvoQUH5rUYo-xmTt4SVHNeuMb0ea2lBxVyMjDVZOzjhGcdbmzIQYvZO0BHOU2lBwKYGyHAZd9Nc62y03TuhGlGkcHqNi7d-ZEHFs5NMYQG4ODpY6IsuWG31eC6vuIaEaWGg4H66p1UmBoHr9uSbLl03VivPw1e5vXOCzk-rQ3R_Me2jBcFdLjfIqxWfcqSQmDFliE4"
 
 interface CyberSecurityPortalHeaderProps {
   onMenuClick?: () => void
+  onToggleSidebar?: (open: boolean) => void
 }
 
-export function CyberSecurityPortalHeader({ onMenuClick }: CyberSecurityPortalHeaderProps) {
+export function CyberSecurityPortalHeader({ onMenuClick, onToggleSidebar }: CyberSecurityPortalHeaderProps) {
   const [query, setQuery] = useState("")
   const { user } = useAuth()
   const name = user
@@ -54,6 +56,8 @@ export function CyberSecurityPortalHeader({ onMenuClick }: CyberSecurityPortalHe
 
       {/* Right: notifications + profile */}
       <div className="ml-4 flex items-center gap-6">
+        <AttendanceClockWidget onToggleSidebar={onToggleSidebar} />
+        
         <button
           type="button"
           onClick={() => toast.info("No new security notifications")}

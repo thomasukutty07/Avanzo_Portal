@@ -4,7 +4,7 @@ import { Link } from "react-router-dom"
 import { Loader2, AtSign, Lock, Eye, EyeOff, Check, ArrowRight } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
-import AvanzoLogo from "@/assets/Avanzo Logo corrected and final.jpg"
+import AvanzoLogo from "@/assets/Avanzo Logo corrected and final-png.png"
 
 export default function Login() {
   useDesignPortalLightTheme()
@@ -61,16 +61,12 @@ export default function Login() {
           </div>
           <div className="relative z-10 flex flex-1 flex-col items-center justify-center p-16 text-center"
                style={{ animation: 'fadeSlideIn 0.5s ease-out both' }}>
-            <div className="flex items-center justify-center gap-4">
-              <img src={AvanzoLogo} alt="Avanzo Logo" className="h-12 w-auto rounded-xl shadow-xl border border-white/10" />
-              <span className="text-3xl font-extrabold tracking-tighter text-white">
-                AVANZO CYBER SECURITY
-              </span>
+            <div className="flex flex-col items-center justify-center gap-8">
+              <img src={AvanzoLogo} alt="Avanzo Logo" className="h-32 w-auto brightness-0 invert transition-all duration-700 hover:scale-105" />
             </div>
-            <div className="relative z-10 mt-16 max-w-lg">
-              <h1 className="mb-6 font-headline text-5xl font-bold leading-tight tracking-tight text-white">
-                Welcome to <br />
-                <span className="text-[#d0beff]">AVANZO CYBER SECURITY.</span>
+            <div className="relative z-10 mt-12 max-w-lg">
+              <h1 className="mb-6 font-headline text-5xl font-black leading-tight tracking-tighter text-white">
+                Employee Portal.
               </h1>
             </div>
           </div>

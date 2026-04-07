@@ -206,7 +206,7 @@ export function EmployeeUpsertForm({
 
       <div className="grid gap-6 sm:grid-cols-2">
         <EliteFormField 
-           label="Employee ID (Optional)" 
+           label="Employee ID (optional)" 
            placeholder="EMP-0000"
            value={employeeId}
            onChange={setEmployeeId}
@@ -220,10 +220,10 @@ export function EmployeeUpsertForm({
       </div>
 
       <div className="space-y-2 text-left">
-        <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.15em] ml-1">Access role</label>
+        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">Access Role</label>
         <div className="relative">
           <select
-            className="w-full h-12 bg-slate-50 border-none rounded-2xl px-5 text-sm font-black text-slate-900 focus:ring-2 focus:ring-violet-600/10 focus:bg-white transition-all outline-none appearance-none cursor-pointer"
+            className="w-full h-12 bg-slate-50 border-none rounded-2xl px-5 text-sm font-medium text-slate-900 focus:ring-2 focus:ring-violet-600/10 focus:bg-white transition-all outline-none appearance-none cursor-pointer"
             value={accessRoleId}
             onChange={(e) => setAccessRoleId(e.target.value)}
           >
@@ -242,10 +242,10 @@ export function EmployeeUpsertForm({
 
       <div className="grid gap-6 sm:grid-cols-2">
         <div className="space-y-2 text-left">
-          <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.15em] ml-1">Department</label>
+          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">Department</label>
           <div className="relative">
             <select
-              className="w-full h-12 bg-slate-50 border-none rounded-2xl px-5 text-sm font-black text-slate-900 focus:ring-2 focus:ring-violet-600/10 focus:bg-white transition-all outline-none appearance-none cursor-pointer"
+              className="w-full h-12 bg-slate-50 border-none rounded-2xl px-5 text-sm font-medium text-slate-900 focus:ring-2 focus:ring-violet-600/10 focus:bg-white transition-all outline-none appearance-none cursor-pointer"
               value={departmentId}
               onChange={(e) => setDepartmentId(e.target.value)}
             >
@@ -262,10 +262,10 @@ export function EmployeeUpsertForm({
           </div>
         </div>
         <div className="space-y-2 text-left">
-          <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.15em] ml-1">Designation</label>
+          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">Designation</label>
           <div className="relative">
             <select
-              className="w-full h-12 bg-slate-50 border-none rounded-2xl px-5 text-sm font-black text-slate-900 focus:ring-2 focus:ring-violet-600/10 focus:bg-white transition-all outline-none appearance-none cursor-pointer"
+              className="w-full h-12 bg-slate-50 border-none rounded-2xl px-5 text-sm font-medium text-slate-900 focus:ring-2 focus:ring-violet-600/10 focus:bg-white transition-all outline-none appearance-none cursor-pointer"
               value={designationId}
               onChange={(e) => setDesignationId(e.target.value)}
             >
@@ -285,10 +285,10 @@ export function EmployeeUpsertForm({
 
       <div className="grid gap-6 sm:grid-cols-2">
         <div className="space-y-2 text-left">
-          <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.15em] ml-1">Team lead (optional)</label>
+          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">Team Lead (optional)</label>
           <div className="relative">
             <select
-              className="w-full h-12 bg-slate-50 border-none rounded-2xl px-5 text-sm font-black text-slate-900 focus:ring-2 focus:ring-violet-600/10 focus:bg-white transition-all outline-none appearance-none cursor-pointer"
+              className="w-full h-12 bg-slate-50 border-none rounded-2xl px-5 text-sm font-medium text-slate-900 focus:ring-2 focus:ring-violet-600/10 focus:bg-white transition-all outline-none appearance-none cursor-pointer"
               value={teamLeadId}
               onChange={(e) => setTeamLeadId(e.target.value)}
             >
@@ -338,13 +338,13 @@ export function EmployeeUpsertForm({
 function EliteFormField({ label, placeholder, type = "text", value, onChange }: { label: string, placeholder?: string, type?: string, value: string, onChange: (val: string) => void }) {
   return (
     <div className="space-y-2 text-left animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.15em] ml-1">{label}</label>
+      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">{label}</label>
       <input 
         type={type}
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full h-12 bg-slate-50 border-none rounded-2xl px-5 text-sm font-black text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-violet-600/10 focus:bg-white transition-all outline-none shadow-sm shadow-slate-900/5 group-hover:scale-[1.02]"
+        className="w-full h-12 bg-slate-50 border-none rounded-2xl px-5 text-sm font-medium text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-violet-600/10 focus:bg-white transition-all outline-none shadow-sm shadow-slate-900/5 group-hover:scale-[1.01]"
       />
     </div>
   )

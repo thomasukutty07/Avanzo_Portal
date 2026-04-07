@@ -96,64 +96,81 @@ export default function TeamAnnouncementsPage() {
                 No Strategic Updates Found
              </div>
           ) : filteredBroadcasts.map((item) => (
-            <div key={item.id} className="bg-white p-8 md:p-10 rounded-[2.5rem] border border-slate-100 shadow-sm transition-all hover:shadow-2xl hover:border-violet-100 group relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-1.5 h-full bg-violet-600/0 group-hover:bg-violet-600 transition-all duration-500 shadow-[0_0_15px_rgba(124,58,237,0.4)]" />
-              
-              {item.is_active && (
-                <div className="absolute top-10 right-10 text-violet-600 bg-violet-50 p-3.5 rounded-2xl shadow-lg shadow-violet-600/10 border border-violet-100 animate-pulse">
-                  <Pin className="size-5 stroke-[2.5px]" />
-                </div>
-              )}
-              
-              <div className="flex items-center gap-4 mb-8">
-                 <span className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border transition-all ${
-                   item.severity === 'critical' ? 'bg-red-50 text-red-700 border-red-100' :
-                   item.severity === 'warning' ? 'bg-amber-50 text-amber-700 border-amber-100' :
-                   'bg-emerald-50 text-emerald-700 border-emerald-100 shadow-sm'
-                 }`}>
-                   {item.severity || 'Tactical'}
-                 </span>
-                 <div className="h-1 w-1 bg-slate-200 rounded-full" />
-                 <div className="flex items-center gap-2.5 text-slate-300">
-                    <Clock className="size-4" />
-                    <span className="text-[10px] font-black tabular-nums lowercase opacity-60">mission {item.created_at?.split('T')[0] || 'day'}</span>
-                 </div>
-              </div>
+            <div key={item.id} className="group relative bg-white border border-slate-100 rounded-[2rem] overflow-hidden hover:shadow-2xl hover:border-violet-200 transition-all duration-500">
+              {/* Severity Side Accent */}
+              <div className={`absolute left-0 top-0 bottom-0 w-1.5 transition-all duration-500 ${
+                item.severity === 'critical' ? 'bg-red-500 shadow-[2px_0_15px_rgba(239,68,68,0.3)]' :
+                item.severity === 'warning' ? 'bg-amber-500 shadow-[2px_0_15px_rgba(245,158,11,0.3)]' :
+                'bg-emerald-500 shadow-[2px_0_15px_rgba(16,185,129,0.3)]'
+              }`} />
 
-              <h3 className="font-headline text-2xl font-black text-slate-900 group-hover:text-violet-600 transition-colors mb-6 leading-tight tracking-tight uppercase">{item.title}</h3>
-              <p className="text-slate-600 text-sm leading-[1.8] font-medium mb-10 max-w-4xl opacity-80">{item.message}</p>
-
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-8 pt-8 border-t border-slate-50">
-                <div className="flex items-center gap-4.5 group/author cursor-pointer" onClick={() => toast.info(`Syncing unit records: ${item.author_name || 'Directive Source'}`)}>
-                  <div className="size-14 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center text-violet-700 font-black text-[10px] shadow-sm group-hover/author:bg-violet-600 group-hover/author:text-white transition-all ring-6 ring-white p-1">
-                    <div className="size-full flex items-center justify-center bg-white rounded-xl group-hover/author:bg-violet-500 transition-colors uppercase">
-                       {(item.author_name || 'System').split(' ').map((n:any) => n[0]).join('')}
+              <div className="p-8 md:p-10 flex flex-col md:flex-row gap-10">
+                {/* Main Content Area */}
+                <div className="flex-1 space-y-6">
+                  <div className="flex flex-wrap items-center gap-4">
+                    <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${
+                      item.severity === 'critical' ? 'bg-red-50 text-red-700 border-red-100' :
+                      item.severity === 'warning' ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                      'bg-emerald-50 text-emerald-700 border-emerald-100'
+                    }`}>
+                      {item.severity || 'Tactical'}
+                    </span>
+                    <div className="h-4 w-px bg-slate-100" />
+                    <div className="flex items-center gap-2 text-slate-300">
+                      <Clock className="size-3.5" />
+                      <span className="text-[10px] font-black tabular-nums uppercase tracking-widest opacity-60">
+                        Mission Zulu: {item.created_at?.split('T')[0] || 'Day 0'}
+                      </span>
                     </div>
+                    {item.is_active && (
+                       <div className="ml-auto flex items-center gap-2 px-3 py-1 bg-violet-50 rounded-full border border-violet-100">
+                          <Pin className="size-3 text-violet-600" />
+                          <span className="text-[9px] font-black text-violet-600 uppercase tracking-widest">Pinned Directive</span>
+                       </div>
+                    )}
                   </div>
+
                   <div>
-                    <p className="text-sm font-black text-slate-900 group-hover/author:text-violet-600 transition-colors tracking-tight uppercase leading-none">{item.author_name || 'Avanzo Strategic'}</p>
-                    <p className="text-[9px] text-slate-400 font-black tracking-widest leading-none mt-2 opacity-60 flex items-center gap-2 uppercase">
-                       <Megaphone className="size-3 text-violet-600" />
-                       Strategic Command Center
+                    <h3 className="text-2xl font-black text-slate-900 leading-tight tracking-tight uppercase group-hover:text-violet-600 transition-colors">
+                      {item.title}
+                    </h3>
+                    <p className="mt-4 text-slate-500 text-sm leading-relaxed font-medium max-w-3xl opacity-80 italic">
+                      "{item.message}"
                     </p>
                   </div>
-                </div>
-                
-                <div className="flex items-center gap-4">
-                   <button 
-                    onClick={() => toast.info("Initializing tactical re-transmission...")}
-                    className="flex items-center gap-2.5 px-5 py-3 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all text-[10px] font-black border border-slate-100 hover:border-violet-100 shadow-sm uppercase tracking-widest"
-                   >
-                     <Edit3 className="size-4" />
-                     Reform
-                   </button>
-                   <button 
-                    onClick={() => toast.error("Intelligence purged from tactical storage.")}
-                    className="flex items-center gap-2.5 px-5 py-3 text-slate-400 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all text-[10px] font-black border border-slate-100 hover:border-red-100 shadow-sm uppercase tracking-widest"
-                   >
-                     <Trash2 className="size-4" />
-                     Purge
-                   </button>
+
+                  <div className="pt-6 flex flex-wrap items-center justify-between gap-6 border-t border-slate-50">
+                    <div className="flex items-center gap-4 group/author cursor-pointer" onClick={() => toast.info(`Accessing credentials: ${item.author_name}`)}>
+                      <div className="size-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-violet-600 font-black text-xs shadow-sm ring-4 ring-white group-hover/author:bg-violet-600 group-hover/author:text-white transition-all">
+                        {(item.author_name || 'S').split(' ').map((n:any) => n[0]).join('')}
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-black text-slate-900 group-hover/author:text-violet-600 transition-colors uppercase tracking-tight leading-none">
+                          {item.author_name || 'Avanzo Command'}
+                        </p>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none opacity-60">
+                          Strategic Force Node Alpha
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <button 
+                        onClick={() => toast.info("Reformulating directive...")}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-100 text-slate-400 hover:text-violet-600 hover:bg-violet-50 hover:border-violet-100 transition-all text-[10px] font-black uppercase tracking-widest shadow-sm"
+                      >
+                        <Edit3 className="size-3.5" />
+                        Reform
+                      </button>
+                      <button 
+                        onClick={() => toast.error("Directive purged from tactical node.")}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-100 text-slate-400 hover:text-red-600 hover:bg-red-50 hover:border-red-100 transition-all text-[10px] font-black uppercase tracking-widest shadow-sm"
+                      >
+                        <Trash2 className="size-3.5" />
+                        Purge
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

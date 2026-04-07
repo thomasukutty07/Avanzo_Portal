@@ -35,15 +35,15 @@ export function SuperAdminSidebar({ onNavClick }: { onNavClick?: () => void }) {
   return (
     <aside className="fixed inset-y-0 left-0 flex h-full w-72 flex-col border-r border-slate-100 bg-white pt-8 font-headline">
       <div className="mb-10 px-8">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-600 text-white shadow-lg shadow-violet-600/20">
-          <span className="text-2xl font-black">A</span>
+        <div className="flex items-center gap-3">
+          <div className="flex size-10 items-center justify-center rounded-xl bg-violet-600 text-lg font-black text-white shadow-lg shadow-violet-600/20">
+            A
+          </div>
+          <div>
+            <h1 className="text-xl font-black tracking-tight text-slate-900 leading-none">Avanzo</h1>
+            <p className="text-[10px] font-black uppercase tracking-widest leading-none mt-1 text-violet-600">System: Global Root</p>
+          </div>
         </div>
-        <h2 className="mt-6 text-xl font-black tracking-tight text-slate-900 leading-none">
-          Avanzo
-        </h2>
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-2">
-          Global Registry
-        </p>
       </div>
 
       <nav className="flex-1 space-y-1 px-4">

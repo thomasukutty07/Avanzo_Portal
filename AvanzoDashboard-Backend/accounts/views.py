@@ -22,7 +22,7 @@ from .serializers import (
 
 
 class LoginRateThrottle(AnonRateThrottle):
-    rate = "5/minute"
+    rate = "60/minute"
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -121,7 +121,11 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         "department", "designation", "access_role", "team_lead"
     )
     serializer_class = EmployeeSerializer
-    permission_classes = [IsAuthenticated, IsAdminOrHRReadOnly]
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [IsAuthenticated()]
+        return [IsAuthenticated(), IsAdminOrHR()]
 
     def _revoke_tokens(self, user):
         """Forcefully expires all outstanding JWTs for a user."""

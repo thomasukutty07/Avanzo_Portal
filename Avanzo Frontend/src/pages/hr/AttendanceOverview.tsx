@@ -12,18 +12,25 @@ import {
   ChevronLeft,
   ChevronRight,
   TrendingUp,
-  ExternalLink
+  ExternalLink,
+  Eye,
+  Settings,
+  ShieldCheck,
+  AlertCircle
 } from "lucide-react"
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 
-const STATS = [
-  { label: "PRESENT TODAY", value: "SYNC...", sub: "Scanning Registry", trend: "0.0%", color: "text-emerald-500", icon: UserCheck },
-  { label: "LATE ARRIVALS", value: "0", sub: "Avg: 0m Delay", trend: "0.0%", color: "text-amber-500", icon: Clock },
-  { label: "ABSENT LOGS", value: "0", sub: "Approved Leaves", trend: "0.0%", color: "text-red-500", icon: UserMinus },
-  { label: "VARSITY SCORE", value: "100", sub: "Operational Health", trend: "Stable", color: "text-violet-600", icon: TrendingUp },
-]
+// Configuration moved inside component for reactivity
 
 interface AttendanceLog {
   name: string;
@@ -38,9 +45,7 @@ interface AttendanceLog {
 }
 
 
-const CHART_DATA = [
-  { day: "System", value: 0 },
-]
+
 
 export default function HRAttendanceOverview() {
   useDesignPortalLightTheme()
@@ -48,6 +53,13 @@ export default function HRAttendanceOverview() {
   const [stats, setStats] = useState<any>({
     clockedIn: 0, late: 0, missing: 0, total: 0
   })
+
+  const STATS = [
+    { label: "Present Today", value: stats.clockedIn.toString(), sub: "Scanning Registry", trend: "+2.4%", color: "text-emerald-500", icon: UserCheck },
+    { label: "Late Arrivals", value: stats.late.toString(), sub: "Avg: 0m Delay", trend: "-1.2%", color: "text-amber-500", icon: Clock },
+    { label: "Absent Logs", value: stats.missing.toString(), sub: "Approved Leaves", trend: "0.0%", color: "text-red-500", icon: UserMinus },
+    { label: "Varsity Score", value: "100", sub: "Operational Health", trend: "Stable", color: "text-violet-600", icon: TrendingUp },
+  ]
 
   useEffect(() => {
     async function fetchAttendance() {
@@ -68,15 +80,15 @@ export default function HRAttendanceOverview() {
           
           if (e.status === 'clocked_in' || e.status === 'clocked_out') {
              if (e.is_late) {
-                statusText = "LATE ARRIVAL"
-                color = "bg-amber-500"
+                statusText = "Late Arrival"
+                color = "bg-amber-500 shadow-amber-500/10"
              } else {
-                statusText = "VERIFIED"
-                color = "bg-emerald-500"
+                statusText = "Verified"
+                color = "bg-emerald-500 shadow-emerald-500/10"
              }
           } else {
-             statusText = "MISSING"
-             color = "bg-red-500"
+             statusText = "Missing"
+             color = "bg-red-500 shadow-red-500/10"
           }
 
           return {
@@ -106,8 +118,8 @@ export default function HRAttendanceOverview() {
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
             <div className="font-headline">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-600 mb-1">
-                    WORKFORCE ANALYTICS
+                <p className="text-[10px] font-black tracking-[0.2em] text-violet-600 mb-1">
+                    Workforce Analytics
                 </p>
                 <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">
                     Attendance Registry
@@ -115,10 +127,10 @@ export default function HRAttendanceOverview() {
                 <p className="text-slate-500 mt-2 text-sm font-medium italic">High-resolution workforce presence tracking and reliability telemetry.</p>
             </div>
             <div className="flex items-center gap-3 font-headline">
-                <Button variant="outline" className="h-11 rounded-xl border-slate-200 text-[11px] font-black text-slate-600 px-6 bg-white hover:bg-slate-50 uppercase tracking-widest transition-all">
+                <Button variant="outline" className="h-11 rounded-xl border-slate-200 text-[11px] font-black text-slate-600 px-6 bg-white hover:bg-slate-50 tracking-widest transition-all">
                     Filter Analytics
                 </Button>
-                <Button onClick={() => toast.success("Compiling attendance report...")} className="h-11 rounded-xl bg-violet-600 text-white text-[11px] font-black px-6 shadow-lg shadow-violet-600/20 hover:bg-violet-700 uppercase tracking-widest transition-all">
+                <Button onClick={() => toast.success("Compiling attendance report...")} className="h-11 rounded-xl bg-violet-600 text-white text-[11px] font-black px-6 shadow-lg shadow-violet-600/20 hover:bg-violet-700 tracking-widest transition-all">
                     <Download className="mr-2 size-4 stroke-[3px]" /> Export Telemetry
                 </Button>
             </div>
@@ -134,7 +146,7 @@ export default function HRAttendanceOverview() {
                        <stat.icon className="size-4" />
                     </div>
                 </div>
-                <p className={`text-4xl font-black tracking-tight uppercase italic ${stat.color.includes('violet') ? 'text-slate-900' : stat.color}`}>{stat.value}</p>
+                <p className={`text-4xl font-black tracking-tight ${stat.color.includes('violet') ? 'text-slate-900' : stat.color}`}>{stat.value}</p>
                 <div className="mt-4 flex items-center justify-between">
                     <span className="text-[10px] font-black text-slate-300 uppercase tracking-tighter italic">{stat.sub}</span>
                     <Badge className={`${stat.trend === 'Stable' ? 'bg-slate-50 text-slate-400' : stat.trend.startsWith('+') ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'} border-none rounded-lg text-[9px] font-black tracking-widest`}>
@@ -153,28 +165,17 @@ export default function HRAttendanceOverview() {
                     <h3 className="text-lg font-black text-slate-900 tracking-tight">Presence Velocity</h3>
                     <div className="flex items-center gap-1 bg-slate-50 p-1.5 rounded-xl border border-slate-50">
                       {['Daily', 'Weekly', 'Monthly'].map((period) => (
-                        <button key={period} className={`px-5 py-2 text-[10px] font-black rounded-lg transition-all uppercase tracking-widest ${period === 'Daily' ? 'bg-white shadow-md text-violet-700' : 'text-slate-300'}`}>
+                        <button key={period} className={`px-5 py-2 text-[10px] font-black rounded-lg transition-all tracking-widest ${period === 'Daily' ? 'bg-white shadow-md text-violet-700' : 'text-slate-300'}`}>
                           {period}
                         </button>
                       ))}
                     </div>
                 </div>
-                <div className="flex-1 min-h-0">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={CHART_DATA}>
-                        <defs>
-                          <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#7c3aed" stopOpacity={0.1}/>
-                            <stop offset="95%" stopColor="#7c3aed" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                        <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 900, fill: '#94a3b8' }} dy={10} />
-                        <YAxis hide />
-                        <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 900, fontSize: '10px' }} />
-                        <Area type="monotone" dataKey="value" stroke="#7c3aed" strokeWidth={4} fillOpacity={1} fill="url(#colorValue)" />
-                      </AreaChart>
-                    </ResponsiveContainer>
+                <div className="flex-1 min-h-0 flex items-center justify-center bg-slate-50/50 border border-slate-100 rounded-2xl">
+                    <div className="text-center">
+                       <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Total Workforce Present</p>
+                       <p className="text-7xl font-black text-slate-900 tracking-tight">{stats.clockedIn} / {Math.max(stats.total, 1)}</p>
+                    </div>
                 </div>
             </div>
 
@@ -193,9 +194,9 @@ export default function HRAttendanceOverview() {
                    <h5 className="text-[10px] font-black text-slate-400 tracking-widest mb-6 leading-none">Reliability Metrics</h5>
                    <div className="space-y-6">
                       {[
-                        { label: "ON-TIME ARRIVAL", val: 88, color: "bg-emerald-500" },
-                        { label: "OVERTIME LOGGED", val: 42, color: "bg-violet-600" },
-                        { label: "UNAUTHORIZED ABSC.", val: 4, color: "bg-red-500" },
+                        { label: "On-time Arrival", val: 88, color: "bg-emerald-500" },
+                        { label: "Overtime Logged", val: 42, color: "bg-violet-600" },
+                        { label: "Unauthorized Absc.", val: 4, color: "bg-red-500" },
                       ].map((m, i) => (
                         <div key={i} className="space-y-2">
                             <div className="flex justify-between items-center text-[9px] font-black tracking-widest">
@@ -236,7 +237,7 @@ export default function HRAttendanceOverview() {
                 </thead>
                 <tbody className="divide-y divide-slate-50">
                   {logs.map((log, i) => (
-                    <tr key={i} className="group hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => toast.info(`Accessing full telemetry for ${log.name}`)}>
+                    <tr key={i} className="group hover:bg-slate-50 transition-colors">
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-3">
                           <div className="size-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-black text-sm group-hover:bg-violet-600 group-hover:text-white transition-all shadow-sm">
@@ -260,9 +261,41 @@ export default function HRAttendanceOverview() {
                         </span>
                       </td>
                       <td className="px-8 py-6 text-right">
-                        <button className="p-3 text-slate-200 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all">
-                          <MoreVertical className="size-4" />
-                        </button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="p-3 text-slate-200 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all outline-none">
+                              <MoreVertical className="size-4" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-56 font-display rounded-2xl p-1.5 shadow-2xl border-slate-200 z-[100]">
+                            <DropdownMenuLabel className="px-3.5 py-2.5 text-[9px] font-black uppercase tracking-[0.18em] text-slate-300 italic">Contextual Intelligence</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => toast.info(`Initializing full telemetry for ${log.name}`)} className="rounded-xl px-3 py-2.5 cursor-pointer group">
+                                <div className="size-8 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center mr-3 group-hover:bg-violet-600 group-hover:text-white transition-colors">
+                                  <Eye className="size-3.5" />
+                                </div>
+                                <span className="font-black text-[11px] text-slate-700 uppercase tracking-tight">View Pulse Profile</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => toast.success("Verification protocol complete.")} className="rounded-xl px-3 py-2.5 cursor-pointer group">
+                                <div className="size-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mr-3 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                                  <ShieldCheck className="size-3.5" />
+                                </div>
+                                <span className="font-black text-[11px] text-slate-700 uppercase tracking-tight">Verify Presence</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator className="bg-slate-50" />
+                            <DropdownMenuItem onClick={() => toast.warning("Adjustment registry locked.")} className="rounded-xl px-3 py-2.5 cursor-pointer group">
+                                <div className="size-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center mr-3 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                                  <Settings className="size-3.5" />
+                                </div>
+                                <span className="font-black text-[11px] text-slate-700 uppercase tracking-tight">Manual Adjustment</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => toast.error("Shift alert issued.")} className="rounded-xl px-3 py-2.5 cursor-pointer group hover:bg-red-50">
+                                <div className="size-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center mr-3 group-hover:bg-red-600 group-hover:text-white transition-colors">
+                                  <AlertCircle className="size-3.5" />
+                                </div>
+                                <span className="font-black text-[11px] text-red-600 uppercase tracking-tight">Issue Compliance Alert</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </td>
                     </tr>
                   ))}

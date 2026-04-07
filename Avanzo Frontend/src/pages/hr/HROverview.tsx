@@ -54,10 +54,10 @@ export default function HROverview() {
         }).length;
 
         setStats([
-            { label: "TOTAL EMPLOYEES", value: allEmployees.length.toString().padStart(2, '0'), sub: "Global Active", icon: Users, color: "text-slate-900" },
-            { label: "NEW ONBOARDINGS", value: newThisMonth.toString().padStart(2, '0'), sub: "Current Month", icon: UserPlus, color: "text-slate-900" },
-            { label: "ATTENDANCE RATE", value: `${Math.round(attendanceRate)}%`, sub: `${attendance.present_now || 0}/${attendance.total_workforce || 0} Present`, valueColor: "text-emerald-500", icon: CheckCircle2, color: "text-emerald-500" },
-            { label: "PENDING LEAVES", value: leaves.filter(l => l.status === 'pending' || l.status === 'tl_approved').length.toString().padStart(2, '0'), sub: "Requires Triage", valueColor: "text-amber-500", icon: ClipboardList, color: "text-amber-500" },
+            { label: "Total Employees", value: allEmployees.length.toString().padStart(2, '0'), sub: "Global Active", icon: Users, color: "text-slate-900" },
+            { label: "New Onboardings", value: newThisMonth.toString().padStart(2, '0'), sub: "Current Month", icon: UserPlus, color: "text-slate-900" },
+            { label: "Attendance Rate", value: `${Math.round(attendanceRate)}%`, sub: `${attendance.present_now || 0}/${attendance.total_workforce || 0} Present`, valueColor: "text-emerald-500", icon: CheckCircle2, color: "text-emerald-500" },
+            { label: "Pending Leaves", value: leaves.filter(l => l.status === 'pending' || l.status === 'tl_approved').length.toString().padStart(2, '0'), sub: "Requires Triage", valueColor: "text-amber-500", icon: ClipboardList, color: "text-amber-500" },
         ])
       } catch (err) {
         console.error("Failed to fetch dashboard data:", err)
@@ -75,7 +75,7 @@ export default function HROverview() {
             <div className="flex h-[80vh] items-center justify-center bg-[#fcfcfc]">
                 <div className="flex flex-col items-center gap-6">
                     <Loader2 className="h-10 w-10 animate-spin text-violet-600" />
-                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] font-headline">Scanning Personnel Registry Intelligence...</p>
+                    <p className="text-[11px] font-black text-slate-400 tracking-[0.2em] font-headline">Scanning personnel registry intelligence...</p>
                 </div>
             </div>
         </HRPortalChrome>
@@ -100,14 +100,14 @@ export default function HROverview() {
                 <button
                     type="button"
                     onClick={() => toast.info("Exporting sector registry…")}
-                    className="px-7 py-3 rounded-xl border border-slate-100 bg-white text-slate-900 text-[11px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm active:scale-95 font-headline"
+                    className="px-7 py-3 rounded-xl border border-slate-100 bg-white text-slate-900 text-[11px] font-black tracking-widest hover:bg-slate-50 transition-all shadow-sm active:scale-95 font-headline"
                 >
                     Export Dossier
                 </button>
                 <button
                     type="button"
                     onClick={() => navigate("/employee-registration")}
-                    className="flex items-center gap-3 px-7 py-3 rounded-xl bg-violet-600 text-white text-[11px] font-black uppercase tracking-widest hover:bg-violet-700 transition-all shadow-lg shadow-violet-600/20 active:scale-95 shadow-md font-headline"
+                    className="flex items-center gap-3 px-7 py-3 rounded-xl bg-violet-600 text-white text-[11px] font-black tracking-widest hover:bg-violet-700 transition-all shadow-lg shadow-violet-600/20 active:scale-95 shadow-md font-headline"
                 >
                     <Plus className="size-4 stroke-[3px]" />
                     Onboard Unit
@@ -127,7 +127,7 @@ export default function HROverview() {
                     </div>
                     <p className={`text-5xl font-black tracking-tight font-headline tabular-nums leading-none ${s.valueColor || 'text-slate-900'}`}>{s.value}</p>
                     <div className="mt-8 flex items-center justify-between">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest opacity-60 bg-slate-50 px-3 py-1 rounded-lg border border-slate-100/50">{s.sub}</span>
+                        <span className="text-[10px] font-black text-slate-400 tracking-widest opacity-60 bg-slate-50 px-3 py-1 rounded-lg border border-slate-100/50">{s.sub}</span>
                         <div className="size-2 bg-slate-50 border border-slate-100 rounded-full" />
                     </div>
                 </div>
@@ -202,7 +202,7 @@ export default function HROverview() {
                 <div className="absolute top-0 left-0 w-full h-1 bg-amber-500/10" />
                 <div className="flex items-center justify-between mb-10">
                    <h3 className="font-black text-xl text-slate-900 font-headline tracking-tight">Compliance Queue</h3>
-                   <span className="px-4 py-1.5 bg-amber-50 text-amber-600 rounded-xl text-[9px] font-black uppercase tracking-widest border border-amber-100 shadow-sm">PENDING TRIAGE</span>
+                   <span className="px-4 py-1.5 bg-amber-50 text-amber-600 rounded-xl text-[9px] font-black tracking-widest border border-amber-100 shadow-sm">Pending triage</span>
                 </div>
                 <div className="space-y-6">
                    {pendingLeaves.length > 0 ? (
@@ -236,7 +236,7 @@ export default function HROverview() {
                 </div>
                 <button 
                   onClick={() => navigate("/leave-requests")}
-                  className="w-full mt-10 py-5 border border-slate-100 rounded-2xl text-[11px] font-black uppercase tracking-[0.3em] text-slate-300 hover:bg-slate-50 hover:text-violet-600 transition-all font-headline shadow-sm"
+                  className="w-full mt-10 py-5 border border-slate-100 rounded-2xl text-[11px] font-black tracking-[0.3em] text-slate-300 hover:bg-slate-50 hover:text-violet-600 transition-all font-headline shadow-sm"
                 >
                    Access Leave Hub
                 </button>

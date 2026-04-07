@@ -53,18 +53,11 @@ const TechnicalDashboardPage = lazy(() =>
 )
 const TechnicalTasksPage = lazy(() => import("@/pages/technical/TechnicalTasks"))
 const TechnicalLeavePage = lazy(() => import("@/pages/technical/TechnicalLeave"))
-const TechnicalIncidentsPage = lazy(() =>
-  import("@/pages/technical/TechnicalIncidents")
-)
-const TechnicalBugsPage = lazy(() => import("@/pages/technical/TechnicalBugs"))
 const TechnicalAnnouncementsPage = lazy(() =>
   import("@/pages/technical/TechnicalAnnouncements")
 )
 const TechnicalReportsPage = lazy(() =>
   import("@/pages/technical/TechnicalReports")
-)
-const TechnicalCreateIncidentPage = lazy(() =>
-  import("@/pages/technical/TechnicalCreateIncident")
 )
 
 const CyberSecurityDashboardPage = lazy(() =>
@@ -257,9 +250,6 @@ export default function App() {
               <Route index element={<TechnicalDashboardPage />} />
               <Route path="tasks" element={<TechnicalTasksPage />} />
               <Route path="leave" element={<TechnicalLeavePage />} />
-              <Route path="incidents" element={<TechnicalIncidentsPage />} />
-              <Route path="incidents/create" element={<TechnicalCreateIncidentPage />} />
-              <Route path="bugs" element={<TechnicalBugsPage />} />
               <Route path="announcements" element={<TechnicalAnnouncementsPage />} />
               <Route path="reports" element={<TechnicalReportsPage />} />
               <Route path="profile" element={<SettingsLegacyPage />} />

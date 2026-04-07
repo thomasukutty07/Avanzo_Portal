@@ -3,11 +3,12 @@ import { Link } from "react-router-dom"
 import { Bell, Search } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { toast } from "sonner"
+import { AttendanceClockWidget } from "@/components/shared/AttendanceClockWidget"
 
 const PROFILE_IMG =
   "https://lh3.googleusercontent.com/aida-public/AB6AXuDzgVkabVGiXiA6U8CKH1uEo2cviFMMhGE3m61Lf-HlkVCFU0mxSigT7qAoTykRrl1baKV1YIvoQUH5rUYo-xmTt4SVHNeuMb0ea2lBxVyMjDVZOzjhGcdbmzIQYvZO0BHOU2lBwKYGyHAZd9Nc62y03TuhGlGkcHqNi7d-ZEHFs5NMYQG4ODpY6IsuWG31eC6vuIaEaWGg4H66p1UmBoHr9uSbLl03VivPw1e5vXOCzk-rQ3R_Me2jBcFdLjfIqxWfcqSQmDFliE4"
 
-export function TechnicalPortalHeader() {
+export function TechnicalPortalHeader({ onToggleSidebar }: { onToggleSidebar?: (open: boolean) => void }) {
   const [query, setQuery] = useState("")
   const { user } = useAuth()
   const name = user
@@ -18,14 +19,7 @@ export function TechnicalPortalHeader() {
   return (
     <div className="flex w-full items-center justify-between">
       <div className="flex items-center gap-12">
-        <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-violet-600 text-lg font-black text-white shadow-md shadow-violet-600/20">
-            A
-          </div>
-          <span className="text-2xl font-black tracking-tight text-slate-900 font-headline">
-            Avanzo
-          </span>
-        </div>
+        {/* Logo removed - Consolidated to Sidebar Branding */}
         
         <form
           className="relative hidden lg:flex items-center w-96"
@@ -45,7 +39,9 @@ export function TechnicalPortalHeader() {
         </form>
       </div>
       
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-6 text-right">
+        <AttendanceClockWidget onToggleSidebar={onToggleSidebar} />
+        
         <button
           type="button"
           onClick={() => toast.info("No unread technical notifications")}

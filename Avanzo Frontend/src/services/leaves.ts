@@ -13,20 +13,28 @@ export const leavesService = {
     const response = await api.patch(`/api/leaves/requests/${id}/`, data);
     return response.data;
   },
-  tlApprove: async (id: string, data: { tl_comment: string }) => {
+  tlApprove: async (id: string, data: { comment: string }) => {
     const response = await api.patch(`/api/leaves/requests/${id}/tl_approve/`, data);
     return response.data;
   },
-  hrApprove: async (id: string, data: { hr_comment: string }) => {
+  hrApprove: async (id: string, data: { comment: string }) => {
     const response = await api.patch(`/api/leaves/requests/${id}/hr_approve/`, data);
     return response.data;
   },
-  rejectRequest: async (id: string, data: { tl_comment?: string; hr_comment?: string }) => {
+  rejectRequest: async (id: string, data: { comment: string }) => {
     const response = await api.patch(`/api/leaves/requests/${id}/reject/`, data);
     return response.data;
   },
   getHistory: async () => {
     const response = await api.get("/api/leaves/requests/history/");
+    return response.data;
+  },
+  getStats: async () => {
+    const response = await api.get("/api/leaves/requests/stats/");
+    return response.data;
+  },
+  getWhoIsOut: async () => {
+    const response = await api.get("/api/leaves/requests/who_is_out/");
     return response.data;
   },
 };

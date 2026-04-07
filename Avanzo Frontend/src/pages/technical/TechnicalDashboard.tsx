@@ -1,16 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
-import { MoreVertical, Plus, Shield, ExternalLink, Loader2, Zap, Activity, Clock } from "lucide-react"
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-} from "recharts"
+import { MoreVertical, Plus, Shield, ExternalLink, Loader2, Zap } from "lucide-react"
+
 import { projectsService } from "@/services/projects";
 import { notificationsService } from "@/services/notifications";
 import { useAuth } from "@/context/AuthContext";
@@ -113,12 +105,7 @@ export default function TechnicalDashboardPage() {
     }
   }, [user]);
 
-  // Burndown Data from real progress
-  const BURNDOWN_DATA = [
-     { day: "T-MINUS", actual: 100, ideal: 100 },
-     { day: "NOW", actual: Math.round(100 - (stats[0]?.barVal || 0)), ideal: 50 },
-     { day: "DEADLINE", actual: null, ideal: 0 },
-  ];
+
 
   if (loading) {
     return (
@@ -145,18 +132,18 @@ export default function TechnicalDashboardPage() {
         <div className="flex items-center gap-4 self-start md:self-auto">
           <button
             type="button"
-            onClick={() => setIsTicketModalOpen(true)}
+            onClick={() => navigate("/technical/leave")}
             className="px-7 py-3 rounded-xl border border-slate-100 bg-white text-slate-900 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all active:scale-95 shadow-sm"
           >
-            SYSTEM REPORT
+            LEAVE REQUEST
           </button>
           <button
             type="button"
-            onClick={() => navigate("/technical/incidents/create")}
+            onClick={() => navigate("/technical/tasks")}
             className="flex items-center gap-3 px-7 py-3 rounded-xl bg-violet-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-violet-700 transition-all shadow-lg shadow-violet-600/20 active:scale-95 shadow-md"
           >
             <Plus className="size-4 stroke-[3px]" />
-            CREATE NEW INCIDENT
+            MY TASKS
           </button>
         </div>
       </div>
@@ -171,7 +158,7 @@ export default function TechnicalDashboardPage() {
                 <span className={`text-[10px] font-black ${s.subColor} uppercase tracking-widest bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100/50`}>{s.sub}</span>
               )}
             </div>
-            <p className={`text-5xl font-black tracking-tight ${s.accent} leading-none`}>{s.value}</p>
+            <p className={`text-2xl font-black tracking-tight ${s.accent} leading-none`}>{s.value}</p>
             {s.bar && (
               <div className="mt-8 h-2 w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100 shadow-inner group-hover:border-violet-100 transition-colors">
                 <div
@@ -206,59 +193,9 @@ export default function TechnicalDashboardPage() {
             </span>
           </div>
 
-          <div className="h-64 w-full mt-10">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={BURNDOWN_DATA} margin={{ top: 10, right: 10, bottom: 0, left: -20 }}>
-                <defs>
-                  <linearGradient id="actualGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#7c3aed" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#7c3aed" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="idealGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#cbd5e1" stopOpacity={0.1} />
-                    <stop offset="95%" stopColor="#cbd5e1" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis
-                  dataKey="day"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 9, fontWeight: 900, fill: "#94a3b8" }}
-                  dy={12}
-                />
-                <YAxis hide />
-                <Tooltip
-                  contentStyle={{ borderRadius: "20px", border: "none", boxShadow: "0 20px 40px rgba(0,0,0,0.1)", fontSize: "11px", fontWeight: "900", textTransform: 'uppercase' }}
-                  cursor={{ stroke: "#7c3aed", strokeWidth: 1, strokeDasharray: "4 4" }}
-                />
-                <ReferenceLine
-                  y={50}
-                  stroke="#f1f5f9"
-                  strokeDasharray="8 8"
-                  strokeWidth={2}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="ideal"
-                  stroke="#e2e8f0"
-                  strokeWidth={3}
-                  strokeDasharray="8 4"
-                  fill="url(#idealGrad)"
-                  dot={false}
-                  connectNulls
-                />
-                <Area
-                  type="monotone"
-                  dataKey="actual"
-                  stroke="#7c3aed"
-                  strokeWidth={4}
-                  fill="url(#actualGrad)"
-                  dot={{ fill: "#7c3aed", strokeWidth: 5, stroke: "#fff", r: 4 }}
-                  activeDot={{ r: 8, fill: "#7c3aed", stroke: "#fff", strokeWidth: 3 }}
-                  connectNulls
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+          <div className="h-64 w-full mt-10 flex flex-col items-center justify-center bg-slate-50/50 rounded-3xl border border-slate-100">
+               <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Mission Completion</p>
+               <p className="text-5xl font-black text-slate-900 tracking-tight">{stats[0]?.value || "0%"}</p>
           </div>
         </div>
 
@@ -305,7 +242,7 @@ export default function TechnicalDashboardPage() {
       {/* Bottom Grid: Task List + Node Integrity */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Personal Task List */}
-        <div className="lg:col-span-9 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden hover:shadow-xl transition-all duration-700">
+        <div className="lg:col-span-12 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden hover:shadow-xl transition-all duration-700">
           <div className="flex items-center justify-between px-10 py-8 border-b border-slate-50 bg-slate-50/10">
             <h3 className="font-black text-xl text-slate-900 tracking-tight uppercase">Assigned Directives</h3>
             <button
@@ -357,50 +294,6 @@ export default function TechnicalDashboardPage() {
                 </div>
             )}
           </div>
-        </div>
-
-        {/* Node Integrity */}
-        <div className="lg:col-span-3 relative overflow-hidden rounded-[2.5rem] bg-slate-900 p-8 text-white shadow-xl shadow-slate-900/20 flex flex-col justify-between group hover:shadow-2xl hover:scale-[1.02] transition-all duration-700 min-h-[400px]" onClick={() => setIsTicketModalOpen(true)}>
-          <div className="pointer-events-none absolute -right-10 -top-10 size-48 rounded-full bg-violet-600/10 blur-2xl group-hover:bg-violet-600/20 transition-all duration-700" />
-          <div className="pointer-events-none absolute right-4 bottom-4 size-32 rounded-full bg-white/5 blur-xl" />
-
-          <div className="flex items-start justify-between relative z-10">
-            <div className="size-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center shadow-lg group-hover:rotate-12 transition-all">
-              <Shield className="size-6 text-white" />
-            </div>
-            <button
-               type="button"
-               onClick={(e) => { e.stopPropagation(); setIsTicketModalOpen(true) }}
-               className="size-10 rounded-xl bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center border border-white/5"
-            >
-              <Plus className="size-4 text-white" />
-            </button>
-          </div>
-
-          <div className="relative z-10">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 mb-3 ml-1">SYSTEM PULSE</p>
-            <h3 className="text-3xl font-black mb-10 leading-tight uppercase tracking-tight">Technical Health Matrix</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors shadow-inner">
-                 <div className="flex items-center gap-3">
-                    <Activity className="size-4 text-emerald-400" />
-                    <span className="text-[11px] font-black uppercase tracking-widest text-white/70">CLUSTERS</span>
-                 </div>
-                 <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">STABLE</span>
-              </div>
-              <div className="flex items-center justify-between p-5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors shadow-inner">
-                 <div className="flex items-center gap-3">
-                    <Clock className="size-4 text-white/40" />
-                    <span className="text-[11px] font-black uppercase tracking-widest text-white/70">UPTIME</span>
-                 </div>
-                 <span className="text-[10px] font-black text-white uppercase tracking-widest">99.9%</span>
-              </div>
-            </div>
-          </div>
-
-          <button className="relative z-10 w-full mt-10 py-5 bg-white text-slate-900 rounded-[1.5rem] text-[11px] font-black uppercase tracking-[0.3em] hover:bg-slate-50 transition-all shadow-xl active:scale-95">
-            Register Pulse
-          </button>
         </div>
       </div>
 

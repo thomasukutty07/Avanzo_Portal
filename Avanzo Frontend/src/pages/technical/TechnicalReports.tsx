@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
-import { BarChart3, Download, TrendingUp, TrendingDown, Clock, Activity, Zap, Loader2, Layers, ArrowUpRight } from "lucide-react"
+import { BarChart3, Download, TrendingUp, TrendingDown, Clock, Activity, Loader2, Layers, Zap } from "lucide-react"
 import { projectsService } from "@/services/projects";
-import { attendanceService } from "@/services/attendance";
 import { toast } from "sonner";
-import { format } from "date-fns";
 
 export default function TechnicalReportsPage() {
   const [loading, setLoading] = useState(true);
@@ -46,8 +44,8 @@ export default function TechnicalReportsPage() {
     return (
         <div className="flex h-[80vh] items-center justify-center bg-[#fcfcfc]">
             <div className="flex flex-col items-center gap-6">
-                <Loader2 className="h-10 w-10 animate-spin text-violet-600" />
-                <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] font-headline">Aggregating Engineering Performance...</p>
+                <Loader2 className="h-10 w-10 animate-spin text-violet-600 mb-6" />
+                <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] font-headline">Aggregating Engineering Performance Metrics...</p>
             </div>
         </div>
     );
@@ -60,7 +58,7 @@ export default function TechnicalReportsPage() {
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-violet-600 mb-2 leading-none">
             TECHNICAL ANALYTICS SECTOR
           </p>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight font-headline uppercase leading-none">
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight font-headline">
             Engineering Telemetry
           </h1>
           <p className="text-slate-500 mt-4 text-sm font-medium">Throughput, quality, and cycle-time metrics for the engineering mission.</p>
@@ -82,7 +80,7 @@ export default function TechnicalReportsPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat, i) => (
+        {stats.map((stat: any, i: number) => (
           <div key={i} className="bg-white rounded-[2rem] border border-slate-100 p-8 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group">
             <div className="flex items-start justify-between mb-6">
               <div className="size-12 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center border border-violet-100 group-hover:bg-violet-600 group-hover:text-white transition-all">
@@ -93,12 +91,12 @@ export default function TechnicalReportsPage() {
                 {stat.trend}
               </span>
             </div>
-            <h2 className="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 opacity-60">
+            <h2 className="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 opacity-60 font-headline">
               {stat.title}
             </h2>
             <div className="flex items-baseline gap-2">
-              <p className="text-5xl font-black text-slate-900 font-headline tabular-nums leading-none tracking-tight">{stat.val}</p>
-              <span className="text-[11px] font-black text-slate-300 uppercase tracking-widest">{stat.unit}</span>
+              <p className="text-4xl font-black text-slate-900 font-headline tabular-nums leading-none tracking-tighter">{stat.val}</p>
+              <span className="text-[11px] font-black text-slate-300 uppercase tracking-widest font-headline">{stat.unit}</span>
             </div>
             <div className="mt-8 border-t border-slate-50 pt-6">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic opacity-50 flex items-center gap-2">
@@ -116,7 +114,7 @@ export default function TechnicalReportsPage() {
             <div className="size-20 rounded-[2rem] bg-slate-50 flex items-center justify-center mb-8 text-slate-200 border border-slate-100 shadow-inner group-hover:scale-110 group-hover:border-violet-100 transition-all duration-700">
                 <BarChart3 className="size-10" />
             </div>
-            <h3 className="text-2xl font-black text-slate-900 font-headline uppercase tracking-tight">Throughput Visualization</h3>
+            <h3 className="text-2xl font-black text-slate-900 font-headline tracking-tight">Throughput Visualization</h3>
             <p className="text-sm font-medium text-slate-500 max-w-sm mt-4 opacity-70 leading-relaxed">
                 Sector performance charts will be synchronized once analytical clusters complete their mission processing.
             </p>

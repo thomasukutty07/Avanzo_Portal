@@ -5,31 +5,25 @@ import { extractResults } from "@/lib/apiResults"
 import { toast } from "sonner"
 import { MoreVertical, Shield, ExternalLink, Loader2, Zap } from "lucide-react"
 import { OrganizationAdminChrome } from "@/components/portal/organizationadmin/OrganizationAdminChrome"
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-} from "recharts"
+
 
 export default function AdminDashboard() {
   const navigate = useNavigate()
   const [tasks, setTasks] = useState<any[]>([])
   const [projects, setProjects] = useState<any[]>([])
   const [updates, setUpdates] = useState<any[]>([])
+  const [attendancePulse, setAttendancePulse] = useState<any>({ clocked_in: 0, missing: 0, total: 0 })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function loadData() {
       try {
         setLoading(true);
-        const [tRes, pRes, bRes] = await Promise.all([
+        const [tRes, pRes, bRes, pulseRes] = await Promise.all([
           api.get("/api/projects/tasks/"),
           api.get("/api/projects/projects/"),
-          api.get("/api/notifications/broadcasts/")
+          api.get("/api/notifications/broadcasts/"),
+          api.get("/api/attendance/pulse/")
         ]);
         
         const rawTasks = extractResults(tRes.data);
@@ -39,6 +33,7 @@ export default function AdminDashboard() {
         setTasks(rawTasks);
         setProjects(rawProjects);
         setUpdates(rawBroadcasts);
+        setAttendancePulse(pulseRes.data);
       } catch (e) {
         console.error("Failed to load dashboard data", e);
         toast.error("Sector synchronization failed.");
@@ -58,38 +53,35 @@ export default function AdminDashboard() {
 
   const dynamicStats = [
     {
-      label: "PROJECT PROGRESS",
+      label: "Workforce Present",
+      value: attendancePulse.clocked_in.toString().padStart(2, '0'),
+      sub: `${attendancePulse.total_employees || 0} Total Personnel`,
+      subColor: "text-emerald-500",
+      accent: "text-emerald-600",
+      bar: true,
+      barVal: attendancePulse.total_employees > 0 ? (attendancePulse.clocked_in / attendancePulse.total_employees) * 100 : 0,
+    },
+    {
+      label: "Active Directives",
+      value: activeTasksCount.toString().padStart(2, '0'),
+      sub: `${tasks.filter(t => t.status === "in_progress").length} in progress`,
+      subColor: "text-slate-400",
+      accent: "text-slate-900",
+    },
+    {
+      label: "System Alerts",
+      value: criticalBugsCount.toString().padStart(2, '0'),
+      sub: `Authorized Absence: ${attendancePulse.missing}`,
+      subColor: "text-red-400",
+      accent: "text-red-500",
+    },
+    {
+      label: "Project Velocity",
       value: `${avgProgress}%`,
       sub: "Average Completion",
-      subColor: "text-emerald-500",
       accent: "text-slate-900",
       bar: true,
       barVal: avgProgress,
-      icon: "📈",
-    },
-    {
-      label: "ACTIVE TASKS",
-      value: activeTasksCount.toString().padStart(2, '0'),
-      sub: `${tasks.filter(t => t.status === "in_progress").length} In Progress`,
-      subColor: "text-slate-400",
-      accent: "text-slate-900",
-      icon: "✓",
-    },
-    {
-      label: "OPEN BUGS",
-      value: criticalBugsCount.toString().padStart(2, '0'),
-      sub: `Current Load: ${criticalBugsCount}`,
-      subColor: "text-red-400",
-      accent: "text-red-500",
-      icon: "⚠",
-    },
-    {
-      label: "SYSTEM USERS",
-      value: projects.reduce((acc, p) => acc + (p.team?.length || 0), 0).toString().padStart(2, '0'),
-      sub: "Total Registered Personnel",
-      subColor: "text-slate-400",
-      accent: "text-slate-900",
-      icon: "👥",
     },
   ];
 
@@ -110,12 +102,7 @@ export default function AdminDashboard() {
                    "bg-slate-50 text-slate-400 border border-slate-100"
   }));
 
-  // Create real burn-down data or empty state
-  const BURNDOWN_DATA = [
-    { day: "T-MINUS", actual: avgProgress, ideal: 100 },
-    { day: "NOW", actual: avgProgress, ideal: avgProgress },
-    { day: "TARGET", actual: null, ideal: 0 },
-  ];
+
 
   if (loading) {
     return (
@@ -136,10 +123,7 @@ export default function AdminDashboard() {
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-600 mb-1">
-              ORGANIZATION MANAGEMENT
-            </p>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight font-headline uppercase leading-none">
+            <h1 className="text-[32px] font-black text-slate-900 tracking-tight font-headline leading-tight">
               Command Overview
             </h1>
             <p className="text-slate-500 mt-4 text-sm font-medium">High-level mission analytics and sector health protocols.</p>
@@ -203,59 +187,9 @@ export default function AdminDashboard() {
               </span>
             </div>
 
-            <div className="h-64 w-full mt-10">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={BURNDOWN_DATA} margin={{ top: 10, right: 10, bottom: 0, left: -20 }}>
-                  <defs>
-                    <linearGradient id="actualGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#7c3aed" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#7c3aed" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="idealGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#cbd5e1" stopOpacity={0.1} />
-                      <stop offset="95%" stopColor="#cbd5e1" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis
-                    dataKey="day"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 9, fontWeight: 900, fill: "#94a3b8" }}
-                    dy={12}
-                  />
-                  <YAxis hide />
-                  <Tooltip
-                    contentStyle={{ borderRadius: "20px", border: "none", boxShadow: "0 20px 40px rgba(0,0,0,0.1)", fontSize: "11px", fontWeight: "black", textTransform: 'uppercase' }}
-                    cursor={{ stroke: "#7c3aed", strokeWidth: 1, strokeDasharray: "4 4" }}
-                  />
-                  <ReferenceLine
-                    y={50}
-                    stroke="#f1f5f9"
-                    strokeDasharray="8 8"
-                    strokeWidth={2}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="ideal"
-                    stroke="#e2e8f0"
-                    strokeWidth={3}
-                    strokeDasharray="10 5"
-                    fill="url(#idealGrad)"
-                    dot={false}
-                    connectNulls
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="actual"
-                    stroke="#7c3aed"
-                    strokeWidth={4}
-                    fill="url(#actualGrad)"
-                    dot={{ fill: "#7c3aed", strokeWidth: 5, stroke: "#fff", r: 4 }}
-                    activeDot={{ r: 8, fill: "#7c3aed", stroke: "#fff", strokeWidth: 3 }}
-                    connectNulls
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+            <div className="h-64 w-full mt-10 flex flex-col items-center justify-center bg-slate-50/50 rounded-3xl border border-slate-100">
+               <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Mission Completion</p>
+               <p className="text-7xl font-black text-slate-900 tracking-tight">{avgProgress}%</p>
             </div>
           </div>
 

@@ -1,16 +1,12 @@
 import { useState } from "react"
 import type { FormEvent } from "react"
 import { Link } from "react-router-dom"
-import { Copy, Loader2, Briefcase, Lock, Eye, EyeOff, Check, ArrowRight } from "lucide-react"
-import { toast } from "sonner"
+import { Loader2, Briefcase, Lock, Eye, EyeOff, Check, ArrowRight } from "lucide-react"
+
 import { useAuth } from "@/context/AuthContext"
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
-import {
-  DUMMY_ACCOUNTS,
-  DUMMY_SHARED_PASSWORD,
-  isDummyAuthEnabled,
-} from "@/lib/dummyAuth"
-import AvanzoLogo from "@/assets/Avanzo Logo corrected and final.jpg"
+import AvanzoLogo from "@/assets/Avanzo Logo corrected and final-png.png"
+
 
 export default function OrgLogin() {
   useDesignPortalLightTheme()
@@ -21,14 +17,7 @@ export default function OrgLogin() {
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
 
-  const copyText = async (text: string, what: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      toast.success(`${what} copied`)
-    } catch {
-      toast.error("Could not copy to clipboard")
-    }
-  }
+
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -76,16 +65,12 @@ export default function OrgLogin() {
           </div>
           <div className="relative z-10 flex flex-1 flex-col items-center justify-center p-16 text-center"
                style={{ animation: 'fadeSlideIn 0.5s ease-out both' }}>
-            <div className="flex items-center justify-center gap-4">
-              <img src={AvanzoLogo} alt="Avanzo Logo" className="h-12 w-auto rounded-xl shadow-xl border border-white/10" />
-              <span className="text-3xl font-extrabold tracking-tighter text-white">
-                AVANZO CYBER SECURITY
-              </span>
+            <div className="flex flex-col items-center justify-center gap-8">
+              <img src={AvanzoLogo} alt="Avanzo Logo" className="h-32 w-auto brightness-0 invert transition-all duration-700 hover:scale-105" />
             </div>
-            <div className="relative z-10 mt-16 max-w-lg">
-              <h1 className="mb-6 font-headline text-5xl font-bold leading-tight tracking-tight text-white">
-                Organization <br />
-                <span className="text-[#d0beff]">Portal.</span>
+            <div className="relative z-10 mt-12 max-w-lg">
+              <h1 className="mb-6 font-headline text-5xl font-black leading-tight tracking-tighter text-white">
+                Organization Portal.
               </h1>
             </div>
           </div>
@@ -259,46 +244,6 @@ export default function OrgLogin() {
         </section>
       </main>
 
-      {isDummyAuthEnabled() && (
-        <div className="fixed bottom-4 right-4 z-[101] max-h-[min(60vh,420px)] max-w-sm overflow-y-auto rounded-lg border border-border bg-card/95 p-4 text-xs shadow-lg backdrop-blur-sm lg:right-4">
-          <p className="mb-2 font-semibold text-foreground">
-            Demo logins (password for all accounts)
-          </p>
-          <div className="mb-3 flex items-center gap-2">
-            <p className="min-w-0 flex-1 break-all font-mono text-[11px] text-muted-foreground">
-              {DUMMY_SHARED_PASSWORD}
-            </p>
-            <button
-              type="button"
-              className="inline-flex shrink-0 items-center justify-center rounded-md border border-border bg-background p-1.5 text-foreground hover:bg-muted"
-              aria-label="Copy demo password"
-              onClick={() => copyText(DUMMY_SHARED_PASSWORD, "Password")}
-            >
-              <Copy className="h-3.5 w-3.5" />
-            </button>
-          </div>
-          <ul className="space-y-2 text-muted-foreground">
-            {DUMMY_ACCOUNTS.map((a) => (
-              <li key={a.email}>
-                <span className="font-medium text-foreground">{a.label}</span>
-                <div className="mt-0.5 flex items-center gap-2">
-                  <span className="min-w-0 flex-1 break-all font-mono text-[11px]">
-                    {a.email}
-                  </span>
-                  <button
-                    type="button"
-                    className="inline-flex shrink-0 items-center justify-center rounded-md border border-border bg-background p-1.5 text-foreground hover:bg-muted"
-                    aria-label={`Copy ${a.label} email`}
-                    onClick={() => copyText(a.email, "Email")}
-                  >
-                    <Copy className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   )
 }

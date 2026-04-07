@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { api } from "@/lib/axios"
 import { ORGANIZATION_ADMIN_NAV } from "./organizationAdminNavConfig"
+import { AttendanceClockWidget } from "@/components/shared/AttendanceClockWidget"
 
 export function OrganizationAdminChrome({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth()
@@ -55,12 +56,14 @@ export function OrganizationAdminChrome({ children }: { children: React.ReactNod
 
       {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-slate-100 bg-white transition-transform duration-300 ease-in-out md:translate-x-0 ${isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}>
-        <div className="flex items-center justify-between p-8">
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-violet-600 text-white shadow-lg shadow-violet-600/20">
-              <span className="text-xl font-black">A</span>
-            </div>
-            <h1 className="text-2xl font-black tracking-tight text-slate-900 font-headline">Avanzo</h1>
+        <div className="flex items-center justify-between p-8 border-b border-slate-50">
+          <div className="flex flex-col gap-2.5">
+             <img 
+               src="/src/assets/Avanzo Logo corrected and final-png.png" 
+               alt="Avanzo" 
+               className="w-32 h-auto object-contain"
+             />
+             <p className="text-[9px] font-black uppercase tracking-[0.2em] leading-none text-violet-600 italic">Global: Admin Command</p>
           </div>
           <button onClick={() => setIsSidebarOpen(false)} className="rounded-xl p-2 text-slate-400 hover:bg-slate-50 md:hidden">
             <X className="h-5 w-5" />
@@ -128,6 +131,7 @@ export function OrganizationAdminChrome({ children }: { children: React.ReactNod
           </div>
 
           <div className="flex items-center gap-6">
+            <AttendanceClockWidget />
             <button className="p-3 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-2xl transition-all relative">
               <Bell className="h-5 w-5" />
               <span className="absolute top-3.5 right-3.5 size-2 bg-violet-600 rounded-full border-2 border-white" />

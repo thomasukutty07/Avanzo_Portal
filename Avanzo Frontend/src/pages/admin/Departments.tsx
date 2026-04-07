@@ -7,10 +7,12 @@ import {
   Users, 
   TrendingUp, 
   MoreVertical,
-  ChevronRight
+  ChevronRight,
+  Trash2
 } from "lucide-react"
 import { OrganizationAdminChrome } from "@/components/portal/organizationadmin/OrganizationAdminChrome"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { api } from "@/lib/axios"
@@ -24,41 +26,42 @@ export default function DepartmentsPage() {
   const [departments, setDepartments] = useState<any[]>([])
   const [newDeptName, setNewDeptName] = useState("")
 
-  useEffect(() => {
-    async function loadDepts() {
-      try {
-        const res = await api.get("/api/organization/departments/")
-        const apiDepts = extractResults(res.data)
-        const mappedDepts = apiDepts.map((d: any, idx: number) => {
-           const images = [
-             "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=400",
-             "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=400",
-             "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=400",
-             "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80&w=400"
-           ];
-           const colors = [
-             "bg-indigo-600",
-             "bg-blue-600",
-             "bg-rose-500",
-             "bg-emerald-500"
-           ]
-           return {
-             id: d.id,
-             name: d.name,
-             badge: "UNIT " + (idx+1),
-             employees: d.employee_count ?? 0,
-             projects: d.project_count ?? 0,
-             utilization: 0,
-             image: images[idx % images.length],
-             color: colors[idx % colors.length]
-           }
-        })
-        setDepartments(mappedDepts)
-      } catch (e) {
-        console.error(e)
-      }
+  const refreshDepts = async () => {
+    try {
+      const res = await api.get("/api/organization/departments/");
+      const apiDepts = extractResults(res.data);
+      const mapped = apiDepts.map((d: any, idx: number) => {
+         const images = [
+           "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=400",
+           "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=400",
+           "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=400",
+           "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80&w=400"
+         ];
+         const colors = [
+           "bg-indigo-600",
+           "bg-blue-600",
+           "bg-rose-500",
+           "bg-emerald-500"
+         ]
+         return {
+           id: d.id,
+           name: d.name,
+           badge: "UNIT " + (idx+1),
+           employees: d.employee_count ?? 0,
+           projects: d.project_count ?? 0,
+           utilization: 0,
+           image: images[idx % images.length],
+           color: colors[idx % colors.length]
+         }
+      })
+      setDepartments(mapped);
+    } catch (e) {
+      console.error(e);
     }
-    loadDepts()
+  }
+
+  useEffect(() => {
+    refreshDepts();
   }, [])
 
   const handleAddDept = async () => {
@@ -74,28 +77,23 @@ export default function DepartmentsPage() {
       setNewDeptName("");
       setAdding(false);
       setIsDialogOpen(false);
-      // Refresh list
-      const updated = await api.get("/api/organization/departments/");
-      const apiDepts = extractResults(updated.data);
-      const mapped = apiDepts.map((d: any, idx: number) => ({
-        id: d.id,
-        name: d.name,
-        badge: "UNIT " + (idx+1),
-        employees: d.employee_count ?? 0,
-        projects: d.project_count ?? 0,
-        utilization: 0,
-        image: [
-          "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=400",
-          "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=400",
-          "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&q=80&w=400"
-        ][idx % 3],
-        color: ["bg-violet-500", "bg-rose-500", "bg-emerald-500"][idx % 3]
-      }));
-      setDepartments(mapped);
+      refreshDepts();
     } catch (e: any) {
       toast.error(e?.response?.data?.name?.[0] || "Failed to create department.");
       setAdding(false);
       setIsDialogOpen(false);
+    }
+  }
+
+  const handleDeleteDept = async (id: string, name: string) => {
+    if (!window.confirm(`Are you sure you want to decommission the "${name}" unit? This action is permanent.`)) return;
+    
+    try {
+      await api.delete(`/api/organization/departments/${id}/`);
+      toast.success(`Unit "${name}" decommissioned successfully.`);
+      refreshDepts();
+    } catch (e) {
+      toast.error("Failed to decommission unit. Ensure it has no active dependencies.");
     }
   }
 
@@ -161,7 +159,26 @@ export default function DepartmentsPage() {
                <div className="p-8 flex-1 space-y-8">
                   <div className="flex items-center justify-between">
                      <h4 className="text-xl font-black text-slate-900 tracking-tight">{dept.name}</h4>
-                     <button className="text-slate-300 hover:text-slate-900 transition-colors"><MoreVertical className="h-5 w-5 stroke-[2.5px]" /></button>
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                           <button className="p-2 -mr-2 text-slate-300 hover:text-slate-900 transition-colors focus:outline-none">
+                              <MoreVertical className="h-5 w-5 stroke-[2.5px]" />
+                           </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48 rounded-2xl p-2 shadow-2xl border-slate-100 font-display">
+                           <DropdownMenuItem onClick={() => toast.info(`Unit ${dept.name} details locked.`)} className="rounded-xl px-3 py-2 cursor-pointer group flex items-center gap-2">
+                              <ChevronRight className="size-3.5 text-slate-400 group-hover:text-violet-600" />
+                              <span className="text-xs font-bold text-slate-700">View Node Details</span>
+                           </DropdownMenuItem>
+                           <DropdownMenuItem 
+                              onClick={() => handleDeleteDept(dept.id, dept.name)}
+                              className="rounded-xl px-3 py-2 cursor-pointer group flex items-center gap-2 text-red-600 hover:bg-red-50 focus:bg-red-50"
+                           >
+                              <Trash2 className="size-3.5" />
+                              <span className="text-xs font-bold">Decommission Unit</span>
+                           </DropdownMenuItem>
+                        </DropdownMenuContent>
+                     </DropdownMenu>
                   </div>
                   
                   <div className="flex items-center justify-between gap-4">

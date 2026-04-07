@@ -43,8 +43,9 @@
   --sidebar-border: #e7e0ef;
   --sidebar-ring: #6200ee;
   --radius: 0.625rem;
-  /* Enforce Elite Roman (Plus Jakarta Sans) as the singular design system font */
-  --default-font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  /* Enforce Elite Roman (Plus Jakarta Sans) as the absolute design system font */
+  --font-plus-jakarta: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --default-font-family: var(--font-plus-jakarta);
 }
 
 .dark {
@@ -83,10 +84,10 @@
   --sidebar-ring: #b388ff;
 }
 
-@theme inline {
-  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-headline: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+@theme {
+  --font-sans: var(--font-plus-jakarta);
+  --font-display: var(--font-plus-jakarta);
+  --font-headline: var(--font-plus-jakarta);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -152,18 +153,15 @@
   * {
     @apply border-border outline-ring/50;
     box-sizing: border-box;
-    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif !important;
   }
   body {
-    @apply bg-background text-foreground font-display;
-    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif !important;
+    @apply bg-background text-foreground font-sans;
     -webkit-font-smoothing: antialiased;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.0125em;
   }
   html {
-    @apply font-display;
+    @apply font-sans;
     line-height: 1.6;
-    font-family: "Plus Jakarta Sans", sans-serif;
   }
   .material-symbols-outlined {
     font-family: "Material Symbols Outlined", sans-serif;
@@ -184,7 +182,8 @@
 
   /* Plus Jakarta Sans specific optimizations */
   .font-headline {
-    font-family: "Plus Jakarta Sans", sans-serif;
-    letter-spacing: -0.02em;
+    font-family: var(--default-font-family);
+    letter-spacing: -0.015em;
+    font-weight: 800; /* Matching the weight in the "Operational Hub" reference */
   }
 }

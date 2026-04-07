@@ -60,10 +60,10 @@ export default function LeadOverview() {
   const handleApproval = async (id: string, action: 'approve' | 'reject', name: string) => {
      try {
         if (action === 'approve') {
-           await leavesService.tlApprove(id, { tl_comment: "Approved from Tactical Dashboard." })
+           await leavesService.tlApprove(id, { comment: "Approved from Tactical Dashboard." })
            toast.success(`Leave request for ${name} has been synchronized.`)
         } else {
-           await leavesService.rejectRequest(id, { tl_comment: "Declined due to team capacity." })
+           await leavesService.rejectRequest(id, { comment: "Declined due to team capacity." })
            toast.info(`Leave request for ${name} rejected.`)
         }
         fetchData()
@@ -151,23 +151,26 @@ export default function LeadOverview() {
                     <p className="text-[10px] font-black">No Active Strategic Projects</p>
                  </div>
                ) : (
-                 projects.slice(0, 3).map((p, i) => (
-                   <div key={i} className="group cursor-pointer" onClick={() => toast.info(`Syncing project metadata: ${p.title}`)}>
-                      <div className="flex items-center justify-between mb-3.5">
-                        <div className="space-y-1">
-                           <p className="text-slate-900 text-sm font-black group-hover:text-violet-600 transition-colors leading-none tracking-tight uppercase">{p.title}</p>
-                           <p className="text-[9px] text-slate-300 font-black opacity-80">{p.client_name || 'Internal Directive'}</p>
+                 projects.slice(0, 3).map((p, i) => {
+                   const percentage = p.completion_percentage || 0;
+                   return (
+                     <div key={i} className="group cursor-pointer" onClick={() => toast.info(`Syncing project metadata: ${p.title}`)}>
+                        <div className="flex items-center justify-between mb-3.5">
+                          <div className="space-y-1">
+                             <p className="text-slate-900 text-sm font-black group-hover:text-violet-600 transition-colors leading-none tracking-tight uppercase">{p.title}</p>
+                             <p className="text-[9px] text-slate-300 font-black opacity-80">{p.client_name || 'Internal Directive'}</p>
+                          </div>
+                          <span className="text-lg font-black font-headline tabular-nums text-slate-900 leading-none">{percentage}%</span>
                         </div>
-                        <span className="text-lg font-black font-headline tabular-nums text-slate-900 leading-none">82%</span>
-                      </div>
-                      <div className="w-full h-2 bg-slate-50 rounded-full overflow-hidden border border-slate-100 group-hover:border-violet-100 transition-colors shadow-inner">
-                        <div 
-                          className="bg-violet-600 h-full rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(124,58,237,0.3)]" 
-                          style={{ width: `${82}%` }} 
-                        />
-                      </div>
-                   </div>
-                 ))
+                        <div className="w-full h-2 bg-slate-50 rounded-full overflow-hidden border border-slate-100 group-hover:border-violet-100 transition-colors shadow-inner">
+                          <div 
+                            className="bg-violet-600 h-full rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(124,58,237,0.3)]" 
+                            style={{ width: `${percentage}%` }} 
+                          />
+                        </div>
+                     </div>
+                   )
+                 })
                )}
             </div>
 

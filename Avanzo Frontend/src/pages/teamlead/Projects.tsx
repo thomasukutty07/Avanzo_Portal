@@ -95,7 +95,7 @@ export default function LeadProjectsPage() {
               className="flex items-center gap-2 px-6 py-2.5 bg-violet-600 text-white font-black rounded-xl hover:bg-violet-700 hover:shadow-xl hover:shadow-violet-600/20 transition-all text-[10px] active:scale-95 shadow-md shadow-violet-600/10"
             >
               <Plus className="size-3.5 stroke-[3px]" />
-              New Objective
+              Add Project
             </button>
           </div>
         </div>

@@ -65,12 +65,12 @@ export default function TechnicalIncidentsPage() {
 
           return {
             id: `INC-${t.id.substring(0, 8).toUpperCase()}`,
-            time: t.created_at ? `REPORTED ${formatDistanceToNow(parseISO(t.created_at))} AGO` : "RECENTLY",
-            desc: t.title.toUpperCase(),
-            target: (t.asset_name || "INTERNAL SYSTEM").toUpperCase(),
+            time: t.created_at ? `Reported ${formatDistanceToNow(parseISO(t.created_at))} ago` : "Recently",
+            desc: t.title,
+            target: t.asset_name || "Internal System",
             sev,
             status: statusMap[t.status] || t.status.toUpperCase(),
-            assignee: (t.assignee_name || "UNASSIGNED").toUpperCase(),
+            assignee: t.assignee_name || "Unassigned",
             initial: t.assignee_name ? t.assignee_name.split(' ').map((n:any) => n[0]).join('') : "??",
             sevColor: sevStyles[sev] || sevStyles.MEDIUM,
             statusColor: statusColors[t.status] || "text-slate-400"
@@ -87,31 +87,31 @@ export default function TechnicalIncidentsPage() {
 
         setStats([
           { 
-            label: "RESOLUTION EFFICIENCY", 
+            label: "Resolution Efficiency", 
             value: `${resolutionRate}%`, 
-            sub: "OPERATIONAL INDEX", 
+            sub: "Operational index", 
             color: resolutionRate > 80 ? "text-emerald-500" : "text-amber-500", 
             barColor: "bg-violet-600", 
             val: resolutionRate 
           },
           { 
-            label: "UNASSIGNED INCIDENTS", 
+            label: "Unassigned Incidents", 
             value: String(unassignedCount).padStart(2, '0'), 
-            sub: "AWAITING TRIAGE", 
-            extra: unassignedCount > 0 ? "DEADLINES SEARCHING" : "QUEUE SYNCED", 
+            sub: "Awaiting triage", 
+            extra: unassignedCount > 0 ? "Pending attention" : "Queue synced", 
             hasWarning: unassignedCount > 0 
           },
           { 
-            label: "CRITICAL ALERTS", 
+            label: "Critical Alerts", 
             value: String(criticalCount).padStart(2, '0'), 
-            sub: "ACTIVE THREATS", 
+            sub: "Active threats", 
             barColor: "bg-red-500", 
             val: criticalCount > 0 ? 100 : 0 
           },
           { 
-            label: "SYSTEM INTEGRITY", 
+            label: "System Integrity", 
             value: "99.9%", 
-            sub: "STABLE SECTOR", 
+            sub: "Stable infrastructure", 
             color: "text-emerald-500", 
             barColor: "bg-emerald-500", 
             val: 99 
@@ -133,39 +133,39 @@ export default function TechnicalIncidentsPage() {
     return (
         <div className="flex h-[80vh] items-center justify-center bg-[#fcfcfc]">
             <div className="flex flex-col items-center gap-6">
-                <Loader2 className="h-10 w-10 animate-spin text-violet-600" />
-                <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] font-headline text-center">SYNCHRONIZING INCIDENT MATRIX...</p>
+                <Loader2 className="h-10 w-10 animate-spin text-violet-600 mb-2" />
+                <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] font-headline text-center">Synchronizing Incident Matrix...</p>
             </div>
         </div>
     );
   }
   return (
-    <div className="space-y-10 pb-12 font-sans bg-[#fcfcfc] min-h-screen">
+    <div className="space-y-10 pb-12 font-sans bg-[#fcfcfc] min-h-screen animate-in fade-in duration-700">
 
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-8 px-4 md:px-8">
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-violet-600 mb-2 leading-none">
-            TECHNICAL SECTOR
+            Infrastructure Sector
           </p>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none uppercase">INCIDENT MANAGEMENT</h1>
-          <p className="text-slate-500 mt-4 text-[10px] font-black uppercase tracking-widest leading-none opacity-60">TACTICAL INTELLIGENCE AND LIFECYCLE MANAGEMENT OF OPERATIONAL INCIDENTS.</p>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none font-headline">Incident Management</h1>
+          <p className="text-slate-500 mt-4 text-[11px] font-bold leading-none opacity-60">Lifecycle management of active operational and system incidents.</p>
         </div>
         <Button 
           onClick={() => navigate("/technical/incidents/create")}
           className="bg-violet-600 hover:bg-violet-700 text-white font-black py-6 px-8 rounded-[1.5rem] shadow-lg shadow-violet-600/20 active:scale-95 transition-all uppercase tracking-widest text-[10px] font-headline"
         >
-          <Plus className="size-4 mr-2" />
-          CREATE NEW INCIDENT
+          <Plus className="size-4 mr-2 stroke-[3px]" />
+          Create New Incident
         </Button>
       </div>
 
       {/* KPI Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 px-4 md:px-8">
         {stats.map((s: any, i: number) => (
           <div key={i} className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-8 hover:shadow-xl hover:-translate-y-1 transition-all overflow-hidden group">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8 leading-none">{s.label}</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8 leading-none font-headline">{s.label}</p>
             <div className="flex items-center gap-4">
-              <h3 className="text-4xl font-black text-slate-900 leading-none tabular-nums">{s.value}</h3>
+              <h3 className="text-4xl font-black text-slate-900 leading-none tabular-nums font-headline tracking-tighter">{s.value}</h3>
               <span className={`text-[9px] font-black ${s.color || 'text-slate-400'} uppercase tracking-[0.2em] bg-slate-50 px-2 py-1 rounded-lg`}>{s.sub}</span>
             </div>
             
@@ -184,37 +184,37 @@ export default function TechnicalIncidentsPage() {
       </div>
 
       {/* Filters Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-6 bg-white p-3 rounded-[1.5rem] border border-slate-100 shadow-sm">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-6 bg-white p-3 rounded-[1.5rem] border border-slate-100 shadow-sm mx-4 md:mx-8">
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <Button variant="ghost" className="h-10 bg-slate-50 border-none rounded-xl px-5 text-[10px] font-black text-slate-500 hover:bg-slate-100 uppercase tracking-widest">
+          <Button variant="ghost" className="h-10 bg-slate-50 border-none rounded-xl px-5 text-[10px] font-bold text-slate-500 hover:bg-slate-100 uppercase tracking-widest font-headline">
             <Filter className="size-4 mr-2" />
-            FILTER MATRIX
+            Filter Data
           </Button>
           <div className="h-6 w-px bg-slate-200 hidden sm:block mx-1" />
-          <select className="h-10 bg-white border border-slate-100 rounded-xl px-4 text-[10px] font-black text-slate-600 focus:ring-violet-600/10 cursor-pointer min-w-[150px] uppercase font-headline tracking-widest">
-            <option>SEVERITY: ALL</option>
-            <option>SEVERITY: CRITICAL</option>
+          <select className="h-10 bg-white border border-slate-100 rounded-xl px-4 text-[10px] font-bold text-slate-600 focus:ring-violet-600/10 cursor-pointer min-w-[150px] font-headline tracking-widest">
+            <option>Severity: All</option>
+            <option>Severity: Critical</option>
           </select>
-          <select className="h-10 bg-white border border-slate-100 rounded-xl px-4 text-[10px] font-black text-slate-600 focus:ring-violet-600/10 cursor-pointer min-w-[150px] uppercase font-headline tracking-widest">
-            <option>STATUS: ALL ACTIVE</option>
-            <option>STATUS: INVESTIGATING</option>
+          <select className="h-10 bg-white border border-slate-100 rounded-xl px-4 text-[10px] font-bold text-slate-600 focus:ring-violet-600/10 cursor-pointer min-w-[150px] font-headline tracking-widest">
+            <option>Status: All Active</option>
+            <option>Status: Investigating</option>
           </select>
         </div>
-        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-6">TRACKING {incidents.length} / {totalCount} INTELLIGENCE NODES</span>
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] px-6 font-headline">Monitoring {incidents.length} / {totalCount} active records</span>
       </div>
 
       {/* Incidents Registry */}
-      <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden mb-12">
+      <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden mb-12 mx-4 md:mx-8">
         <div className="overflow-x-auto">
           <table className="w-full text-left bg-white">
-            <thead className="bg-slate-50/50 text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-100">
+            <thead className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 font-headline">
               <tr>
-                <th className="px-10 py-6">INTELLIGENCE ID</th>
-                <th className="px-10 py-6">MISSION DESCRIPTION</th>
-                <th className="px-10 py-6">TACTICAL SEV</th>
-                <th className="px-10 py-6">OPS STATUS</th>
-                <th className="px-10 py-6">ASSIGNEE</th>
-                <th className="px-10 py-6 text-right">BRIEFING</th>
+                <th className="px-10 py-6">Incident ID</th>
+                <th className="px-10 py-6">Description</th>
+                <th className="px-10 py-6">Severity</th>
+                <th className="px-10 py-6">Operation Status</th>
+                <th className="px-10 py-6">Assignee</th>
+                <th className="px-10 py-6 text-right">Details</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -226,8 +226,8 @@ export default function TechnicalIncidentsPage() {
                       <span className="text-[9px] font-black text-slate-300 block mt-2 uppercase tracking-widest italic">{inc.time}</span>
                     </td>
                     <td className="px-10 py-8">
-                      <p className="text-[14px] font-black text-slate-900 group-hover:text-violet-700 transition-colors leading-none uppercase tracking-tight">{inc.desc}</p>
-                      <p className="text-[9px] text-slate-300 font-black mt-2.5 leading-none uppercase tracking-[0.2em] opacity-60">{inc.target}</p>
+                      <p className="text-[14px] font-black text-slate-900 group-hover:text-violet-700 transition-colors leading-none tracking-tight">{inc.desc}</p>
+                      <p className="text-[9px] text-slate-300 font-black mt-2.5 leading-none uppercase tracking-[0.2em] opacity-60 font-headline">{inc.target}</p>
                     </td>
                     <td className="px-10 py-8">
                       <span className={`px-3 py-1 rounded-[10px] text-[9px] font-black tracking-widest border shadow-sm ${inc.sevColor}`}>
@@ -261,7 +261,7 @@ export default function TechnicalIncidentsPage() {
                 <tr>
                   <td colSpan={6} className="px-10 py-24 text-center">
                     <ShieldAlert className="size-12 mx-auto mb-6 text-slate-100" />
-                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-300">REGISTRY SYNCED. NO ANOMALIES DETECTED.</p>
+                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-300">Registry synced. No active incidents detected.</p>
                   </td>
                 </tr>
               )}
@@ -271,10 +271,10 @@ export default function TechnicalIncidentsPage() {
         
         {/* Pagination */}
         <div className="px-10 py-6 bg-slate-50/30 border-t border-slate-100 flex items-center justify-between">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none tabular-nums">REGISTRY PAGE 01 OF 01</p>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none tabular-nums">Page 01 of 01</p>
           <div className="flex gap-4">
-            <Button disabled variant="ghost" className="h-10 px-8 text-[10px] font-black uppercase tracking-widest border border-slate-200 bg-white shadow-sm opacity-50">PREVIOUS NODE</Button>
-            <Button disabled variant="ghost" className="h-10 px-8 text-[10px] font-black uppercase tracking-widest border border-slate-200 bg-white shadow-sm opacity-50">NEXT NODE</Button>
+            <Button disabled variant="ghost" className="h-10 px-8 text-[10px] font-bold uppercase tracking-widest border border-slate-100 bg-white shadow-sm opacity-50">Previous</Button>
+            <Button disabled variant="ghost" className="h-10 px-8 text-[10px] font-bold uppercase tracking-widest border border-slate-100 bg-white shadow-sm opacity-50">Next</Button>
           </div>
         </div>
       </div>

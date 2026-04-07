@@ -95,16 +95,16 @@ export default function NewTaskModal({ open, onOpenChange, onSuccess }: NewTaskM
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className="w-[95vw] sm:max-w-3xl rounded-2xl sm:rounded-3xl p-0 border border-violet-100 overflow-hidden bg-white shadow-[0_20px_50px_rgba(109,40,217,0.08)] font-sans outline-none max-h-[90vh] flex flex-col">
-        <DialogTitle className="sr-only">Initialize directive</DialogTitle>
-        <DialogDescription className="sr-only">Deploy mission briefings to unit sectors.</DialogDescription>
+        <DialogTitle className="sr-only">Assign Task</DialogTitle>
+        <DialogDescription className="sr-only">Configure and assign technical deliverables to unit sectors.</DialogDescription>
         {/* Header */}
         <div className="bg-white px-5 sm:px-8 pt-5 pb-4 flex items-center gap-3 border-b border-violet-50 shrink-0">
           <div className="size-8 bg-violet-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-violet-600/30 shrink-0">
             <Plus className="size-4 stroke-[3px]" />
           </div>
           <div>
-            <h2 className="text-sm font-black tracking-tight text-slate-900 leading-none">Initialize directive</h2>
-            <p className="text-[11px] font-medium text-slate-400 mt-0.5">Deploy mission briefings to unit sectors.</p>
+            <h2 className="text-sm font-black tracking-tight text-slate-900 leading-none uppercase tracking-[0.05em]">Assign Task</h2>
+            <p className="text-[11px] font-medium text-slate-400 mt-1.5 flex items-center gap-1.5 leading-none opacity-80 italic">Configure and assign technical deliverables to unit sectors.</p>
           </div>
         </div>
 

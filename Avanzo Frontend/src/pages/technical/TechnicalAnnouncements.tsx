@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Megaphone, Plus, Calendar, Check, MoreHorizontal, Loader2 } from "lucide-react"
+import { Megaphone, Calendar, Check, MoreHorizontal, Loader2 } from "lucide-react"
 import { notificationsService } from "@/services/notifications";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
@@ -67,19 +67,12 @@ export default function TechnicalAnnouncementsPage() {
           </h1>
           <p className="text-slate-500 mt-2 text-sm font-medium">Department-wide updates and maintenance notices.</p>
         </div>
-        <button
-          type="button"
-          onClick={() => toast.info("Post announcement coming soon.")}
-          className="flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-[13px] font-bold text-white hover:bg-violet-700 shadow-lg shadow-violet-600/20 transition-all font-headline"
-        >
-          <Plus className="size-4" />
-          Post Update
-        </button>
+        {/* Post Update button removed - Administrative-only privilege */}
       </div>
 
       <div className="max-w-4xl space-y-5 flex-1">
         {announcements.length > 0 ? (
-            announcements.map((a) => (
+            announcements.map((a: Announcement) => (
               <article
                 key={a.id}
                 className={`relative rounded-2xl border bg-white p-8 shadow-sm transition-all duration-300 ${read[a.id] ? 'border-slate-100 opacity-70' : 'border-violet-100 hover:shadow-md'}`}
@@ -114,7 +107,7 @@ export default function TechnicalAnnouncementsPage() {
                       type="button"
                       className={`mt-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest px-4 py-2 rounded-lg transition-colors ${read[a.id] ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-600 hover:bg-violet-50 hover:text-violet-700'}`}
                       disabled={read[a.id]}
-                      onClick={() => setRead((r) => ({ ...r, [a.id]: true }))}
+                      onClick={() => setRead((r: Record<string, boolean>) => ({ ...r, [a.id]: true }))}
                     >
                       <Check className={`size-3.5 ${read[a.id] ? 'block' : 'hidden'}`} />
                       {read[a.id] ? "Read" : "Mark as read"}

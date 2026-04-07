@@ -34,13 +34,15 @@ export function CyberSecurityPortalSidebar({ onNavClick }: { onNavClick?: () => 
   return (
     <aside className="flex h-full w-72 shrink-0 flex-col border-r border-slate-100 bg-white shadow-[1px_0_0_0_rgba(0,0,0,0.02)]">
       <div className="p-8 font-headline">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="size-6 bg-violet-600 rounded-lg shadow-lg shadow-violet-600/20" />
-          <h1 className="text-xl font-black tracking-tight text-slate-900 leading-none">Avanzo</h1>
+        <div className="flex items-center gap-3 mb-1">
+          <div className="flex size-10 items-center justify-center rounded-xl bg-violet-600 text-lg font-black text-white shadow-lg shadow-violet-600/20">
+            A
+          </div>
+          <div>
+            <h1 className="text-xl font-black tracking-tight text-slate-900 leading-tight">Avanzo</h1>
+            <p className="text-[10px] font-black uppercase tracking-widest leading-none mt-1 text-violet-600">Personnel: Security Unit</p>
+          </div>
         </div>
-        <p className="text-[9px] font-black tracking-[0.2em] text-slate-400">
-          Cybersecurity Unit
-        </p>
       </div>
 
       <nav className="flex-1 space-y-1.5 px-4 mt-2">
