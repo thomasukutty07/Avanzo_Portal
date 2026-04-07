@@ -1,11 +1,9 @@
 // src/lib/axios.ts
 import axios from "axios"
-import { DUMMY_ACCESS_TOKEN } from "@/lib/dummyAuth"
 
-// Local backend default. Override with VITE_API_BASE_URL in .env (e.g. team server IP).
 const BASE_URL =
   import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ||
-  "http://192.168.220.85:8000"
+  "http://localhost:8000"
 
 export const api = axios.create({
   baseURL: BASE_URL,
@@ -17,6 +15,11 @@ export const api = axios.create({
 // Attach access token to every request
 api.interceptors.request.use(
   (config) => {
+    // Don't send token for auth endpoints
+    if (config.url?.includes("/api/auth/login/") || config.url?.includes("/api/auth/refresh/")) {
+      return config
+    }
+
     const token = localStorage.getItem("access_token")
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
@@ -37,11 +40,6 @@ api.interceptors.response.use(
       !originalRequest._retry &&
       !originalRequest.url?.includes("/api/auth/login/")
     ) {
-      const access = localStorage.getItem("access_token")
-      if (access === DUMMY_ACCESS_TOKEN) {
-        return Promise.reject(error)
-      }
-
       originalRequest._retry = true
 
       try {

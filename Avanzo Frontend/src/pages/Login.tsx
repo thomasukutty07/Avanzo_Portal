@@ -1,15 +1,9 @@
 import { useState } from "react"
 import type { FormEvent } from "react"
 import { Link } from "react-router-dom"
-import { Copy, Loader2, AtSign, Lock, Eye, EyeOff, Check, ArrowRight } from "lucide-react"
-import { toast } from "sonner"
+import { Loader2, AtSign, Lock, Eye, EyeOff, Check, ArrowRight } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
-import {
-  DUMMY_ACCOUNTS,
-  DUMMY_SHARED_PASSWORD,
-  isDummyAuthEnabled,
-} from "@/lib/dummyAuth"
 import AvanzoLogo from "@/assets/Avanzo Logo corrected and final.jpg"
 
 export default function Login() {
@@ -20,15 +14,6 @@ export default function Login() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-
-  const copyText = async (text: string, what: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      toast.success(`${what} copied`)
-    } catch {
-      toast.error("Could not copy to clipboard")
-    }
-  }
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -250,47 +235,6 @@ export default function Login() {
         </section>
       </main>
 
-      {isDummyAuthEnabled() && (
-        <div className="fixed bottom-4 right-4 z-[101] max-h-[min(60vh,420px)] max-w-sm overflow-y-auto rounded-lg border border-border bg-card/95 p-4 text-xs shadow-lg backdrop-blur-sm">
-          <p className="mb-2 font-semibold text-foreground">
-            Demo logins (password for all accounts)
-          </p>
-          <div className="mb-3 flex items-center gap-2">
-            <p className="min-w-0 flex-1 break-all font-mono text-[11px] text-muted-foreground">
-              {DUMMY_SHARED_PASSWORD}
-            </p>
-            <button
-              type="button"
-              className="inline-flex shrink-0 items-center justify-center rounded-md border border-border bg-background p-1.5 text-foreground hover:bg-muted"
-              aria-label="Copy demo password"
-              onClick={() => copyText(DUMMY_SHARED_PASSWORD, "Password")}
-            >
-              <Copy className="h-3.5 w-3.5" />
-            </button>
-          </div>
-          <ul className="space-y-2 text-muted-foreground">
-            {DUMMY_ACCOUNTS.map((a) => (
-              <li key={a.email}>
-                <span className="font-medium text-foreground">{a.label}</span>
-                <div className="mt-0.5 flex items-center gap-2">
-                  <span className="min-w-0 flex-1 break-all font-mono text-[11px]">
-                    {a.email}
-                  </span>
-                  <button
-                    type="button"
-                    className="inline-flex shrink-0 items-center justify-center rounded-md border border-border bg-background p-1.5 text-foreground hover:bg-muted"
-                    aria-label={`Copy ${a.label} email`}
-                    onClick={() => copyText(a.email, "Email")}
-                  >
-                    <Copy className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   )
 }
-
