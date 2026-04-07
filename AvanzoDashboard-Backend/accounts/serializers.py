@@ -10,6 +10,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """Embeds user role and profile data into the JWT so the frontend
     can hydrate RoleContext immediately after login without a second API call."""
 
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)

@@ -5,6 +5,7 @@ import { defineConfig } from "vite"
 import { VitePWA } from "vite-plugin-pwa"
 
 export default defineConfig({
+  envDir: '../',
   server: {
     host: true, // Listen on all local IPs
     port: 5173,

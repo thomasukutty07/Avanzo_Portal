@@ -23,7 +23,9 @@ env = environ.Env()
 environ.Env.read_env(BASE_DIR / ".env")
 
 # Detect SQLite early
-is_sqlite = env("DATABASE_URL", default="").startswith("sqlite")
+default_db_url = f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
+db_url = env("DATABASE_URL", default=default_db_url)
+is_sqlite = db_url.startswith("sqlite")
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env("SECRET_KEY")
