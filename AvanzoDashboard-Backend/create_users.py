@@ -67,6 +67,7 @@ create_user("teamlead@avanzo.com", pwd, "Team Lead", first_name="Team", last_nam
 
 # 3. Employee - Cybersecurity
 create_user("cybersecurity@avanzo.com", pwd, "Employee", dept_name="Cybersecurity", desig_name="Security Analyst", first_name="Cyber", last_name="Sec")
+create_user("tech@avanzo.com", pwd, "Employee", dept_name="Engineering", desig_name="Technical Lead", first_name="Tech", last_name="Support")
 
 # 5. Admin (Organization Level)
 create_user("admin@avanzo.com", pwd, "Admin", first_name="Avanzo", last_name="Admin")
