@@ -28,8 +28,8 @@ class TalentTag(models.Model):
 
 class AccessRole(TimeStampedModel):
     """
-    Exactly 4 rows: Employee, Team Lead, HR, Admin.
-    Maps 1:1 to the frontend Role type in role-context.tsx.
+    Role definitions for RBAC.
+    Maps 1:1 to the frontend Role type in RequireRole.tsx.
     """
 
     class RoleChoices(models.TextChoices):
@@ -37,6 +37,8 @@ class AccessRole(TimeStampedModel):
         TEAM_LEAD = "Team Lead", "Team Lead"
         HR = "HR", "HR"
         ADMIN = "Admin", "Admin"
+        SUPER_ADMIN = "Super Admin", "Super Admin"
+        ORGANIZATION = "Organization", "Organization"
 
     name = models.CharField(max_length=50, unique=True, choices=RoleChoices.choices)
     description = models.TextField(blank=True)
@@ -214,6 +216,10 @@ class Employee(AbstractUser):
     @property
     def is_hr(self) -> bool:
         return self.role_name == "HR"
+
+    @property
+    def is_super_admin(self) -> bool:
+        return self.role_name == "Super Admin"
 
 
 auditlog.register(Employee)
