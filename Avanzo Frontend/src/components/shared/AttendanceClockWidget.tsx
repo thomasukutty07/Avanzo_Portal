@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { 
   Clock,
   CheckCircle2,
@@ -47,16 +48,16 @@ export const AttendanceClockWidget: React.FC<AttendanceClockWidgetProps> = ({ on
       await attendanceService.clockIn({ 
         entries: [
           { 
-            intent_text: "Initializing operational session.", 
-            custom_label: "General Sync" 
+            intent_text: "Daily system check-in.", 
+            custom_label: "Attendance" 
           }
         ], 
-        general_notes: "Clocked in via terminal." 
+        general_notes: "System Check-in" 
       });
-      toast.success("Operational session initialized. Have a great day!");
+      toast.success("Check-in successful. Have a great day!");
       await fetchCurrentStatus();
     } catch (err: any) {
-      toast.error(err.response?.data?.detail || "Sync failed.");
+      toast.error(err.response?.data?.detail || "Request failed.");
     } finally {
       setRefreshing(false);
     }
@@ -68,18 +69,18 @@ export const AttendanceClockWidget: React.FC<AttendanceClockWidgetProps> = ({ on
       
       const payload_entries = (currentLog?.entries || []).map((e: any) => ({
         entry_id: e.id,
-        output_text: "Operational cycle finalized.",
-        outcome: "completed"
+        output_text: "Finished today's workday.",
+        outcome: "Finished"
       }));
 
       await attendanceService.clockOut({ 
         entries: payload_entries, 
         general_notes: "Clocked out via terminal." 
       });
-      toast.success("Operational session completed. Data synchronized.");
+      toast.success("Check-out successful. Workday logged.");
       await fetchCurrentStatus();
     } catch (err: any) {
-      toast.error(err.response?.data?.detail || "Sync failed.");
+      toast.error(err.response?.data?.detail || "Request failed.");
     } finally {
       setRefreshing(false);
     }
@@ -94,7 +95,7 @@ export const AttendanceClockWidget: React.FC<AttendanceClockWidgetProps> = ({ on
     : "bg-violet-50 text-violet-600 border-violet-100 shadow-violet-600/10";
 
   const statusIcon = currentLog?.has_clocked_out ? <CheckCircle2 className="size-3.5" /> : <Clock className="size-3.5" />;
-  const statusLabel = currentLog?.has_clocked_out ? "COMPLETED" : currentLog?.has_clocked_in ? "ACTIVE SESSION" : "CLOCK IN";
+  const statusLabel = currentLog?.has_clocked_out ? "Finished" : currentLog?.has_clocked_in ? "Working" : "Sign In";
 
   return (
     <>
@@ -109,14 +110,14 @@ export const AttendanceClockWidget: React.FC<AttendanceClockWidgetProps> = ({ on
         <span className="hidden sm:inline">{statusLabel}</span>
       </button>
 
-      {isOpen && (
+      {isOpen && createPortal(
         <div className="fixed inset-0 top-0 left-0 w-screen h-screen z-[9999] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-xl animate-in fade-in duration-300">
           <div className="relative w-full max-w-lg max-h-[92vh] bg-white rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] overflow-hidden border border-slate-100 flex flex-col animate-in zoom-in-95 duration-300">
             {/* Modal Header */}
             <div className="px-8 py-7 border-b border-slate-50 flex items-center justify-between font-headline bg-white sticky top-0 z-10 transition-colors">
               <div>
                 <h3 className="text-xl font-bold text-slate-900 tracking-tight">
-                  {currentLog?.has_clocked_in ? "Review & Check Out" : "Daily Attendance"}
+                  {currentLog?.has_clocked_in ? "Check Out" : "Daily Attendance"}
                 </h3>
                 <p className="text-[10px] font-bold text-slate-400 tracking-widest mt-1 uppercase">
                   {currentLog?.has_clocked_in ? "Review your hours and finalize" : "What is your status today?"}
@@ -136,23 +137,23 @@ export const AttendanceClockWidget: React.FC<AttendanceClockWidgetProps> = ({ on
             <div className="p-8 flex-1 flex flex-col items-center justify-center text-center space-y-8">
                {/* 1. PRIMARY STATUS */}
                <div className="space-y-4">
-                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">Current Attendance Status</p>
+                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">Attendance State</p>
                   <div className="flex flex-col items-center gap-4">
                      <div className={`px-10 py-4 rounded-[2rem] text-2xl font-black tracking-tight border transition-all ${
                         currentLog?.has_clocked_out ? 'bg-slate-50 text-slate-400 border-slate-100' :
                         currentLog?.has_clocked_in ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
                         'bg-violet-50 text-violet-600 border-violet-100'
                      }`}>
-                        {currentLog?.has_clocked_out ? 'Finalized' : currentLog?.has_clocked_in ? 'Working' : 'Not Checked In'}
+                        {currentLog?.has_clocked_out ? 'logged' : currentLog?.has_clocked_in ? 'Working' : 'Not Checked In'}
                      </div>
                      {currentLog?.has_clocked_in && !currentLog?.has_clocked_out && currentLog?.clock_in && (
                         <p className="text-sm font-bold text-emerald-600/80">
-                          Started at {(() => {
+                          Clocked in at {(() => {
                             try { return format(new Date(currentLog.clock_in), 'hh:mm a'); } catch (e) { return '—'; }
                           })()}
                         </p>
                      )}
-                  </div>
+                   </div>
                </div>
 
                {/* 2. LIVE CLOCK AREA */}
@@ -174,7 +175,7 @@ export const AttendanceClockWidget: React.FC<AttendanceClockWidgetProps> = ({ on
                        onClick={handleClockIn}
                        disabled={refreshing}
                        className="w-full h-16 bg-violet-600 hover:bg-violet-700 text-white rounded-[1.25rem] font-black text-base tracking-widest shadow-xl shadow-violet-900/20 active:scale-95 transition-all uppercase disabled:opacity-50 flex items-center justify-center gap-4"
-                    >
+                     >
                        {refreshing ? <Loader2 className="size-5 animate-spin" /> : <Activity className="size-5" />}
                        Check In
                     </button>
@@ -183,13 +184,13 @@ export const AttendanceClockWidget: React.FC<AttendanceClockWidgetProps> = ({ on
                        onClick={handleClockOut}
                        disabled={refreshing}
                        className="w-full h-16 bg-slate-900 hover:bg-black text-white rounded-[1.25rem] font-black text-base tracking-widest shadow-xl shadow-slate-900/20 active:scale-95 transition-all uppercase disabled:opacity-50 flex items-center justify-center gap-4"
-                    >
+                     >
                        {refreshing ? <Loader2 className="size-5 animate-spin" /> : <CheckCircle2 className="size-5" />}
                        Check Out
                     </button>
                   ) : (
                     <div className="w-full h-16 flex items-center justify-center bg-emerald-50 text-emerald-600 rounded-[1.25rem] font-black text-base tracking-widest uppercase border border-emerald-100 gap-3">
-                       <CheckCircle2 className="size-5" /> Completed
+                       <CheckCircle2 className="size-5" /> Finished
                     </div>
                   )}
                </div>
@@ -197,11 +198,12 @@ export const AttendanceClockWidget: React.FC<AttendanceClockWidgetProps> = ({ on
 
             {/* Modal Footer */}
             <div className="px-8 py-5 bg-slate-50/50 border-t border-slate-50 flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest font-headline italic">
-              <span>PROTOCOL v4.2 // AVANZO SECTOR HUB</span>
+              <span>Avanzo Portal v4.2</span>
               <span className="tabular-nums">{new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

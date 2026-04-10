@@ -10,8 +10,8 @@ import {
   Loader2,
   ChevronRight,
   Zap,
-  Activity,
-  Shield
+  Shield,
+  Activity
 } from "lucide-react"
 import type { LeaveRequest, User } from "@/types"
 import { HRPortalChrome } from "@/components/portal/hr/HRPortalChrome"
@@ -54,14 +54,14 @@ export default function HROverview() {
         }).length;
 
         setStats([
-            { label: "Total Employees", value: allEmployees.length.toString().padStart(2, '0'), sub: "Global Active", icon: Users, color: "text-slate-900" },
-            { label: "New Onboardings", value: newThisMonth.toString().padStart(2, '0'), sub: "Current Month", icon: UserPlus, color: "text-slate-900" },
+            { label: "Total Employees", value: allEmployees.length.toString().padStart(2, '0'), sub: "Active", icon: Users, color: "text-slate-900" },
+            { label: "New Hires", value: newThisMonth.toString().padStart(2, '0'), sub: "This Month", icon: UserPlus, color: "text-slate-900" },
             { label: "Attendance Rate", value: `${Math.round(attendanceRate)}%`, sub: `${attendance.present_now || 0}/${attendance.total_workforce || 0} Present`, valueColor: "text-emerald-500", icon: CheckCircle2, color: "text-emerald-500" },
-            { label: "Pending Leaves", value: leaves.filter(l => l.status === 'pending' || l.status === 'tl_approved').length.toString().padStart(2, '0'), sub: "Requires Triage", valueColor: "text-amber-500", icon: ClipboardList, color: "text-amber-500" },
+            { label: "Pending Leaves", value: leaves.filter(l => l.status === 'pending' || l.status === 'tl_approved').length.toString().padStart(2, '0'), sub: "Needs Review", valueColor: "text-amber-500", icon: ClipboardList, color: "text-amber-500" },
         ])
       } catch (err) {
         console.error("Failed to fetch dashboard data:", err)
-        toast.error("Sector synchronization failed.")
+        toast.error("Failed to load dashboard data.")
       } finally {
         setLoading(false)
       }
@@ -75,7 +75,7 @@ export default function HROverview() {
             <div className="flex h-[80vh] items-center justify-center bg-[#fcfcfc]">
                 <div className="flex flex-col items-center gap-6">
                     <Loader2 className="h-10 w-10 animate-spin text-violet-600" />
-                    <p className="text-[11px] font-black text-slate-400 tracking-[0.2em] font-headline">Scanning personnel registry intelligence...</p>
+                    <p className="text-[11px] font-black text-slate-400 tracking-[0.2em] font-headline">Loading employee data...</p>
                 </div>
             </div>
         </HRPortalChrome>
@@ -86,31 +86,31 @@ export default function HROverview() {
     <HRPortalChrome>
       <div className="space-y-12 font-display bg-[#fcfcfc] min-h-screen animate-in fade-in duration-700">
         {/* Page Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-2">
+        <div className="sticky top-0 z-30 -mx-6 md:-mx-10 px-6 md:px-10 py-8 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-8 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-transparent transition-all">
             <div>
-                <p className="text-[10px] font-black tracking-[0.3em] text-violet-600 mb-2 leading-none uppercase">
-                    HR Sector Command
+                <p className="text-[10px] font-black text-violet-600 mb-1 leading-none">
+                    HR Dashboard
                 </p>
                 <h1 className="text-3xl font-black text-slate-900 tracking-tight font-headline leading-none">
-                    Personnel Overview
+                    Employee Overview
                 </h1>
-                <p className="text-slate-500 mt-4 text-sm font-medium">Workforce analytics, leave compliance, and boarding status.</p>
+                <p className="text-slate-500 mt-2 text-sm font-medium">Workforce analytics, leave management, and hiring status.</p>
             </div>
             <div className="flex items-center gap-4 self-start md:self-auto">
                 <button
                     type="button"
-                    onClick={() => toast.info("Exporting sector registry…")}
-                    className="px-7 py-3 rounded-xl border border-slate-100 bg-white text-slate-900 text-[11px] font-black tracking-widest hover:bg-slate-50 transition-all shadow-sm active:scale-95 font-headline"
+                    onClick={() => toast.info("Exporting employee list…")}
+                    className="px-7 py-3 rounded-xl border border-slate-100 bg-white text-slate-900 text-[11px] font-black hover:bg-slate-50 transition-all shadow-sm active:scale-95 font-headline"
                 >
-                    Export Dossier
+                    Export List
                 </button>
                 <button
                     type="button"
                     onClick={() => navigate("/employee-registration")}
-                    className="flex items-center gap-3 px-7 py-3 rounded-xl bg-violet-600 text-white text-[11px] font-black tracking-widest hover:bg-violet-700 transition-all shadow-lg shadow-violet-600/20 active:scale-95 shadow-md font-headline"
+                    className="flex items-center gap-3 px-7 py-3 rounded-xl bg-violet-600 text-white text-[11px] font-black hover:bg-violet-700 transition-all shadow-lg shadow-violet-600/20 active:scale-95 shadow-md font-headline"
                 >
                     <Plus className="size-4 stroke-[3px]" />
-                    Onboard Unit
+                    Add Employee
                 </button>
             </div>
         </div>
@@ -139,26 +139,26 @@ export default function HROverview() {
           {/* Recent Employee Table */}
           <div className="lg:col-span-8 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden hover:shadow-xl transition-all duration-700">
             <div className="flex items-center justify-between px-10 py-8 border-b border-slate-50 bg-slate-50/10">
-              <h3 className="font-headline font-black text-xl text-slate-900 tracking-tight">Recent Talent Acquisition</h3>
+              <h3 className="font-headline font-black text-xl text-slate-900 tracking-tight">Recent Hires</h3>
               <button 
                 onClick={() => navigate("/employees")}
                 className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-600 hover:text-violet-800 transition-colors flex items-center gap-3 bg-violet-50 px-5 py-2.5 rounded-xl border border-violet-100 shadow-sm"
               >
-                Access Registry <ChevronRight className="size-3.5" />
+                View Employees <ChevronRight className="size-3.5" />
               </button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead className="bg-slate-50/50 text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] border-b border-slate-50">
                   <tr>
-                    <th className="px-10 py-6">Mission Unit Profile</th>
-                    <th className="px-10 py-6 text-center">Protocol Status</th>
-                    <th className="px-10 py-6 text-right">Synchronization Day</th>
+                    <th className="px-10 py-6">Employee Profile</th>
+                    <th className="px-10 py-6 text-center">Work Status</th>
+                    <th className="px-10 py-6 text-right">Joining Date</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
                   {recentEmployees.length > 0 ? recentEmployees.map((emp) => (
-                    <tr key={emp.id} className="hover:bg-slate-50/30 transition-all group cursor-pointer" onClick={() => toast.info(`Syncing personnel dossier: ${emp.first_name}`)}>
+                    <tr key={emp.id} className="hover:bg-slate-50/30 transition-all group cursor-pointer" onClick={() => toast.info(`Viewing employee details: ${emp.first_name}`)}>
                       <td className="px-10 py-8">
                         <div className="flex items-center gap-6">
                           <div className="size-14 rounded-2xl bg-white border border-slate-100 p-2 shadow-sm flex items-center justify-center font-black text-slate-300 text-sm uppercase group-hover:rounded-xl group-hover:border-violet-100 group-hover:shadow-xl transition-all">
@@ -173,13 +173,13 @@ export default function HROverview() {
                       <td className="px-10 py-8">
                          <div className="flex justify-center">
                             <span className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest border border-emerald-100 shadow-sm">
-                                AUTHORIZED
+                                ACTIVE
                             </span>
                          </div>
                       </td>
                       <td className="px-10 py-8 text-right">
                         <p className="text-[12px] font-black text-slate-400 tabular-nums uppercase tracking-widest opacity-60">
-                          {emp.date_of_joining ? new Date(emp.date_of_joining).toLocaleDateString() : 'SYNC PENDING'}
+                          {emp.date_of_joining ? new Date(emp.date_of_joining).toLocaleDateString() : 'Pending'}
                         </p>
                       </td>
                     </tr>
@@ -187,7 +187,7 @@ export default function HROverview() {
                     <tr>
                       <td colSpan={3} className="px-10 py-24 text-center opacity-30">
                         <Zap className="size-12 mx-auto mb-6 text-slate-200" />
-                        <p className="text-[11px] font-black uppercase tracking-[0.2em]">Personnel Registry Empty</p>
+                        <p className="text-[11px] font-black uppercase tracking-[0.2em]">Employee list empty</p>
                       </td>
                     </tr>
                   )}
@@ -213,7 +213,7 @@ export default function HROverview() {
                              <p className="text-[13px] font-black text-slate-900 font-headline uppercase tracking-tight group-hover/item:text-violet-600 transition-colors">REQ #{leave.id.slice(0, 5)}</p>
                              <span className="text-[10px] font-black text-slate-300 tabular-nums uppercase">{leave.start_date.split('-').slice(1).join('/')}</span>
                           </div>
-                          <p className="text-[11px] text-slate-400 font-medium line-clamp-1 mb-6 uppercase tracking-tight opacity-80">{leave.reason || 'Operational synchronization request'}</p>
+                          <p className="text-[11px] text-slate-400 font-medium line-clamp-1 mb-6 uppercase tracking-tight opacity-80">{leave.reason || 'General leave request'}</p>
                           <div className="flex items-center justify-between mt-2">
                              <div className="flex items-center gap-3">
                                 <div className="size-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-violet-600 text-[10px] font-black shadow-sm group-hover/item:bg-violet-600 group-hover/item:text-white transition-all">
@@ -247,7 +247,7 @@ export default function HROverview() {
                    <Activity className="size-48" />
                 </div>
                 <div className="relative z-10">
-                   <h4 className="text-2xl font-black mb-3 font-headline uppercase tracking-tight">Registry Sync</h4>
+                   <h4 className="text-2xl font-black mb-3 font-headline uppercase tracking-tight">System Status</h4>
                    <p className="text-violet-100 text-[11px] font-black uppercase tracking-widest opacity-60 leading-relaxed">System-wide background synchronization of personnel metrics is currently operational.</p>
                 </div>
                 <div className="mt-10 relative z-10">

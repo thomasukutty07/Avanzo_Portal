@@ -38,6 +38,8 @@ export interface User {
   team_lead?: string | null // ← NEW: UUID of manager
   team_lead_name?: string | null // ← NEW: display name
   date_of_joining?: string | null
+  self_declared_talents?: number[]
+  evaluated_talents?: number[]
 }
 
 export interface Role {

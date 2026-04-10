@@ -126,8 +126,8 @@ export default function HREmployees() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">Employee registry</h1>
-            <p className="text-sm font-medium text-slate-500 mt-2">Global directory of active, onboarding, and off-duty personnel.</p>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">Employee Directory</h1>
+            <p className="text-sm font-medium text-slate-500 mt-2">View and manage all active, onboarding, and off-duty employees.</p>
           </div>
           <div className="flex gap-3">
             <Button 
@@ -193,11 +193,11 @@ export default function HREmployees() {
               <table className="w-full text-left">
                 <thead>
                   <tr className="border-b border-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] bg-slate-50/20 font-headline">
-                    <th className="px-8 py-5">Personnel</th>
-                    <th className="px-8 py-5">Strategic Unit</th>
-                    <th className="px-8 py-5">Operational Role</th>
+                    <th className="px-8 py-5">Employee</th>
+                    <th className="px-8 py-5">Department</th>
+                    <th className="px-8 py-5">Designation</th>
                     <th className="px-8 py-5">Status</th>
-                    <th className="px-8 py-5">Date Of Entry</th>
+                    <th className="px-8 py-5">Joining Date</th>
                     <th className="px-8 py-5 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -241,7 +241,7 @@ export default function HREmployees() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48 rounded-2xl p-2 shadow-xl border-slate-100 font-headline">
-                            <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-3 py-2">Management Actions</DropdownMenuLabel>
+                            <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-3 py-2">Actions</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
                               className="rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 flex items-center gap-2 cursor-pointer focus:bg-violet-50 focus:text-violet-700 transition-colors"
@@ -250,7 +250,7 @@ export default function HREmployees() {
                                 setModalType('view')
                               }}
                             >
-                              <User className="size-3.5" /> View Full Profile
+                              <User className="size-3.5" /> View Profile
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               className="rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 flex items-center gap-2 cursor-pointer focus:bg-violet-50 focus:text-violet-700 transition-colors"
@@ -259,14 +259,14 @@ export default function HREmployees() {
                                 setModalType('edit')
                               }}
                             >
-                              <Edit2 className="size-3.5" /> Edit Employee Details
+                              <Edit2 className="size-3.5" /> Edit Employee
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
                               className="rounded-xl px-3 py-2.5 text-xs font-bold text-red-600 flex items-center gap-2 cursor-pointer focus:bg-red-50 focus:text-red-700 transition-colors"
                               onClick={() => setRevokeEmployee(emp)}
                             >
-                              <UserX className="size-3.5" /> Revoke System Access
+                              <UserX className="size-3.5" /> Disable Access
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -321,7 +321,7 @@ export default function HREmployees() {
                   <div className="size-10 rounded-xl bg-violet-600 text-white flex items-center justify-center">
                     {modalType === 'view' ? <User size={20} /> : <Edit2 size={20} />}
                   </div>
-                  {modalType === 'view' ? 'Staff Intelligence Profile' : modalType === 'edit' ? 'Edit Personnel Record' : 'Register New Employee'}
+                  {modalType === 'view' ? 'Employee Profile' : modalType === 'edit' ? 'Edit Employee' : 'Add New Employee'}
                 </SheetTitle>
                 {selectedEmployee && (
                   <p className="text-xs font-bold text-slate-400 mt-2 uppercase tracking-widest leading-none">
@@ -334,19 +334,19 @@ export default function HREmployees() {
                 {modalType === 'view' && selectedEmployee && (
                   <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
                     <section className="space-y-4">
-                      <h4 className="text-[10px] font-black text-violet-600 tracking-[0.2em] mb-4">Core Identification</h4>
+                      <h4 className="text-[10px] font-black text-violet-600 tracking-[0.2em] mb-4">Identification</h4>
                       <div className="grid grid-cols-2 gap-6 bg-slate-50 p-6 rounded-2xl border border-slate-100">
                         <ProfileItem label="Full Name" value={`${selectedEmployee.first_name} ${selectedEmployee.last_name}`} />
-                        <ProfileItem label="Contact Email" value={selectedEmployee.email} />
-                        <ProfileItem label="Strategic Unit" value={selectedEmployee.department_name || "Engineering"} />
-                        <ProfileItem label="Operational Role" value={selectedEmployee.role || "Senior Dev"} />
-                        <ProfileItem label="Date of Entry" value={selectedEmployee.date_of_joining || "Oct 12, 2021"} />
+                        <ProfileItem label="Email" value={selectedEmployee.email} />
+                        <ProfileItem label="Department" value={selectedEmployee.department_name || "Engineering"} />
+                        <ProfileItem label="Designation" value={selectedEmployee.role || "Senior Dev"} />
+                        <ProfileItem label="Joining Date" value={selectedEmployee.date_of_joining || "Oct 12, 2021"} />
                         <ProfileItem label="Status" value={selectedEmployee.status.toUpperCase()} />
                       </div>
                     </section>
 
                     <section className="space-y-4">
-                      <h4 className="text-[10px] font-black text-violet-600 tracking-[0.2em] mb-4">Access Telemetry</h4>
+                      <h4 className="text-[10px] font-black text-violet-600 tracking-[0.2em] mb-4">Account Status</h4>
                       <div className="p-6 rounded-2xl border-2 border-dashed border-slate-100 space-y-4">
                         <div className="flex items-center justify-between">
                           <p className="text-xs font-bold text-slate-400">Portal Permissions</p>
@@ -355,7 +355,7 @@ export default function HREmployees() {
                         <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden">
                           <div className="h-full bg-violet-600 w-full" />
                         </div>
-                        <p className="text-[10px] font-medium text-slate-400 italic italic">Full synchronization with central security protocols is currently active.</p>
+                        <p className="text-[10px] font-medium text-slate-400 italic">User account is active and verified.</p>
                       </div>
                     </section>
                   </div>
@@ -387,7 +387,7 @@ export default function HREmployees() {
                     className="flex-1 h-12 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl shadow-lg shadow-violet-200 transition-all active:scale-95 flex items-center justify-center gap-2"
                     onClick={() => setModalType('edit')}
                   >
-                    <Edit2 size={16} /> Edit Employee details
+                    <Edit2 size={16} /> Edit Employee
                   </Button>
                   <Button 
                     variant="outline"
@@ -416,13 +416,13 @@ export default function HREmployees() {
                   </div>
                   <div className="space-y-1 text-left">
                     <AlertDialogTitle className="text-xl font-bold text-slate-900 tracking-tight font-headline m-0">
-                      Revoke System Access
+                      Disable Account
                     </AlertDialogTitle>
-                    <p className="text-[10px] font-black text-red-600 uppercase tracking-[0.15em] leading-none">Security Lockout Protocol</p>
+                    <p className="text-[10px] font-black text-red-600 uppercase tracking-[0.15em] leading-none">Account Access</p>
                   </div>
                 </div>
                 <AlertDialogDescription className="text-sm font-medium text-slate-500 leading-relaxed text-left">
-                  You are initiating a system lockout for <span className="text-slate-900 font-bold">{revokeEmployee?.first_name} {revokeEmployee?.last_name}</span>. This will immediately terminate all active network sessions and securely invalidate their existing authentication credentials.
+                  You are about to disable account access for <span className="text-slate-900 font-bold">{revokeEmployee?.first_name} {revokeEmployee?.last_name}</span>. This will log them out of all devices and prevent further access.
                 </AlertDialogDescription>
               </AlertDialogHeader>
             </div>
@@ -436,17 +436,17 @@ export default function HREmployees() {
                   if (!revokeEmployee) return;
                   try {
                     await api.delete(`/api/auth/employees/${revokeEmployee.id}/`)
-                    toast.success(`Access completely revoked for ${revokeEmployee?.first_name}.`)
+                    toast.success(`Account access disabled for ${revokeEmployee?.first_name}.`)
                     load()
                   } catch (e) {
-                    toast.error("Failed to revoke access.")
+                    toast.error("Failed to disable access.")
                   } finally {
                     setRevokeEmployee(null)
                   }
                 }}
                 className="h-10 px-5 rounded-xl bg-red-600 hover:bg-red-700 outline-none text-white text-xs font-bold shadow-sm shadow-red-200 transition-all border-none ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
               >
-                Terminate Access
+                Disable Access
               </AlertDialogAction>
             </div>
           </AlertDialogContent>

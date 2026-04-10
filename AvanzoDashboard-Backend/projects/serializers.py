@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from leaves.models import LeaveRequest
 
+from accounts.serializers import EmployeePublicSerializer
 from .models import ExternalClient, Project, Service, Task
 
 
@@ -22,6 +23,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     service_name = serializers.CharField(source="service.name", read_only=True, default=None)
     department_name = serializers.CharField(source="owning_department.name", read_only=True)
     progress = serializers.IntegerField(source="weighted_progress", read_only=True)
+    team = EmployeePublicSerializer(many=True, read_only=True)
 
     class Meta:
         model = Project

@@ -1,9 +1,9 @@
 import { NavLink, useNavigate, useLocation } from "react-router-dom"
-import { LogOut, LayoutDashboard, CheckSquare, Folder, Users, Megaphone, BarChart3, Settings, Search, Bell, Plus, Menu, X, Clock } from "lucide-react"
+import { LogOut, LayoutDashboard, CheckSquare, Folder, Users, Megaphone, Settings, Search, Bell, Menu, X, Clock } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { toast } from "sonner"
-import { NewTaskModal, NewUpdateModal, CreateProjectModal, AddMemberModal, SearchModal } from "./TeamLeadActionForms"
+import { NewTaskModal, NewUpdateModal, SearchModal } from "./TeamLeadActionForms"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -17,7 +17,6 @@ const NAV_ITEMS = [
   { to: "/projects", label: "Projects", icon: Folder },
   { to: "/team", label: "Team Members", icon: Users },
   { to: "/team-announcements", label: "Announcements", icon: Megaphone },
-  { to: "/team-reports", label: "Reports", icon: BarChart3 },
 ]
 
 export default function TeamLeadChrome({ children }: { children: React.ReactNode }) {
@@ -27,8 +26,6 @@ export default function TeamLeadChrome({ children }: { children: React.ReactNode
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false)
   const [isNewUpdateOpen, setIsNewUpdateOpen] = useState(false)
-  const [isNewProjectOpen, setIsNewProjectOpen] = useState(false)
-  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [notifications, setNotifications] = useState<any[]>([])
   const [announcementCount, setAnnouncementCount] = useState(0)
@@ -115,35 +112,20 @@ export default function TeamLeadChrome({ children }: { children: React.ReactNode
         </nav>
 
         <div className="mt-auto border-t border-slate-50 p-5 bg-white shrink-0">
-          <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50/50 border border-slate-100 mb-3 px-3.5 overflow-hidden relative group">
-            <div className="flex size-9 items-center justify-center overflow-hidden rounded-full bg-violet-100 uppercase font-black text-violet-700 text-[10px] shrink-0 ring-2 ring-white">
-              {displayName.slice(0, 2)}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-bold text-slate-900 group-hover:text-violet-600 transition-colors uppercase tracking-tight leading-none">{displayName}</p>
-              <p className="truncate text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1.5 leading-none">Team Lead</p>
-            </div>
-            <button 
-              type="button"
-              onClick={() => navigate("/settings")}
-              className="text-slate-300 hover:text-violet-600 transition-colors p-1 rounded-lg shrink-0 group/btn"
-              title="Profile Settings"
-            >
-              <Settings className="h-3.5 w-3.5 group-hover/btn:rotate-90 transition-transform duration-500" />
-            </button>
-          </div>
-          
           <button
             type="button"
             onClick={() => {
               logout()
               navigate("/login", { replace: true })
             }}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100/50 py-2.5 text-[11px] font-black text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all uppercase tracking-widest font-headline"
+            className="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-[11px] font-black text-red-500 hover:bg-red-50 transition-all uppercase tracking-widest font-headline group"
           >
-            <LogOut className="h-3.5 w-3.5" />
+            <LogOut className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
             Sign Out
           </button>
+          <div className="mt-4 pt-4 border-t border-slate-50">
+            <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest text-center">Avanzo Portal v4.2</p>
+          </div>
         </div>
       </aside>
 
@@ -161,8 +143,8 @@ export default function TeamLeadChrome({ children }: { children: React.ReactNode
             <div className="relative flex-1 group font-headline hidden lg:block">
               <Search className="absolute left-4 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 group-focus-within:text-violet-500 transition-colors" />
               <input
-                className="w-full bg-[#F1F5F9] border-transparent rounded-lg pl-10 pr-4 py-1.5 text-[12px] font-bold text-slate-900 focus:ring-4 focus:ring-violet-600/5 focus:bg-white focus:border-violet-200 transition-all placeholder:text-slate-300 tracking-tight outline-none"
-                placeholder="Search tactical units, projects, or team..."
+                className="w-full bg-slate-50 border-transparent rounded-lg pl-10 pr-4 py-1.5 text-[12px] font-bold text-slate-900 focus:ring-4 focus:ring-violet-600/5 focus:bg-white focus:border-violet-200 transition-all placeholder:text-slate-300 tracking-tight outline-none"
+                placeholder="Search projects, members, or tasks..."
                 onKeyDown={(e) => e.key === "Enter" && toast.info(`Searching: ${e.currentTarget.value}`)}
                 type="text"
               />
@@ -172,26 +154,28 @@ export default function TeamLeadChrome({ children }: { children: React.ReactNode
           <div className="flex items-center gap-3.5">
             <div className="flex items-center gap-2">
               <AttendanceClockWidget onToggleSidebar={setIsSidebarOpen} />
+              
+              {/* Notifications */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button 
                     type="button"
-                    className="relative flex items-center justify-center size-9 rounded-full border border-slate-100 text-slate-500 hover:bg-slate-50 transition-colors"
+                    className="relative flex items-center justify-center size-9 rounded-full border border-slate-100 text-slate-500 hover:bg-slate-100 transition-colors"
                   >
                     <Bell className="h-4.5 w-4.5" />
-                    <span className="absolute right-0 top-0 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
+                    <span className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-80 font-display rounded-2xl p-2 shadow-2xl border-slate-200">
                    <DropdownMenuLabel className="p-4">
-                    <h3 className="font-black text-base text-slate-900 font-headline tracking-tight">Intelligence Feed</h3>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">{notifications.length} Operational Alerts</p>
+                    <h3 className="font-black text-base text-slate-900 font-headline tracking-tight">Notifications</h3>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">{notifications.length} Active Alerts</p>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator className="bg-slate-100" />
                   <ScrollArea className="h-[280px]">
                     {notifications.length > 0 ? (
                       notifications.slice(0, 5).map((n, i) => (
-                        <DropdownMenuItem key={i} className="p-3.5 rounded-xl cursor-not-allowed hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-none">
+                        <DropdownMenuItem key={i} className="p-3.5 rounded-xl cursor-default hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-none">
                           <div className="space-y-1 w-full">
                             <div className="flex items-center justify-between">
                               <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded text-violet-700 bg-violet-50`}>
@@ -215,64 +199,62 @@ export default function TeamLeadChrome({ children }: { children: React.ReactNode
                    </ScrollArea>
                   <DropdownMenuSeparator className="bg-slate-100" />
                   <div className="p-1.5">
-                    <Button variant="ghost" className="w-full text-[10px] font-black text-violet-600 uppercase tracking-widest hover:bg-violet-50 rounded-xl" onClick={() => toast.info("Full history locked.")}>View All Alerts</Button>
+                    <Button variant="ghost" className="w-full text-[10px] font-black text-violet-600 uppercase tracking-widest hover:bg-violet-50 rounded-xl" onClick={() => toast.info("History view access restricted.")}>View All Notifications</Button>
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>
 
+              {/* Direct Settings Access */}
+              <button 
+                onClick={() => navigate("/settings")}
+                className="relative flex items-center justify-center size-9 rounded-full border border-slate-100 text-slate-500 hover:bg-slate-100 hover:text-violet-600 transition-all group"
+                title="Account Settings"
+              >
+                <Settings className="h-4.5 w-4.5 group-hover:rotate-90 transition-transform duration-500" />
+              </button>
+
+              {/* Profile Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button 
-                    type="button"
-                    className="flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-[11px] font-black text-white transition-all hover:bg-violet-700 active:scale-95 shadow-md shadow-violet-600/20 uppercase tracking-widest"
-                  >
-                    <Plus className="h-3.5 w-3.5 stroke-[3px]" />
-                    <span className="hidden sm:inline">Actions</span>
+                  <button className="flex items-center gap-2.5 p-1 rounded-full hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100 group ml-1">
+                    <div className="flex size-8 items-center justify-center overflow-hidden rounded-full bg-violet-100 uppercase font-black text-violet-700 text-[10px] shrink-0 ring-2 ring-white shadow-sm group-hover:ring-violet-50 transition-all">
+                      {displayName.slice(0, 2)}
+                    </div>
+                    <div className="hidden sm:block text-left mr-2">
+                       <p className="text-[11px] font-black text-slate-900 leading-none uppercase tracking-tight">{displayName}</p>
+                       <p className="text-[9px] font-bold text-slate-400 mt-1 leading-none uppercase">Team Lead</p>
+                    </div>
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 font-display rounded-2xl p-1.5 shadow-2xl border-slate-200">
-                   <DropdownMenuLabel className="px-3.5 py-2.5 text-[9px] font-black uppercase tracking-[0.18em] text-slate-300">Quick Operations</DropdownMenuLabel>
-                   <DropdownMenuItem onClick={() => setIsNewTaskOpen(true)} className="rounded-xl px-3 py-2.5 cursor-pointer group">
-                      <div className="size-7 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center mr-3 group-hover:bg-violet-600 group-hover:text-white transition-colors">
-                        <CheckSquare className="h-3.5 w-3.5" />
-                      </div>
-                      <span className="font-bold text-xs text-slate-700">Assign New Task</span>
-                   </DropdownMenuItem>
-                   <DropdownMenuItem onClick={() => setIsNewUpdateOpen(true)} className="rounded-xl px-3 py-2.5 cursor-pointer group">
-                      <div className="size-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mr-3 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                        <Megaphone className="h-3.5 w-3.5" />
-                      </div>
-                      <span className="font-bold text-xs text-slate-700">Broadcast Update</span>
-                   </DropdownMenuItem>
-                   <DropdownMenuSeparator className="bg-slate-50" />
-                   <DropdownMenuItem onClick={() => setIsNewProjectOpen(true)} className="rounded-xl px-3 py-2.5 cursor-pointer group">
-                      <div className="size-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mr-3 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                        <Folder className="h-3.5 w-3.5" />
-                      </div>
-                      <span className="font-bold text-xs text-slate-700">Initialize Project</span>
-                   </DropdownMenuItem>
-                   <DropdownMenuItem onClick={() => setIsAddMemberOpen(true)} className="rounded-xl px-3 py-2.5 cursor-pointer group">
-                      <div className="size-7 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center mr-3 group-hover:bg-orange-600 group-hover:text-white transition-colors">
-                        <Users className="h-3.5 w-3.5" />
-                      </div>
-                      <span className="font-bold text-xs text-slate-700">Onboard Member</span>
-                   </DropdownMenuItem>
+                <DropdownMenuContent align="end" className="w-56 p-2 rounded-2xl shadow-2xl border-slate-200 animate-in fade-in zoom-in-95 duration-200">
+                  <DropdownMenuLabel className="px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-slate-100" />
+                  <DropdownMenuItem 
+                    onClick={() => {
+                      logout()
+                      navigate("/login", { replace: true })
+                    }}
+                    className="rounded-xl p-2.5 flex items-center gap-3 cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50 outline-none"
+                   >
+                    <LogOut className="h-4 w-4" />
+                    <span className="text-xs font-bold">Sign Out</span>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </div>
         </header>
 
-        <main key={location.pathname} className="min-h-0 flex-1 overflow-y-auto p-6 md:p-8 lg:p-10">
-          {children}
+        <main key={location.pathname} className="min-h-0 flex-1 overflow-y-auto relative">
+          <div className="p-6 md:p-8 lg:p-10">
+            {children}
+          </div>
         </main>
       </div>
 
       {/* Action Modals */}
       <NewTaskModal open={isNewTaskOpen} onOpenChange={setIsNewTaskOpen} />
       <NewUpdateModal open={isNewUpdateOpen} onOpenChange={setIsNewUpdateOpen} />
-      <CreateProjectModal open={isNewProjectOpen} onOpenChange={setIsNewProjectOpen} />
-      <AddMemberModal open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen} />
       <SearchModal open={isSearchOpen} onOpenChange={setIsSearchOpen} />
     </div>
   )

@@ -60,9 +60,9 @@ export default function TeamReportsPage() {
   ]
 
   const STATS = [
-    { label: "Sector Velocity", value: `${Math.round(successRate)}%`, icon: Zap, trend: "+12.5%", color: "text-emerald-500", sub: "Mission Completion Rate" },
-    { label: "Cycle Latency", value: "3.2d", icon: Clock, trend: "-4.2%", color: "text-red-500", sub: "Avg Tactical Resolution" },
-    { label: "Active Nodes", value: activeMembers.toString(), icon: PieChart, trend: "Optimal", color: "text-violet-500", sub: "Unit Capacity Authorized" },
+    { label: "Task Success", value: `${Math.round(successRate)}%`, icon: Zap, trend: "+12.5%", color: "text-emerald-500", sub: "Tasks completed successfully" },
+    { label: "Average Speed", value: "3.2d", icon: Clock, trend: "-4.2%", color: "text-red-500", sub: "Time to finish projects" },
+    { label: "Team Members", value: activeMembers.toString(), icon: PieChart, trend: "Optimal", color: "text-violet-500", sub: "Available team capacity" },
   ]
 
   return (
@@ -71,16 +71,16 @@ export default function TeamReportsPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
           <header>
-            <h2 className="text-2xl font-black tracking-tight text-slate-900 font-headline leading-none">Operational Intelligence</h2>
-            <p className="text-xs font-bold text-slate-400 mt-2 font-headline leading-none opacity-60">Global mission telemetry synchronization active</p>
+            <h2 className="text-2xl font-black tracking-tight text-slate-900 font-headline leading-none">Team Reports</h2>
+            <p className="text-xs font-bold text-slate-400 mt-2 font-headline leading-none opacity-60">Real-time team performance and progress tracking</p>
           </header>
           <div className="flex gap-4">
              <button 
-              onClick={() => toast.success("Drafting tactical PDF synthesis...")}
+              onClick={() => toast.success("Downloading report...")}
               className="flex items-center gap-2.5 px-6 py-2.5 bg-violet-600 text-white font-black rounded-xl hover:bg-violet-700 hover:shadow-xl hover:shadow-violet-600/20 transition-all text-[10px] active:scale-95 shadow-md shadow-violet-600/10 uppercase tracking-widest"
             >
               <Download className="size-4 stroke-[3px]" />
-              Export Dossier
+              Download Report
             </button>
           </div>
         </div>
@@ -123,12 +123,12 @@ export default function TeamReportsPage() {
                 <div className="absolute top-0 left-0 w-full h-1 bg-violet-600/10" />
                 <div className="flex items-center justify-between mb-10">
                   <header>
-                    <h3 className="font-headline font-black text-xl text-slate-900 tracking-tight">Velocity Telemetry</h3>
-                    <p className="text-[9px] lowercase font-black tracking-widest text-slate-400 mt-2">Operational delivery per mission cycle</p>
+                    <h3 className="font-headline font-black text-xl text-slate-900 tracking-tight">Progress History</h3>
+                    <p className="text-[9px] lowercase font-black tracking-widest text-slate-400 mt-2">Team performance over the last few months</p>
                   </header>
                   <select className="bg-slate-50 border border-slate-100 rounded-2xl text-[9px] font-black text-slate-600 px-5 py-3 cursor-pointer shadow-sm uppercase tracking-widest focus:ring-4 focus:ring-violet-600/5 outline-none">
                     <option>H1-2026 ACTIVE</option>
-                    <option>GLOBAL ARCHIVE</option>
+                    <option>Yearly Archive</option>
                   </select>
                 </div>
                 
@@ -150,17 +150,17 @@ export default function TeamReportsPage() {
               <div className="bg-white p-10 rounded-[3.5rem] border border-slate-100 shadow-sm flex flex-col h-[480px] hover:shadow-2xl transition-all duration-500 overflow-hidden relative">
                 <div className="absolute top-0 left-0 w-full h-1 bg-violet-600/10" />
                 <div className="mb-10">
-                  <h3 className="font-headline font-black text-xl text-slate-900 tracking-tight">Resource Alignment</h3>
-                  <p className="text-[9px] lowercase font-black tracking-widest text-slate-400 mt-2">Unit distribution across strategic domains</p>
+                  <h3 className="font-headline font-black text-xl text-slate-900 tracking-tight">Team Focus</h3>
+                  <p className="text-[9px] lowercase font-black tracking-widest text-slate-400 mt-2">How time is spent across different areas</p>
                 </div>
                 <div className="flex-1 flex flex-col justify-center space-y-10">
                   {[
-                    { name: 'Engineering Nodes', val: 45 },
-                    { name: 'Tactical Design', val: 30 },
-                    { name: 'Quality Assurance', val: 15 },
-                    { name: 'Ops Coordination', val: 10 },
+                    { name: 'Development', val: 45 },
+                    { name: 'Design', val: 30 },
+                    { name: 'Bug Fixing', val: 15 },
+                    { name: 'Management', val: 10 },
                   ].map((cat, i) => (
-                    <div key={i} className="space-y-3 group cursor-pointer" onClick={() => toast.info(`Syncing ${cat.name} focus: ${cat.val}%`)}>
+                    <div key={i} className="space-y-3 group cursor-pointer" onClick={() => toast.info(`${cat.name} progress: ${cat.val}%`)}>
                       <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-[0.12em]">
                         <span className="text-slate-400 group-hover:text-violet-600 transition-colors">{cat.name}</span>
                         <span className="text-slate-900 tabular-nums">{cat.val}%</span>
@@ -180,13 +180,13 @@ export default function TeamReportsPage() {
             {/* Allocation Table */}
             <div className="bg-white rounded-[3.5rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col hover:shadow-2xl transition-all duration-700">
               <div className="px-10 py-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/10">
-                <h3 className="font-headline font-black text-xl text-slate-900 tracking-tight uppercase">Operational Units Terminal</h3>
+                <h3 className="font-headline font-black text-xl text-slate-900 tracking-tight uppercase">Team Members</h3>
                 <button 
                   onClick={() => navigate("/team")}
                   className="text-[9px] font-black text-violet-600 uppercase tracking-widest hover:translate-x-2 transition-transform flex items-center gap-3 group bg-violet-50 px-5 py-2.5 rounded-xl border border-violet-100"
                 >
                   <Layers className="size-3.5" />
-                  Access Full Roster
+                  View Full Team
                   <ArrowUpRight className="size-4 group-hover:-translate-y-0.5 transition-transform" />
                 </button>
               </div>
@@ -194,15 +194,15 @@ export default function TeamReportsPage() {
                 <table className="w-full text-left">
                   <thead className="bg-slate-50/50 text-slate-300 text-[10px] font-black uppercase tracking-[0.2em]">
                     <tr>
-                      <th className="px-10 py-6">Designated Unit</th>
-                      <th className="px-10 py-6">Active Loads</th>
-                      <th className="px-10 py-6">Efficiency Index</th>
-                      <th className="px-10 py-6 text-right">Status Terminal</th>
+                      <th className="px-10 py-6">Member Name</th>
+                      <th className="px-10 py-6">Active Tasks</th>
+                      <th className="px-10 py-6">Performance</th>
+                      <th className="px-10 py-6 text-right">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
                     {members.slice(0, 5).map((m, i) => (
-                      <tr key={i} className="hover:bg-slate-50/30 transition-all group cursor-pointer" onClick={() => toast.info(`Syncing ${m.full_name} performance telemetry...`)}>
+                      <tr key={i} className="hover:bg-slate-50/30 transition-all group cursor-pointer" onClick={() => toast.info(`Viewing ${m.full_name} performance details...`)}>
                         <td className="px-10 py-7">
                            <div className="flex items-center gap-6 min-w-[240px]">
                               <div className="size-14 bg-white rounded-[1.5rem] overflow-hidden shadow-sm border border-slate-100 p-1.5 transition-all duration-500 group-hover:rounded-2xl group-hover:rotate-6 group-hover:shadow-xl group-hover:border-violet-100">
@@ -210,17 +210,17 @@ export default function TeamReportsPage() {
                               </div>
                               <div className="space-y-1">
                                  <p className="text-sm font-black text-slate-900 group-hover:text-violet-600 transition-colors uppercase tracking-tight leading-none">{m.full_name}</p>
-                                 <p className="text-[9px] text-slate-300 font-black uppercase tracking-widest leading-none mt-1 opacity-80">{m.role_display || 'Sector Operative'}</p>
+                                 <p className="text-[9px] text-slate-300 font-black uppercase tracking-widest leading-none mt-1 opacity-80">{m.role_display || 'Team Member'}</p>
                               </div>
                            </div>
                         </td>
                         <td className="px-10 py-7">
-                           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest tabular-nums bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100/50 shadow-sm">{Math.floor(Math.random() * 5) + 3} OPERATIONAL UNITS</span>
+                           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest tabular-nums bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100/50 shadow-sm">{Math.floor(Math.random() * 5) + 3} Active Tasks</span>
                         </td>
                         <td className="px-10 py-7">
                            <div className={`flex items-center gap-2.5 font-black text-[10px] uppercase tracking-widest ${m.is_active !== false ? 'text-emerald-500' : 'text-amber-500 bg-amber-50 rounded-lg px-3 py-1.5 border border-amber-100'}`}>
                               <TrendingUp className="size-4.5" />
-                              {m.is_active !== false ? 'EXCELLENT' : 'AWAITING SYNC'}
+                              {m.is_active !== false ? 'Excellent' : 'Pending'}
                            </div>
                         </td>
                         <td className="px-10 py-7 text-right">
@@ -232,7 +232,7 @@ export default function TeamReportsPage() {
                                 m.is_active !== false ? 'bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]' :
                                 'bg-slate-300'
                              }`} />
-                             {m.is_active !== false ? 'AUTHORIZED' : 'ENROUTE'}
+                             {m.is_active !== false ? 'Working' : 'Away'}
                            </div>
                         </td>
                       </tr>

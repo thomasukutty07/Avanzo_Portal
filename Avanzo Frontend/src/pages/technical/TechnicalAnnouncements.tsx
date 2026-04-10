@@ -10,6 +10,7 @@ type Announcement = {
   body: string;
   date: string;
   urgent: boolean;
+  isExpired: boolean;
 }
 
 export default function TechnicalAnnouncementsPage() {
@@ -29,6 +30,7 @@ export default function TechnicalAnnouncementsPage() {
           title: b.title,
           body: b.message,
           date: b.created_at ? format(parseISO(b.created_at), 'MMM dd, yyyy') : "Recently",
+          isExpired: b.expiry_date ? new Date(b.expiry_date) < new Date(new Date().setHours(0,0,0,0)) : false,
           urgent: b.is_urgent || false
         }));
 
@@ -94,6 +96,11 @@ export default function TechnicalAnnouncementsPage() {
                           <Calendar className="size-3" />
                           {a.date}
                         </p>
+                        {a.isExpired && (
+                          <span className="px-2 py-0.5 bg-red-50 text-red-600 border border-red-100 rounded-md text-[8px] font-black uppercase tracking-widest">
+                            Expired
+                          </span>
+                        )}
                       </div>
                       <h2 className="text-xl font-bold text-slate-900 font-headline mb-2">{a.title}</h2>
                       <p className="text-sm font-medium leading-relaxed text-slate-500 max-w-2xl">{a.body}</p>

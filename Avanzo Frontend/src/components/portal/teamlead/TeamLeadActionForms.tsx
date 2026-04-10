@@ -93,7 +93,7 @@ export function ReviewTaskModal({ open, onOpenChange, task, onSuccess }: { open:
                  className={`flex flex-col items-center justify-center gap-2 h-24 rounded-2xl border-2 transition-all ${approved === true ? 'border-emerald-500 bg-emerald-50' : 'border-slate-100 bg-slate-50 hover:border-slate-200'}`}
                >
                  <CheckCircle2 className={`size-6 ${approved === true ? 'text-emerald-500' : 'text-slate-400'}`} />
-                 <span className={`text-[10px] font-black uppercase tracking-widest ${approved === true ? 'text-emerald-600' : 'text-slate-500'}`}>Approve & Close</span>
+                 <span className={`text-[10px] font-black uppercase tracking-widest ${approved === true ? 'text-emerald-600' : 'text-slate-500'}`}>Approve & close</span>
                </button>
 
                <button 
@@ -102,15 +102,15 @@ export function ReviewTaskModal({ open, onOpenChange, task, onSuccess }: { open:
                  className={`flex flex-col items-center justify-center gap-2 h-24 rounded-2xl border-2 transition-all ${approved === false ? 'border-amber-500 bg-amber-50' : 'border-slate-100 bg-slate-50 hover:border-slate-200'}`}
                >
                  <X className={`size-6 ${approved === false ? 'text-amber-500' : 'text-slate-400'}`} />
-                 <span className={`text-[10px] font-black uppercase tracking-widest ${approved === false ? 'text-amber-600' : 'text-slate-500'}`}>Sent for Rework</span>
+                 <span className={`text-[10px] font-black uppercase tracking-widest ${approved === false ? 'text-amber-600' : 'text-slate-500'}`}>Sent for rework</span>
                </button>
             </div>
 
             <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3 pt-2 border-t border-slate-50 mt-4">
-              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="w-full sm:flex-1 h-10 text-slate-400 font-medium text-[10px] uppercase tracking-widest rounded-xl hover:bg-slate-50 transition-all">
+              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="w-full sm:flex-1 h-10 text-slate-400 font-bold text-xs rounded-xl hover:bg-slate-50 transition-all">
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading || approved === null} className="w-full sm:flex-[2] h-10 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-md active:scale-95 transition-all">
+              <Button type="submit" disabled={loading || approved === null} className="w-full sm:flex-[2] h-10 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-md active:scale-95 transition-all">
                 {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
                 Finalize Review
               </Button>
@@ -239,19 +239,19 @@ export function AddMemberModal({ open, onOpenChange }: { open: boolean, onOpenCh
           <form onSubmit={handleSubmit} className="px-5 sm:px-8 py-6 space-y-5 bg-white">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Given name</Label>
+                <Label className="text-[10px] font-bold text-slate-400 tracking-tight">Given name</Label>
                 <Input placeholder="Candidate name..." required className="rounded-xl border-slate-100 bg-slate-50 h-10 text-sm font-medium focus:border-violet-500 focus:bg-white transition-all placeholder:text-slate-300" />
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Surname</Label>
+                <Label className="text-[10px] font-bold text-slate-400 tracking-tight">Surname</Label>
                 <Input placeholder="Candidate surname..." required className="rounded-xl border-slate-100 bg-slate-50 h-10 text-sm font-medium focus:border-violet-500 focus:bg-white transition-all placeholder:text-slate-300" />
               </div>
               <div className="space-y-2 sm:col-span-2">
-                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Contact email</Label>
+                <Label className="text-[10px] font-bold text-slate-400 tracking-tight">Contact email</Label>
                 <Input type="email" placeholder="professional@avanzo.com" required className="rounded-xl border-slate-100 bg-slate-50 h-10 text-sm font-medium focus:border-violet-500 focus:bg-white transition-all placeholder:text-slate-300" />
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sector assignment</Label>
+                <Label className="text-[10px] font-bold text-slate-400 tracking-tight">Sector assignment</Label>
                 <Select defaultValue="engineering">
                   <SelectTrigger className="rounded-xl border-slate-100 bg-slate-50 h-10 text-sm font-medium">
                     <SelectValue />
@@ -265,7 +265,7 @@ export function AddMemberModal({ open, onOpenChange }: { open: boolean, onOpenCh
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mission role</Label>
+                <Label className="text-[10px] font-bold text-slate-400 tracking-tight">Mission role</Label>
                 <Select defaultValue="dev">
                   <SelectTrigger className="rounded-xl border-slate-100 bg-slate-50 h-10 text-sm font-medium">
                     <SelectValue />
@@ -281,10 +281,10 @@ export function AddMemberModal({ open, onOpenChange }: { open: boolean, onOpenCh
             </div>
 
             <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3 pt-2">
-              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="w-full sm:flex-1 h-10 text-slate-400 font-medium text-[10px] uppercase tracking-widest rounded-xl hover:bg-violet-50 hover:text-violet-600 transition-all">
+              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="w-full sm:flex-1 h-10 text-slate-400 font-bold text-xs rounded-xl hover:bg-violet-50 hover:text-violet-600 transition-all">
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading} className="w-full sm:flex-[2] h-10 bg-violet-600 hover:bg-violet-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-md shadow-violet-600/25 active:scale-95 transition-all">
+              <Button type="submit" disabled={loading} className="w-full sm:flex-[2] h-10 bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs rounded-xl shadow-md shadow-violet-600/25 active:scale-95 transition-all">
                 {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : <CheckCircle2 className="size-4 mr-2" />}
                 {loading ? "Onboarding..." : "Authorize member"}
               </Button>
@@ -368,7 +368,7 @@ export function CreateProjectModal({ open, onOpenChange, onSuccess }: { open: bo
           <form onSubmit={handleSubmit} className="px-5 sm:px-8 py-6 space-y-5 bg-white">
             {/* Title */}
             <div className="space-y-2">
-              <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Project title</Label>
+              <Label className="text-[10px] font-bold text-slate-400 tracking-tight">Project title</Label>
               <input
                 required
                 placeholder="e.g. Project Aurora: API Core Refresh"
@@ -381,20 +381,19 @@ export function CreateProjectModal({ open, onOpenChange, onSuccess }: { open: bo
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Internal / External toggle */}
               <div className="space-y-2">
-                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Deployment type</Label>
+                <Label className="text-[10px] font-bold text-slate-400 tracking-tight">Deployment type</Label>
                 <select
-                  className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium text-slate-900 focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-500/10 outline-none transition-all appearance-none cursor-pointer"
-                  value={formData.is_internal ? "internal" : "external"}
-                  onChange={e => setFormData({ ...formData, is_internal: e.target.value === "internal", client: "" })}
+                  className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium text-slate-900 focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-500/10 outline-none transition-all appearance-none cursor-not-allowed"
+                  value="internal"
+                  disabled
                 >
                   <option value="internal">Internal Infrastructure</option>
-                  <option value="external">Operational Delivery (External)</option>
                 </select>
               </div>
 
               {/* Target deadline */}
               <div className="space-y-2">
-                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Target deadline</Label>
+                <Label className="text-[10px] font-bold text-slate-400 tracking-tight">Target deadline</Label>
                 <input
                   type="date"
                   value={formData.target_end_date}
@@ -404,31 +403,13 @@ export function CreateProjectModal({ open, onOpenChange, onSuccess }: { open: bo
               </div>
             </div>
 
-            {/* Client — only shown for external projects */}
-            {!formData.is_internal && (
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Client</Label>
-                <select
-                  required
-                  value={formData.client}
-                  onChange={e => setFormData({ ...formData, client: e.target.value })}
-                  className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium text-slate-900 focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-500/10 outline-none transition-all appearance-none cursor-pointer"
-                >
-                  <option value="" disabled>Select client...</option>
-                  {clients.length === 0
-                    ? <option value="" disabled>No clients available</option>
-                    : clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)
-                  }
-                </select>
-              </div>
-            )}
 
             {/* Actions */}
             <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3 pt-2">
-              <Button type="button" variant="ghost" onClick={() => { onOpenChange(false); reset() }} className="w-full sm:flex-1 h-10 text-slate-400 font-medium text-[10px] uppercase tracking-widest rounded-xl hover:bg-violet-50 hover:text-violet-600 transition-all">
+              <Button type="button" variant="ghost" onClick={() => { onOpenChange(false); reset() }} className="w-full sm:flex-1 h-10 text-slate-400 font-bold text-xs rounded-xl hover:bg-violet-50 hover:text-violet-600 transition-all">
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading} className="w-full sm:flex-[2] h-10 bg-violet-600 hover:bg-violet-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-md shadow-violet-600/25 active:scale-95 transition-all">
+              <Button type="submit" disabled={loading} className="w-full sm:flex-[2] h-10 bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs rounded-xl shadow-md shadow-violet-600/25 active:scale-95 transition-all">
                 {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : <CheckCircle2 className="size-4 mr-2" />}
                 {loading ? "Deploying..." : "Initialize mission project"}
               </Button>
@@ -474,12 +455,12 @@ export function NewUpdateModal({ open, onOpenChange }: { open: boolean, onOpenCh
         <div className="overflow-y-auto">
           <form onSubmit={handleSubmit} className="px-5 sm:px-8 py-6 space-y-5 bg-white">
             <div className="space-y-2">
-              <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Broadcast headline</Label>
+              <Label className="text-[10px] font-bold text-slate-400 tracking-tight">Broadcast headline</Label>
               <input placeholder="Enter a descriptive subject..." required className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium text-slate-900 placeholder:text-slate-300 focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-500/10 outline-none transition-all" />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Transmission detail</Label>
+              <Label className="text-[10px] font-bold text-slate-400 tracking-tight">Transmission detail</Label>
               <Textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
@@ -497,7 +478,7 @@ export function NewUpdateModal({ open, onOpenChange }: { open: boolean, onOpenCh
                   <Globe className="size-3 text-emerald-500" />Everyone
                 </div>
               </div>
-              <Button type="submit" disabled={loading} className="sm:ml-auto h-10 px-6 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-md shadow-violet-600/25 active:scale-95 transition-all">
+              <Button type="submit" disabled={loading} className="sm:ml-auto h-10 px-6 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-bold text-xs shadow-md shadow-violet-600/25 active:scale-95 transition-all">
                 {loading ? <Loader2 className="size-4 animate-spin" /> : "Transmit update"}
               </Button>
             </div>

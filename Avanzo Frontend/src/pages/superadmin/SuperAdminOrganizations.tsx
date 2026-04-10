@@ -65,9 +65,9 @@ export default function SuperAdminOrganizations() {
     <SuperAdminChrome>
       <div className="space-y-6 pb-12 font-display bg-[#fcfcfc] min-h-screen">
         {/* Hero Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-2">
+        <div className="sticky top-16 z-30 -mx-4 md:-mx-8 px-4 md:px-8 py-6 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-transparent transition-all">
             <div className="font-headline">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-600 mb-1">
+              <p className="text-[10px] font-black text-violet-600 mb-1">
                 GLOBAL ENTITY REGISTRY
               </p>
               <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none uppercase">
@@ -81,12 +81,12 @@ export default function SuperAdminOrganizations() {
              <button 
                onClick={handleRefresh}
                disabled={refreshing}
-               className="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-100 rounded-xl text-[11px] font-black text-slate-600 hover:bg-slate-50 transition-all shadow-sm active:scale-95 disabled:opacity-50 uppercase tracking-widest"
+               className="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-100 rounded-xl text-[11px] font-black text-slate-600 hover:bg-slate-50 transition-all shadow-sm active:scale-95 disabled:opacity-50"
              >
                 <RefreshCcw className={`h-3 w-3 stroke-[2.5px] ${refreshing ? 'animate-spin' : ''}`} />
                 {refreshing ? 'Syncing...' : 'Force Sync'}
              </button>
-             <button className="flex items-center gap-2 px-8 py-2.5 bg-violet-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-violet-600/20 hover:bg-violet-700 transition-all active:scale-95">
+             <button className="flex items-center gap-2 px-8 py-2.5 bg-violet-600 text-white rounded-xl text-[11px] font-black shadow-lg shadow-violet-600/20 hover:bg-violet-700 transition-all active:scale-95">
                 <Plus className="h-4 w-4 stroke-[3px]" />
                 New Entity
              </button>

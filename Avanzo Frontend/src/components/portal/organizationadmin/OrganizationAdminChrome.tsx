@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { api } from "@/lib/axios"
 import { ORGANIZATION_ADMIN_NAV } from "./organizationAdminNavConfig"
-import { AttendanceClockWidget } from "@/components/shared/AttendanceClockWidget"
 
 export function OrganizationAdminChrome({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth()
@@ -131,7 +130,6 @@ export function OrganizationAdminChrome({ children }: { children: React.ReactNod
           </div>
 
           <div className="flex items-center gap-6">
-            <AttendanceClockWidget />
             <button className="p-3 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-2xl transition-all relative">
               <Bell className="h-5 w-5" />
               <span className="absolute top-3.5 right-3.5 size-2 bg-violet-600 rounded-full border-2 border-white" />
@@ -158,8 +156,10 @@ export function OrganizationAdminChrome({ children }: { children: React.ReactNod
           </div>
         </header>
 
-        <main key={location.pathname} className="flex-1 overflow-y-auto p-6 md:p-10 lg:p-12 animate-in fade-in slide-in-from-bottom-2 duration-700 ease-out">
-          {children}
+        <main key={location.pathname} className="flex-1 overflow-y-auto bg-[#fcfcfc] relative">
+          <div className="p-0 animate-in fade-in duration-700 ease-out">
+            {children}
+          </div>
         </main>
       </div>
     </div>

@@ -89,9 +89,9 @@ export default function HRLeaveRequests() {
   }
 
   const SUMMARY_CARDS = [
-    { label: "Actionable Ready", value: stats?.tl_approved?.toString().padStart(2, "0") || "00", sub: "Tier 1 Cleared", color: "blue", icon: Check },
-    { label: "Wait for TL", value: stats?.total_pending?.toString().padStart(2, "0") || "00", sub: "Pending Review", color: "amber", icon: Clock },
-    { label: "Today - Out", value: stats?.out_today?.toString().padStart(2, "0") || "00", sub: "Active Nodes", color: "red", icon: UserIcon },
+    { label: "Approved by TL", value: stats?.tl_approved?.toString().padStart(2, "0") || "00", sub: "Ready for HR", color: "blue", icon: Check },
+    { label: "Pending TL", value: stats?.total_pending?.toString().padStart(2, "0") || "00", sub: "Waiting review", color: "amber", icon: Clock },
+    { label: "Out Today", value: stats?.out_today?.toString().padStart(2, "0") || "00", sub: "Currently absent", color: "red", icon: UserIcon },
   ]
 
   return (
@@ -100,7 +100,7 @@ export default function HRLeaveRequests() {
         <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="font-headline">
             <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">Leave Management</h1>
-            <p className="text-sm font-medium text-slate-500 mt-2">Review personnel requests and synchronize service availability.</p>
+            <p className="text-sm font-medium text-slate-500 mt-2">Review employee requests and manage staff availability.</p>
           </div>
           <button 
             onClick={() => toast.success("Exporting leave records to CSV...")}
@@ -135,7 +135,7 @@ export default function HRLeaveRequests() {
           {/* Main List */}
           <div className="lg:col-span-2 space-y-6">
              <div className="flex items-center justify-between font-headline">
-                <h3 className="text-lg font-black text-slate-900 tracking-tight">Pending Approval Queue</h3>
+                <h3 className="text-lg font-black text-slate-900 tracking-tight">Pending Requests</h3>
                 {!loading && (
                    <span className="bg-violet-100 text-violet-700 text-[10px] font-black px-3 py-1 rounded-lg uppercase tracking-widest">
                       {requests.filter(r => r.status !== 'approved' && r.status !== 'rejected').length} Requests Active
@@ -161,7 +161,7 @@ export default function HRLeaveRequests() {
                       <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
                         <div className="font-headline">
                           <h4 className="font-black text-slate-900 text-[15px] leading-tight tracking-tight">{req.employee_name}</h4>
-                          <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Personnel ID: {req.id.split('-')[0]}</p>
+                          <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Employee ID: {req.id.split('-')[0]}</p>
                         </div>
                         <span className={`text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-xl shrink-0 font-headline border ${
                            req.status === 'tl_approved' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
@@ -205,7 +205,7 @@ export default function HRLeaveRequests() {
                         }`}
                       >
                         <Check className="h-4 w-4 stroke-[3px]" /> 
-                        {req.status === 'pending' ? 'Force Approve (Bypass TL)' : 'Process Approval'}
+                        {req.status === 'pending' ? 'Force Approve' : 'Approve Request'}
                       </button>
                     </div>
                   )}
@@ -215,7 +215,7 @@ export default function HRLeaveRequests() {
 
           {/* Sidebar Info */}
           <div className="space-y-6 font-headline">
-            <h3 className="text-lg font-black text-slate-900 tracking-tight">Avanzo Calendar context</h3>
+            <h3 className="text-lg font-black text-slate-900 tracking-tight">Calendar</h3>
             
             <div className="bg-white rounded-2xl border border-slate-100 p-8 shadow-sm">
               <div className="flex items-center justify-between mb-8">

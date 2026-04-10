@@ -9,6 +9,23 @@ from core.models import TimeStampedModel
 from .managers import EmployeeManager
 
 
+class TalentTag(models.Model):
+    """Categories for employee skills/talents."""
+
+    name = models.CharField(max_length=50, unique=True)
+    category = models.CharField(
+        max_length=50, blank=True, help_text="e.g. Technical, Creative, Management"
+    )
+
+    class Meta:
+        db_table = "talent_tags"
+        verbose_name = "Talent Tag"
+        verbose_name_plural = "Talent Tags"
+
+    def __str__(self):
+        return self.name
+
+
 class AccessRole(TimeStampedModel):
     """
     Exactly 4 rows: Employee, Team Lead, HR, Admin.
@@ -44,6 +61,12 @@ class Employee(AbstractUser):
         ON_LEAVE = "on_leave", "On Leave"
         OFFBOARDING = "offboarding", "Offboarding"
 
+    class Gender(models.TextChoices):
+        MALE = "male", "Male"
+        FEMALE = "female", "Female"
+        OTHER = "other", "Other"
+        PREFER_NOT_TO_SAY = "prefer_not_to_say", "Prefer not to say"
+
     # Override PK to UUID
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -53,6 +76,10 @@ class Employee(AbstractUser):
 
     # Profile fields
     phone = models.CharField(max_length=20, blank=True)
+    gender = models.CharField(
+        max_length=20, choices=Gender.choices, blank=True, null=True
+    )
+    date_of_birth = models.DateField(null=True, blank=True)
     avatar = models.URLField(blank=True)
     employee_id = models.CharField(
         max_length=20,
@@ -113,6 +140,20 @@ class Employee(AbstractUser):
     )
     date_of_joining = models.DateField(null=True, blank=True)
 
+    # Talents & Skills
+    self_declared_talents = models.ManyToManyField(
+        TalentTag,
+        blank=True,
+        related_name="employees_declared",
+        help_text="Skills self-declared by the employee.",
+    )
+    evaluated_talents = models.ManyToManyField(
+        TalentTag,
+        blank=True,
+        related_name="employees_evaluated",
+        help_text="Talents identified/evaluated by Team Leads.",
+    )
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -140,7 +181,7 @@ class Employee(AbstractUser):
                 last_employee = (
                     Employee.objects.select_for_update()
                     .filter(employee_id__startswith="AVZ-")
-                    .order_by("created_at")
+                    .order_by("employee_id")
                     .last()
                 )
 

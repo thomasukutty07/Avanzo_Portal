@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.utils import timezone
+from rest_framework.decorators import action
 from drf_spectacular.utils import OpenApiResponse, extend_schema, inline_serializer
 from rest_framework import serializers, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -12,12 +13,13 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from core.permissions import IsAdminOrHR, IsAdminOrHRReadOnly
 
-from .models import AccessRole, Employee, LoginAttempt
+from .models import AccessRole, Employee, LoginAttempt, TalentTag
 from .serializers import (
     AccessRoleSerializer,
     CustomTokenObtainPairSerializer,
     EmployeeSerializer,
     MeSerializer,
+    TalentTagSerializer,
 )
 
 
@@ -123,7 +125,8 @@ class EmployeeViewSet(viewsets.ModelViewSet):
     serializer_class = EmployeeSerializer
 
     def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
+        # Team Leads can see the list and update skills
+        if self.action in ["list", "retrieve", "update_skills", "evaluate"]:
             return [IsAuthenticated()]
         return [IsAuthenticated(), IsAdminOrHR()]
 
@@ -142,6 +145,42 @@ class EmployeeViewSet(viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         self._revoke_tokens(instance)
         super().perform_destroy(instance)
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="update-skills",
+        permission_classes=[IsAuthenticated],
+    )
+    def update_skills(self, request, pk=None):
+        """
+        POST /api/auth/employees/{id}/update-skills/
+        Allows Team Lead to update employee skills.
+        """
+        if not (request.user.is_team_lead or request.user.is_admin):
+            return Response({"detail": "Only Team Leads can update skills."}, status=403)
+
+        employee = self.get_object()
+        talent_ids = request.data.get("talent_ids", [])
+
+        if not isinstance(talent_ids, list):
+            return Response({"detail": "talent_ids must be a list of IDs."}, status=400)
+
+        employee.evaluated_talents.set(talent_ids)
+        return Response(EmployeeSerializer(employee).data)
+
+    @action(detail=True, methods=["post"], url_path="evaluate", permission_classes=[IsAuthenticated])
+    def evaluate(self, request, pk=None):
+        """
+        Legacy endpoint — redirects to update_skills.
+        """
+        return self.update_skills(request, pk)
+
+
+class TalentTagViewSet(viewsets.ModelViewSet):
+    queryset = TalentTag.objects.all()
+    serializer_class = TalentTagSerializer
+    permission_classes = [IsAuthenticated]
 
 
 class AccessRoleViewSet(viewsets.ReadOnlyModelViewSet):

@@ -17,7 +17,8 @@ export type EmployeeRow = {
   access_role: string
   department?: string | null
   designation?: string | null
-  team_lead?: string | null
+  gender?: string | null
+  date_of_birth?: string | null
   status: string
   date_of_joining?: string | null
 }
@@ -54,7 +55,8 @@ export function EmployeeUpsertForm({
   const [accessRoleId, setAccessRoleId] = useState("")
   const [departmentId, setDepartmentId] = useState("")
   const [designationId, setDesignationId] = useState("")
-  const [teamLeadId, setTeamLeadId] = useState("")
+  const [gender, setGender] = useState("")
+  const [dateOfBirth, setDateOfBirth] = useState("")
   const [dateOfJoining, setDateOfJoining] = useState("")
 
   useEffect(() => {
@@ -67,7 +69,8 @@ export function EmployeeUpsertForm({
       setAccessRoleId(initialData.access_role || "")
       setDepartmentId(initialData.department || "")
       setDesignationId(initialData.designation || "")
-      setTeamLeadId(initialData.team_lead || "")
+      setGender(initialData.gender || "")
+      setDateOfBirth(initialData.date_of_birth || "")
       setDateOfJoining(initialData.date_of_joining || "")
     }
   }, [initialData])
@@ -76,19 +79,14 @@ export function EmployeeUpsertForm({
     const load = async () => {
       setLoadingMeta(true)
       try {
-        const [r, d, g, empRes] = await Promise.all([
+        const [r, d, g] = await Promise.all([
           api.get("/api/auth/roles/"),
           api.get("/api/organization/departments/"),
           api.get("/api/organization/designations/"),
-          api.get("/api/auth/employees/"),
         ])
         setRoles(extractResults<Role>(r.data))
         setDepartments(extractResults<Department>(d.data))
         setDesignations(extractResults<Designation>(g.data))
-        const emps = extractResults<any>(empRes.data)
-        setTeamLeadOptions(
-          emps.filter((e: any) => e.role === "Team Lead" || String(e.role).includes("Lead"))
-        )
       } catch {
         toast.error("Failed to load form data (check API / login).")
       } finally {
@@ -128,7 +126,8 @@ export function EmployeeUpsertForm({
         employee_id: employeeId.trim() || null,
         department: departmentId || null,
         designation: designationId || null,
-        team_lead: teamLeadId || null,
+        gender: gender || null,
+        date_of_birth: dateOfBirth || null,
         date_of_joining: dateOfJoining || null,
       }
 
@@ -190,17 +189,25 @@ export function EmployeeUpsertForm({
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2">
+        <div className="space-y-2 text-left">
+           <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">Gender</label>
+           <select
+             className="w-full h-12 bg-slate-50 border-none rounded-2xl px-5 text-sm font-medium text-slate-900 focus:ring-2 focus:ring-violet-600/10 focus:bg-white transition-all outline-none appearance-none cursor-pointer"
+             value={gender}
+             onChange={(e) => setGender(e.target.value)}
+           >
+             <option value="">Select Gender</option>
+             <option value="male">Male</option>
+             <option value="female">Female</option>
+             <option value="other">Other</option>
+             <option value="prefer_not_to_say">Prefer not to say</option>
+           </select>
+        </div>
         <EliteFormField 
-           label="First name" 
-           placeholder="e.g. John"
-           value={firstName}
-           onChange={setFirstName}
-        />
-        <EliteFormField 
-           label="Last name" 
-           placeholder="e.g. Doe"
-           value={lastName}
-           onChange={setLastName}
+           label="Date of Birth" 
+           type="date" 
+           value={dateOfBirth}
+           onChange={setDateOfBirth}
         />
       </div>
 
@@ -284,26 +291,21 @@ export function EmployeeUpsertForm({
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2">
-        <div className="space-y-2 text-left">
-          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">Team Lead (optional)</label>
-          <div className="relative">
-            <select
-              className="w-full h-12 bg-slate-50 border-none rounded-2xl px-5 text-sm font-medium text-slate-900 focus:ring-2 focus:ring-violet-600/10 focus:bg-white transition-all outline-none appearance-none cursor-pointer"
-              value={teamLeadId}
-              onChange={(e) => setTeamLeadId(e.target.value)}
-            >
-              <option value="">None</option>
-              {teamLeadOptions.map((tl) => (
-                <option key={tl.id} value={tl.id}>
-                  {tl.first_name} {tl.last_name} ({tl.email})
-                </option>
-              ))}
-            </select>
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="size-4"><path d="m6 9 6 6 6-6"/></svg>
-            </div>
-          </div>
-        </div>
+        <EliteFormField 
+           label="First name" 
+           placeholder="e.g. John"
+           value={firstName}
+           onChange={setFirstName}
+        />
+        <EliteFormField 
+           label="Last name" 
+           placeholder="e.g. Doe"
+           value={lastName}
+           onChange={setLastName}
+        />
+      </div>
+
+      <div className="grid gap-6 sm:grid-cols-2">
         <EliteFormField 
            label="Date of joining" 
            type="date" 

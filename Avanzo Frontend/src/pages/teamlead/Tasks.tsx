@@ -32,7 +32,7 @@ export default function LeadTasksPage() {
       const data = await projectsService.getTasks();
       setTasks(Array.isArray(data) ? data : (data.results || []));
     } catch (error) {
-      toast.error("Telemetry synchronization failed.");
+      toast.error("Telemetry Due Date failed.");
       setTasks([]);
     } finally {
       setLoading(false);
@@ -48,17 +48,17 @@ export default function LeadTasksPage() {
     <TeamLeadChrome>
       <div className="p-4 md:p-8 space-y-10 animate-in fade-in duration-700 font-sans">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+        <div className="sticky top-0 z-30 -mx-4 md:-mx-8 px-4 md:px-8 py-6 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-transparent transition-all">
           <header>
-            <h2 className="text-2xl font-black tracking-tight text-slate-900 font-headline leading-none">Operational Roadmap</h2>
-            <p className="text-xs font-bold text-slate-400 mt-2 font-headline leading-none opacity-60">Manage sector objectives and tactical unit deployments</p>
+            <h2 className="text-2xl font-black tracking-tight text-slate-900 font-headline leading-none">Task List</h2>
+            <p className="text-xs font-bold text-slate-400 mt-2 font-headline leading-none opacity-60">Manage team tasks and progress</p>
           </header>
           <button 
             onClick={() => setIsNewTaskOpen(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-violet-600 text-white font-black rounded-xl hover:bg-violet-700 hover:shadow-xl hover:shadow-violet-600/20 transition-all text-[11px] uppercase tracking-widest active:scale-95 shadow-md shadow-violet-600/10"
+            className="flex items-center gap-2 px-6 py-3 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 hover:shadow-xl hover:shadow-violet-600/20 transition-all text-xs active:scale-95 shadow-md shadow-violet-600/10"
           >
             <Plus className="size-4 stroke-[3px]" />
-            Assign Task
+            Assign task
           </button>
         </div>
 
@@ -70,13 +70,13 @@ export default function LeadTasksPage() {
                 type="text" 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Synchronize with mission objectives..." 
+                placeholder="Search tasks..." 
                 className="w-full bg-white border border-slate-100 rounded-2xl pl-16 pr-6 py-4 text-[13px] font-bold text-slate-900 focus:ring-4 focus:ring-violet-600/5 focus:border-violet-200 transition-all placeholder:text-slate-200 outline-none shadow-sm"
               />
            </div>
-           <button className="flex items-center gap-2.5 px-6 py-4 bg-white border border-slate-100 text-slate-900 font-black rounded-2xl hover:bg-slate-50 transition-all text-[11px] uppercase tracking-widest shadow-sm active:scale-95">
+           <button className="flex items-center gap-2.5 px-6 py-4 bg-white border border-slate-100 text-slate-900 font-bold rounded-2xl hover:bg-slate-50 transition-all text-xs shadow-sm active:scale-95">
               <Filter className="size-4 text-violet-600" />
-              Advanced Matrix
+              Filters
            </button>
         </div>
 
@@ -84,45 +84,45 @@ export default function LeadTasksPage() {
         <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-700">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
-              <thead className="bg-slate-50/50 text-slate-400 text-[9px] font-black uppercase tracking-[0.15em]">
+              <thead className="bg-slate-50/50 text-slate-400 text-[10px] font-bold">
                 <tr>
-                  <th className="px-8 py-5">Mission Directive</th>
-                  <th className="px-8 py-5">Intel Sector</th>
-                  <th className="px-8 py-5">Tactical Priority</th>
-                  <th className="px-8 py-5">Synchronization</th>
-                  <th className="px-8 py-5 text-right">Operational Status</th>
+                  <th className="px-8 py-5">Task Name</th>
+                  <th className="px-8 py-5">Category</th>
+                  <th className="px-8 py-5">Priority</th>
+                  <th className="px-8 py-5">Due Date</th>
+                  <th className="px-8 py-5 text-right">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {loading ? (
                    <tr>
-                     <td colSpan={5} className="px-8 py-32 text-center text-[11px] font-black uppercase tracking-widest text-slate-300">
+                     <td colSpan={5} className="px-8 py-32 text-center text-[12px] font-bold text-slate-300">
                         <Loader2 className="size-10 animate-spin text-violet-600 mx-auto mb-6" />
-                        Synchronizing Roadmap...
+                        Loading tasks...
                      </td>
                    </tr>
                 ) : filteredTasks.length === 0 ? (
                    <tr>
-                     <td colSpan={5} className="px-8 py-24 text-center opacity-30 text-[11px] font-black uppercase tracking-widest text-slate-300">
+                     <td colSpan={5} className="px-8 py-24 text-center opacity-30 text-[11px] font-bold text-slate-300">
                         <Zap className="size-12 mx-auto mb-6" />
-                        No Strategic Directives Active
+                        No tasks found
                      </td>
                    </tr>
                 ) : filteredTasks.map((task, i) => (
                   <tr key={i} className="group hover:bg-slate-50/30 transition-all cursor-pointer" onClick={() => task.status === 'review' ? setReviewTask(task) : toast.info(`Syncing unit metadata: ${task.title}`)}>
                     <td className="px-8 py-7">
                        <div className="flex flex-col gap-1 min-w-[240px]">
-                         <span className="font-black text-sm text-slate-900 group-hover:text-violet-600 transition-colors uppercase tracking-tight leading-none">{task.title}</span>
-                         <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mt-1 opacity-80 leading-none">{task.project_name || 'Individual Directive'}</span>
+                         <span className="font-bold text-sm text-slate-900 group-hover:text-violet-600 transition-colors capitalize leading-none">{task.title}</span>
+                         <span className="text-[10px] font-bold text-slate-300 mt-1 opacity-80 leading-none">{task.project_name || 'General Task'}</span>
                        </div>
                     </td>
                     <td className="px-8 py-7">
-                       <span className="inline-flex px-3 py-1 bg-slate-50 text-[9px] font-black text-slate-400 uppercase tracking-widest rounded-lg border border-slate-100 shadow-sm">
+                       <span className="inline-flex px-3 py-1 bg-slate-50 text-[10px] font-bold text-slate-400 rounded-lg border border-slate-100 shadow-sm">
                          {task.task_type || 'General'}
                        </span>
                     </td>
                     <td className="px-8 py-7">
-                      <span className={`px-4 py-2 text-[9px] font-black rounded-xl uppercase tracking-widest border transition-all ${
+                      <span className={`px-4 py-2 text-[10px] font-bold rounded-xl border transition-all capitalize ${
                         task.priority === 'urgent' || task.priority === 'high' ? 'bg-red-50 text-red-600 border-red-100 shadow-sm shadow-red-500/5' :
                         task.priority === 'tactical' || task.priority === 'medium' ? 'bg-amber-50 text-amber-600 border-amber-100 shadow-sm' :
                         'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-sm'
@@ -130,10 +130,10 @@ export default function LeadTasksPage() {
                         {task.priority || 'Normal'}
                       </span>
                     </td>
-                    <td className="px-8 py-7 text-[10px] font-black text-slate-400 tabular-nums uppercase tracking-widest opacity-80">
+                    <td className="px-8 py-7 text-[10px] font-bold text-slate-400 tabular-nums opacity-80">
                        <div className="flex items-center gap-2">
                          <Calendar className="size-3.5" />
-                         {task.due_date || 'tbd'}
+                         {task.due_date || 'Tbd'}
                        </div>
                     </td>
                     <td className="px-8 py-7 text-right">
@@ -146,7 +146,7 @@ export default function LeadTasksPage() {
                               task.status === 'rework' ? 'bg-red-500' :
                               'bg-slate-300'
                             }`}></span>
-                            <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">{task.status?.replace('_', ' ') || 'Registered'}</span>
+                            <span className="text-[10px] font-bold text-slate-800 capitalize">{task.status?.replace('_', ' ') || 'Open'}</span>
                           </div>
                           <button className="p-2.5 text-slate-300 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all shadow-sm">
                              <MoreHorizontal className="size-5" />

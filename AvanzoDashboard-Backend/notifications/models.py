@@ -82,6 +82,11 @@ class Broadcast(TimeStampedModel):
     message = models.TextField()
 
     # Expiry logic
+    expiry_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Optional date after which the broadcast is considered expired.",
+    )
     is_active = models.BooleanField(
         default=True,
         help_text="Uncheck to manually hide this broadcast.",

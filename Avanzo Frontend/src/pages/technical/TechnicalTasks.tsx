@@ -131,7 +131,7 @@ export default function TechnicalTasksPage() {
   return (
     <div className="space-y-6 pb-12 font-display bg-[#fcfcfc] min-h-screen">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+      <div className="sticky top-0 z-30 -mx-4 md:-mx-8 px-4 md:px-8 py-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-8 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-transparent transition-all">
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-600 mb-1">
             TECHNICAL MANAGEMENT
@@ -142,10 +142,6 @@ export default function TechnicalTasksPage() {
           <p className="text-slate-500 mt-2 text-sm font-medium">Track and manage your assigned sprint deliverables.</p>
         </div>
         <div className="flex items-center gap-4">
-          <button className="flex items-center gap-1.5 bg-violet-700 hover:bg-violet-800 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-sm transition-colors">
-            <Plus className="size-4" />
-            New Task
-          </button>
         </div>
       </div>
 

@@ -36,18 +36,25 @@ def create_user(email, password, role_name, dept_name=None, desig_name=None, fir
 
     user = User.objects.filter(email=email).first()
     if user:
-        user.delete()
-    
-    user = User.objects.create_user(
-        email=email,
-        password=password,
-        first_name=first_name,
-        last_name=last_name,
-        access_role=role,
-        department=dept,
-        designation=desig
-    )
-    print(f"Created {email} ({role_name} - {dept_name})")
+        user.set_password(password)
+        user.first_name = first_name
+        user.last_name = last_name
+        user.access_role = role
+        user.department = dept
+        user.designation = desig
+        user.save()
+        print(f"Updated {email} ({role_name})")
+    else:
+        user = User.objects.create_user(
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            access_role=role,
+            department=dept,
+            designation=desig
+        )
+        print(f"Created {email} ({role_name})")
 
 # Shared password
 pwd = "Password@123"

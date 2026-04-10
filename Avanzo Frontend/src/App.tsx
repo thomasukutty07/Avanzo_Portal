@@ -2,6 +2,7 @@ import { Suspense, lazy } from "react"
 import { Routes, Route, Navigate } from "react-router-dom"
 import { useAuth } from "@/context/AuthContext"
 import { RequirePortalAccess } from "@/components/auth/RequirePortalAccess"
+import { RequireRole } from "@/components/auth/RequireRole"
 import {
   isCyberSecurityEmployeeTrack,
   isTechnicalEmployeeTrack,
@@ -22,6 +23,7 @@ const AdminNotificationsPage = lazy(() => import("@/pages/admin/AdminNotificatio
 const AdminAnnouncementsPage = lazy(() => import("@/pages/admin/AdminAnnouncements"))
 const AdminEmployeeRegistrationPage = lazy(() => import("@/pages/admin/AdminEmployeeRegistration"))
 const SettingsPage = lazy(() => import("@/pages/shared/Settings"))
+const AdminProjectDetailsPage = lazy(() => import("@/pages/admin/ProjectDetails"))
 const HROverview = lazy(() => import("@/pages/hr/HROverview"))
 const HREmployees = lazy(() => import("@/pages/hr/Employees"))
 const HRLeaveRequests = lazy(() => import("@/pages/hr/LeaveRequests"))
@@ -43,7 +45,6 @@ const TeamPage = lazy(() => import("@/pages/teamlead/Team"))
 const TeamAnnouncementsPage = lazy(() =>
   import("@/pages/teamlead/TeamAnnouncements")
 )
-const TeamReportsPage = lazy(() => import("@/pages/teamlead/TeamReports"))
 const TeamLeadCreateAnnouncementPage = lazy(() =>
   import("@/pages/teamlead/CreateAnnouncement")
 )
@@ -55,9 +56,6 @@ const TechnicalTasksPage = lazy(() => import("@/pages/technical/TechnicalTasks")
 const TechnicalLeavePage = lazy(() => import("@/pages/technical/TechnicalLeave"))
 const TechnicalAnnouncementsPage = lazy(() =>
   import("@/pages/technical/TechnicalAnnouncements")
-)
-const TechnicalReportsPage = lazy(() =>
-  import("@/pages/technical/TechnicalReports")
 )
 
 const CyberSecurityDashboardPage = lazy(() =>
@@ -71,9 +69,6 @@ const CyberSecurityIncidentsPage = lazy(() =>
 )
 const CyberSecurityAnnouncementsPage = lazy(() =>
   import("@/pages/cyber_security/CyberSecurityAnnouncements")
-)
-const CyberSecurityReportsPage = lazy(() =>
-  import("@/pages/cyber_security/CyberSecurityReports")
 )
 const CyberSecurityLeavePage = lazy(() =>
   import("@/pages/cyber_security/CyberSecurityLeave")
@@ -199,49 +194,56 @@ export default function App() {
         >
           <Route path="/" element={<RoleBasedHome />} />
 
-          <Route path="/users" element={<UsersPage />} />
-          <Route path="/departments" element={<DepartmentsPage />} />
-          <Route path="/reports" element={<ReportsPage />} />
-          <Route
-            path="/admin-notifications"
-            element={<AdminNotificationsPage />}
-          />
-          <Route
-            path="/admin-announcements"
-            element={<AdminAnnouncementsPage />}
-          />
-          <Route 
-            path="/admin/register-employee" 
-            element={<AdminEmployeeRegistrationPage />} 
-          />
+          <Route element={<RequireRole roles={["Admin", "Organization", "Super Admin"]} />}>
+            <Route path="/users" element={<UsersPage />} />
+            <Route path="/departments" element={<DepartmentsPage />} />
+            <Route path="/reports" element={<ReportsPage />} />
+            <Route
+              path="/admin-notifications"
+              element={<AdminNotificationsPage />}
+            />
+            <Route
+              path="/admin-announcements"
+              element={<AdminAnnouncementsPage />}
+            />
+            <Route 
+              path="/admin/register-employee" 
+              element={<AdminEmployeeRegistrationPage />} 
+            />
+            <Route path="/admin/projects/:id" element={<AdminProjectDetailsPage />} />
+          </Route>
+
           <Route path="/settings" element={<SettingsPage />} />
 
-          <Route path="/employees" element={<HREmployees />} />
-          <Route path="/attendance" element={<HRAttendanceOverview />} />
-          <Route path="/leave" element={<HRLeaveRequests />} />
-          <Route path="/hrreports" element={<HRReports />} />
-          <Route
-            path="/employee-registration"
-            element={<EmployeeRegistrationPage />}
-          />
-          <Route path="/hr-announcements" element={<HRAnnouncementsPage />} />
-          <Route
-            path="/hr/create-announcement"
-            element={<HRCreateAnnouncementPage />}
-          />
+          <Route element={<RequireRole roles={["HR", "Admin", "Organization", "Super Admin"]} />}>
+            <Route path="/employees" element={<HREmployees />} />
+            <Route path="/attendance" element={<HRAttendanceOverview />} />
+            <Route path="/leave" element={<HRLeaveRequests />} />
+            <Route path="/hrreports" element={<HRReports />} />
+            <Route
+              path="/employee-registration"
+              element={<EmployeeRegistrationPage />}
+            />
+            <Route path="/hr-announcements" element={<HRAnnouncementsPage />} />
+            <Route
+              path="/hr/create-announcement"
+              element={<HRCreateAnnouncementPage />}
+            />
+          </Route>
 
-          <Route path="/tasks" element={<TaskManagement />} />
-          <Route path="/projects" element={<ProjectProgress />} />
-          <Route path="/team" element={<TeamPage />} />
-          <Route
-            path="/team-announcements"
-            element={<TeamAnnouncementsPage />}
-          />
-          <Route path="/team-reports" element={<TeamReportsPage />} />
-          <Route
-            path="/team/create-announcement"
-            element={<TeamLeadCreateAnnouncementPage />}
-          />
+          <Route element={<RequireRole roles={["Team Lead", "Admin", "Organization", "Super Admin"]} />}>
+            <Route path="/tasks" element={<TaskManagement />} />
+            <Route path="/projects" element={<ProjectProgress />} />
+            <Route path="/team" element={<TeamPage />} />
+            <Route
+              path="/team-announcements"
+              element={<TeamAnnouncementsPage />}
+            />
+            <Route
+              path="/team/create-announcement"
+              element={<TeamLeadCreateAnnouncementPage />}
+            />
+          </Route>
 
 
 
@@ -251,7 +253,6 @@ export default function App() {
               <Route path="tasks" element={<TechnicalTasksPage />} />
               <Route path="leave" element={<TechnicalLeavePage />} />
               <Route path="announcements" element={<TechnicalAnnouncementsPage />} />
-              <Route path="reports" element={<TechnicalReportsPage />} />
               <Route path="profile" element={<SettingsLegacyPage />} />
             </Route>
           </Route>
@@ -263,7 +264,6 @@ export default function App() {
               <Route path="incidents" element={<CyberSecurityIncidentsPage />} />
               <Route path="leave" element={<CyberSecurityLeavePage />} />
               <Route path="announcements" element={<CyberSecurityAnnouncementsPage />} />
-              <Route path="reports" element={<CyberSecurityReportsPage />} />
               <Route
                 path="create-announcement"
                 element={<CyberSecurityCreateAnnouncementPage />}

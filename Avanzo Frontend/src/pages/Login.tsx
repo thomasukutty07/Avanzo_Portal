@@ -1,6 +1,6 @@
 import { useState } from "react"
 import type { FormEvent } from "react"
-import { Link } from "react-router-dom"
+import { useNavigate, Link } from "react-router-dom"
 import { Loader2, AtSign, Lock, Eye, EyeOff, Check, ArrowRight } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
@@ -9,6 +9,7 @@ import AvanzoLogo from "@/assets/Avanzo Logo corrected and final-png.png"
 export default function Login() {
   useDesignPortalLightTheme()
   const { login, logout } = useAuth()
+  const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [email, setEmail] = useState("")
@@ -219,12 +220,12 @@ export default function Login() {
             <div className="pt-8 text-center space-y-2">
               <p className="font-medium text-[#494456]">
                 Are you an organization administrator?{" "}
-                <Link
-                  to="/org-login"
-                  className="ml-1 font-bold text-[#4800b2] decoration-primary/30 underline-offset-4 hover:underline"
+                <button
+                  onClick={() => navigate("/org-login")}
+                  className="ml-1 font-bold text-[#4800b2] decoration-primary/30 underline-offset-4 hover:underline bg-transparent border-none p-0 cursor-pointer"
                 >
                   Organization Portal
-                </Link>
+                </button>
               </p>
             </div>
           </div>

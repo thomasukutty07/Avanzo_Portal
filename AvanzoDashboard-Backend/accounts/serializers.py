@@ -2,8 +2,22 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from core.constants import RoleNames
+from .models import AccessRole, Employee, TalentTag
 
-from .models import AccessRole, Employee
+
+class TalentTagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TalentTag
+        fields = ["id", "name", "category"]
+
+
+class EmployeePublicSerializer(serializers.ModelSerializer):
+    """Brief public profile for lists like project teams."""
+    full_name = serializers.CharField(source="get_full_name", read_only=True)
+
+    class Meta:
+        model = Employee
+        fields = ["id", "full_name", "first_name", "last_name", "avatar"]
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -28,6 +42,7 @@ class MeSerializer(serializers.ModelSerializer):
     user's full profile including role, department, and designation."""
 
     role = serializers.CharField(source="role_name", read_only=True)
+    full_name = serializers.CharField(source="get_full_name", read_only=True)
     department_name = serializers.CharField(source="department.name", read_only=True, default=None)
     designation_name = serializers.CharField(
         source="designation.name", read_only=True, default=None
@@ -39,9 +54,12 @@ class MeSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "email",
+            "full_name",
             "first_name",
             "last_name",
             "phone",
+            "gender",
+            "date_of_birth",
             "avatar",
             "employee_id",
             "role",
@@ -50,6 +68,8 @@ class MeSerializer(serializers.ModelSerializer):
             "team_lead_name",
             "status",
             "date_of_joining",
+            "self_declared_talents",
+            "evaluated_talents",
         ]
         read_only_fields = [
             "id",
@@ -62,6 +82,7 @@ class MeSerializer(serializers.ModelSerializer):
             "team_lead_name",
             "status",
             "date_of_joining",
+            "evaluated_talents",
         ]
 
     def get_team_lead_name(self, obj) -> str | None:
@@ -93,6 +114,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "phone",
+            "gender",
+            "date_of_birth",
             "employee_id",
             "access_role",
             "department",
@@ -103,6 +126,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
             "role",
             "status",
             "date_of_joining",
+            "self_declared_talents",
+            "evaluated_talents",
         ]
 
     def validate_access_role(self, value):

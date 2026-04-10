@@ -13,22 +13,6 @@ import SettingsLegacyPage from "./SettingsLegacy"
 export default function SettingsPage() {
   const { user } = useAuth()
 
-  if (isTechnicalEmployeeTrack(user)) {
-    return (
-      <TechnicalPortalLayout>
-        <SettingsLegacyPage />
-      </TechnicalPortalLayout>
-    )
-  }
-
-  if (isCyberSecurityEmployeeTrack(user)) {
-    return (
-      <CyberSecurityPortalLayout>
-        <SettingsLegacyPage />
-      </CyberSecurityPortalLayout>
-    )
-  }
-
   if (user?.role === "HR") {
     return (
       <HRPortalChrome>
@@ -45,9 +29,34 @@ export default function SettingsPage() {
     )
   }
 
+  if (user?.role === "Admin" || user?.role === "Organization") {
+    return (
+      <OrganizationAdminChrome>
+        <SettingsLegacyPage />
+      </OrganizationAdminChrome>
+    )
+  }
+
+  if (isTechnicalEmployeeTrack(user)) {
+    return (
+      <TechnicalPortalLayout>
+        <SettingsLegacyPage />
+      </TechnicalPortalLayout>
+    )
+  }
+
+  if (isCyberSecurityEmployeeTrack(user)) {
+    return (
+      <CyberSecurityPortalLayout>
+        <SettingsLegacyPage />
+      </CyberSecurityPortalLayout>
+    )
+  }
+
+  // Fallback for Super Admin or others
   return (
-    <OrganizationAdminChrome>
+    <div className="p-8">
       <SettingsLegacyPage />
-    </OrganizationAdminChrome>
+    </div>
   )
 }

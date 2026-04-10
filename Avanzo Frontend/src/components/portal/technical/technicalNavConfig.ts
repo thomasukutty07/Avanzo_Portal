@@ -1,6 +1,5 @@
 import type { LucideIcon } from "lucide-react"
 import {
-  BarChart3,
   LayoutDashboard,
   ListTodo,
   Megaphone,
@@ -21,6 +20,5 @@ export const TECHNICAL_NAV_ITEMS: TechnicalNavItem[] = [
   { to: "/technical/tasks", label: "Technical Tasks", icon: ListTodo },
   { to: "/technical/leave", label: "Leave Requests", icon: Umbrella },
   { to: "/technical/announcements", label: "Announcements", icon: Megaphone },
-  { to: "/technical/reports", label: "Reports", icon: BarChart3 },
   { to: "/technical/profile", label: "My Profile", icon: User },
 ]

@@ -26,6 +26,7 @@ export default function HRAnnouncementsPage() {
   const [newContent, setNewContent] = useState("")
   const [isCritical, setIsCritical] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [expiryDate, setExpiryDate] = useState("")
 
   const loadAnnouncements = async () => {
     try {
@@ -37,6 +38,8 @@ export default function HRAnnouncementsPage() {
         content: a.message || "Please read the full announcement details.",
         pinned: a.severity === "critical",
         date: new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+        expiryDate: a.expiry_date,
+        isExpired: a.expiry_date ? new Date(a.expiry_date) < new Date(new Date().setHours(0,0,0,0)) : false,
         type: a.target_scope === "org_wide" ? "Internal Operations" : "Department Specific",
         category: a.target_scope === "org_wide" ? "Announcement" : "Team Update",
         priority: a.severity === "critical" ? "High" : "Normal",
@@ -62,13 +65,15 @@ export default function HRAnnouncementsPage() {
         title: newTitle,
         message: newContent,
         target_scope: "org_wide",
-        severity: isCritical ? "critical" : "info"
+        severity: isCritical ? "critical" : "info",
+        expiry_date: expiryDate || null
       })
       toast.success("Broadcast successfully dispatched to the personnel feed.")
       setShowComposer(false)
       setNewTitle("")
       setNewContent("")
       setIsCritical(false)
+      setExpiryDate("")
       loadAnnouncements()
     } catch(e) {
       toast.error("Transmission Failed: Check network or permissions.")
@@ -125,6 +130,15 @@ export default function HRAnnouncementsPage() {
                          value={newContent}
                          onChange={(e) => setNewContent(e.target.value)}
                       />
+                   </div>
+                   <div className="space-y-2">
+                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Expiry Date (Optional)</label>
+                       <input 
+                          type="date" 
+                          className="w-full bg-slate-50 border-transparent rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none"
+                          value={expiryDate}
+                          onChange={(e) => setExpiryDate(e.target.value)}
+                       />
                    </div>
                 </div>
 
@@ -196,6 +210,11 @@ export default function HRAnnouncementsPage() {
                                  <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1">
                                     <Calendar className="h-3 w-3" /> {post.date}
                                  </span>
+                                 {post.isExpired && (
+                                   <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-lg text-[9px] font-bold uppercase tracking-widest">
+                                      Expired
+                                   </span>
+                                 )}
                               </div>
                               
                               <h4 className="font-headline text-xl font-black text-slate-900 group-hover:text-violet-700 transition-colors tracking-tight leading-none">{post.title}</h4>

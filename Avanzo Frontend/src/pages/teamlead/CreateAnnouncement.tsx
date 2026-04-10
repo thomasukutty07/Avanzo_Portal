@@ -114,14 +114,14 @@ export default function TeamLeadCreateAnnouncementPage() {
                  <div className="size-8 rounded-xl bg-violet-50 flex items-center justify-center text-violet-600 shadow-sm">
                     <Type className="size-4" />
                  </div>
-                 <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Tactical Subject Heading</label>
+                 <label className="text-[10px] font-bold text-slate-400">Subject</label>
               </div>
               <input 
                 type="text" 
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder="Enter a high-impact title..."
-                className="w-full bg-transparent border-none p-0 text-2xl font-black text-slate-900 placeholder:text-slate-100 focus:ring-0 tracking-tight font-headline uppercase"
+                className="w-full bg-transparent border-none p-0 text-2xl font-bold text-slate-900 placeholder:text-slate-100 focus:ring-0 tracking-tight font-headline"
               />
             </div>
 
@@ -130,7 +130,7 @@ export default function TeamLeadCreateAnnouncementPage() {
                   <div className="size-8 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-sm">
                     <FileText className="size-4" />
                  </div>
-                 <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Intelligence Briefing Content</label>
+                 <label className="text-[10px] font-bold text-slate-400">Announcement body</label>
               </div>
               <textarea 
                 value={content}
@@ -207,7 +207,7 @@ export default function TeamLeadCreateAnnouncementPage() {
               <button 
                 disabled={loading}
                 onClick={handleTransmit}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-3.5 px-8 py-3.5 bg-violet-600 text-white font-black rounded-xl hover:bg-violet-700 transition-all shadow-lg shadow-violet-600/20 active:scale-95 group disabled:opacity-50 text-[10px] uppercase tracking-widest"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-3.5 px-8 py-3.5 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 transition-all shadow-lg shadow-violet-600/20 active:scale-95 group disabled:opacity-50 text-xs"
               >
                 {loading ? (
                   <>
@@ -217,7 +217,7 @@ export default function TeamLeadCreateAnnouncementPage() {
                 ) : (
                   <>
                     <Send className="size-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                    Transmit Broadcast
+                    Publish announcement
                   </>
                 )}
               </button>

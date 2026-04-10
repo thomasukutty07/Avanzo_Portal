@@ -189,7 +189,7 @@ export default function UsersPage() {
     <OrganizationAdminChrome>
       <div className="p-6 md:p-10 space-y-8 animate-in fade-in duration-500 min-h-screen font-display bg-[#fcfcfc] text-slate-900">
         {/* Header Section */}
-        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+        <header className="sticky top-0 z-30 -mx-6 md:-mx-10 px-6 md:px-10 py-6 mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-transparent transition-all">
           <div className="">
             <h1 className="text-[32px] font-black tracking-tight text-slate-900 leading-tight">
               Employee Management
@@ -201,14 +201,14 @@ export default function UsersPage() {
           <div className="flex items-center gap-4">
              <button 
                onClick={handleExport}
-               className="flex items-center gap-3 px-8 py-3 bg-white border border-slate-100 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all active:scale-95"
+               className="flex items-center gap-3 px-8 py-3 bg-white border border-slate-100 rounded-2xl text-[11px] font-black tracking-widest shadow-sm hover:bg-slate-50 transition-all active:scale-95"
              >
                 <Download className="h-4 w-4 text-slate-400 stroke-[3px]" />
                 Export
              </button>
              <button 
                onClick={handleAddUser}
-               className="flex items-center gap-3 px-10 py-3 bg-violet-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-violet-900/20 hover:bg-violet-700 transition-all active:scale-95"
+               className="flex items-center gap-3 px-10 py-3 bg-violet-600 text-white rounded-2xl text-[11px] font-black tracking-widest shadow-xl shadow-violet-900/20 hover:bg-violet-700 transition-all active:scale-95"
              >
                 <UserPlus className="h-4 w-4 stroke-[3px]" />
                 New Access

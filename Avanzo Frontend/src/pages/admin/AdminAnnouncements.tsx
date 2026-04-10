@@ -45,7 +45,8 @@ export default function AdminAnnouncementsPage() {
   const [newAnn, setNewAnn] = useState({
     title: "",
     content: "",
-    target: "All"
+    target: "All",
+    expiryDate: ""
   })
 
   const loadAnnouncements = async () => {
@@ -59,6 +60,8 @@ export default function AdminAnnouncementsPage() {
         target: a.target_scope === "org_wide" ? "All Staff" : a.department_name ? `Dept: ${a.department_name}` : "Department",
         author: a.created_by_name || "System Admin",
         date: new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+        expiryDate: a.expiry_date,
+        isExpired: a.expiry_date ? new Date(a.expiry_date) < new Date(new Date().setHours(0,0,0,0)) : false,
         type: a.target_scope === "org_wide" ? "All" : "HR"
       }))
       setAnnouncements(mapped)
@@ -89,13 +92,14 @@ export default function AdminAnnouncementsPage() {
       message: newAnn.content,
       target_scope: isDeptScoped ? "department" : "org_wide",
       severity: "info",
-      department: isDeptScoped ? newAnn.target : null
+      department: isDeptScoped ? newAnn.target : null,
+      expiry_date: newAnn.expiryDate || null
     }
 
     api.post("/api/notifications/broadcasts/", payload).then(() => {
       setSending(false)
       setIsCreateOpen(false)
-      setNewAnn({ title: "", content: "", target: "All" })
+      setNewAnn({ title: "", content: "", target: "All", expiryDate: "" })
       loadAnnouncements()
       toast.success("Announcement broadcasted successfully.")
     }).catch((e) => {
@@ -195,6 +199,16 @@ export default function AdminAnnouncementsPage() {
                       className="rounded-2xl border border-slate-100 bg-white min-h-[160px] focus-visible:ring-0 focus-visible:ring-offset-0 resize-none font-medium p-4 text-slate-700 shadow-sm"
                    />
                 </div>
+
+                <div className="space-y-1.5">
+                   <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Expiry Date (Optional)</label>
+                   <Input 
+                      type="date"
+                      value={newAnn.expiryDate}
+                      onChange={e => setNewAnn({...newAnn, expiryDate: e.target.value})}
+                      className="rounded-xl border border-slate-100 bg-slate-50/50 py-6 px-4 focus-visible:ring-4 focus-visible:ring-violet-600/5 text-slate-700 font-medium"
+                   />
+                </div>
               </div>
 
               <div className="px-8 pb-8 bg-white mt-auto">
@@ -250,6 +264,11 @@ export default function AdminAnnouncementsPage() {
                                  <p className="text-[10px] text-slate-300 font-black uppercase tracking-widest flex items-center gap-2">
                                    <Calendar className="h-3 w-3 stroke-[2.5px]" /> {ann.date}
                                  </p>
+                                 {ann.isExpired && (
+                                   <div className="px-2 py-0.5 bg-red-50 text-red-600 border border-red-100 rounded-full">
+                                      <p className="text-[8px] font-black uppercase tracking-widest">Expired</p>
+                                   </div>
+                                 )}
                                </div>
                             </div>
                             <p className="text-sm text-slate-500 leading-relaxed font-medium line-clamp-3">"{ann.content}"</p>

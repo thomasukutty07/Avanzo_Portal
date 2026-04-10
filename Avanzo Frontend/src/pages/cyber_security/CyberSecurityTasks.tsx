@@ -75,9 +75,6 @@ export default function CyberSecurityTasksPage() {
               <Button variant="outline" className="h-10 rounded-xl border-slate-200 text-[11px] font-bold text-slate-600 px-5 bg-white hover:bg-slate-50">
                   Filters
               </Button>
-              <Button className="h-10 rounded-xl bg-violet-600 text-white text-[11px] font-bold px-5 shadow-lg shadow-violet-600/20 hover:bg-violet-700">
-                  <Plus className="mr-2 size-3.5" /> Initialize task
-              </Button>
           </div>
       </div>
 

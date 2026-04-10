@@ -24,23 +24,19 @@ export default function EmployeeRegistrationPage() {
   const [departments, setDepartments] = useState<any[]>([])
   const [designations, setDesignations] = useState<any[]>([])
   const [roles, setRoles] = useState<any[]>([])
-  const [leads, setLeads] = useState<any[]>([])
   const [loadingForm, setLoadingForm] = useState(false)
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [r, d, g, empRes] = await Promise.all([
+        const [r, d, g] = await Promise.all([
           api.get("/api/auth/roles/"),
           api.get("/api/organization/departments/"),
           api.get("/api/organization/designations/"),
-          api.get("/api/auth/employees/")
         ])
         setRoles(extractResults(r.data))
         setDepartments(extractResults(d.data))
         setDesignations(extractResults(g.data))
-        const emps = extractResults<any>(empRes.data)
-        setLeads(emps.filter(e => e.role === "Team Lead" || String(e.role).includes("Lead")))
       } catch (e) {
         console.error(e)
       }
@@ -52,12 +48,13 @@ export default function EmployeeRegistrationPage() {
     firstName: "",
     lastName: "",
     email: "",
-    phone: "",
+    phone: "+91 ",
+    gender: "",
+    dob: "",
     employeeId: "",
     department: "",
     designation: "",
-    hireDate: "",
-    teamLead: "",
+    joiningDate: "",
     password: "",
     accessRole: ""
   })
@@ -80,6 +77,8 @@ export default function EmployeeRegistrationPage() {
         if (!formData.firstName) newErrors.firstName = "Required"
         if (!formData.lastName) newErrors.lastName = "Required"
         if (!formData.phone) newErrors.phone = "Required"
+        if (!formData.gender) newErrors.gender = "Required"
+        if (!formData.dob) newErrors.dob = "Required"
     } 
     else if (currentStep === 'job') {
         if (!formData.email) newErrors.email = "Required"
@@ -88,7 +87,7 @@ export default function EmployeeRegistrationPage() {
         if (!formData.employeeId) newErrors.employeeId = "Required"
         if (!formData.department) newErrors.department = "Required"
         if (!formData.designation) newErrors.designation = "Required"
-        if (!formData.hireDate) newErrors.hireDate = "Required"
+        if (!formData.joiningDate) newErrors.joiningDate = "Required"
     }
     else if (currentStep === 'security') {
         if (!formData.accessRole) newErrors.accessRole = "Required"
@@ -141,13 +140,14 @@ export default function EmployeeRegistrationPage() {
         first_name: formData.firstName,
         last_name: formData.lastName,
         phone: formData.phone || null,
+        gender: formData.gender || null,
+        date_of_birth: formData.dob || null,
         employee_id: formData.employeeId || null,
         access_role: formData.accessRole || null,
         department: formData.department || null,
         designation: formData.designation || null,
-        team_lead: formData.teamLead || null,
         status: "active",
-        date_of_joining: formData.hireDate || null
+        date_of_joining: formData.joiningDate || null
       })
       toast.success("Employee registered successfully!", {
         description: `${formData.firstName} ${formData.lastName} has been added to the system.`
@@ -211,7 +211,6 @@ export default function EmployeeRegistrationPage() {
         <div className="max-w-4xl mx-auto">
             <Card className="border border-slate-100 shadow-xl shadow-slate-200/50 rounded-[2rem] overflow-hidden bg-white">
                 <CardContent className="p-8 md:p-12 space-y-10">
-                    
                     {step === 'personal' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left animate-in slide-in-from-right-4 duration-500">
                             <div className="space-y-2 md:col-span-2">
@@ -219,8 +218,29 @@ export default function EmployeeRegistrationPage() {
                             </div>
                             <FormField label="First Name" placeholder="e.g. John" error={errors.firstName} value={formData.firstName} onChange={(v) => updateForm('firstName', v)} />
                             <FormField label="Last Name" placeholder="e.g. Doe" error={errors.lastName} value={formData.lastName} onChange={(v) => updateForm('lastName', v)} />
+                            <FormField label="Phone Number" placeholder="+91 00000 00000" error={errors.phone} value={formData.phone} onChange={(v) => updateForm('phone', v)} />
+                            <div className="space-y-2">
+                                <label className="text-[13px] font-bold text-slate-700 ml-1">Gender</label>
+                                <div className="relative">
+                                  <select 
+                                    className={`w-full h-11 bg-slate-50 border-transparent rounded-xl px-4 py-2 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none appearance-none cursor-pointer ${errors.gender ? 'ring-2 ring-red-500/20 border-red-200 bg-red-50/10' : ''}`}
+                                    value={formData.gender}
+                                    onChange={(e) => updateForm('gender', e.target.value)}
+                                  >
+                                      <option value="">Select Gender</option>
+                                      <option value="male">Male</option>
+                                      <option value="female">Female</option>
+                                      <option value="other">Other</option>
+                                      <option value="prefer_not_to_say">Prefer not to say</option>
+                                  </select>
+                                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="size-4"><path d="m6 9 6 6 6-6"/></svg>
+                                  </div>
+                                </div>
+                                {errors.gender && <FormError msg={errors.gender} />}
+                            </div>
                             <div className="md:col-span-2">
-                                <FormField label="Phone Number" placeholder="+91 00000 00000" error={errors.phone} value={formData.phone} onChange={(v) => updateForm('phone', v)} />
+                                <FormField label="Date of Birth" placeholder="mm/dd/yyyy" type="date" isDatePicker error={errors.dob} value={formData.dob} onChange={(v) => updateForm('dob', v)} />
                             </div>
                         </div>
                     )}
@@ -233,11 +253,19 @@ export default function EmployeeRegistrationPage() {
                             <FormField label="Work Email" placeholder="john.doe@avanzo.com" type="email" error={errors.email} value={formData.email} onChange={(v) => updateForm('email', v)} />
                             <FormField label="Employee ID" placeholder="e.g. EMP12345" error={errors.employeeId} value={formData.employeeId} onChange={(v) => updateForm('employeeId', v)} />
                             <div className="md:col-span-2">
-                                <FormField label="Hire Date" placeholder="mm/dd/yyyy" type="date" isDatePicker error={errors.hireDate} value={formData.hireDate} onChange={(v) => updateForm('hireDate', v)} />
+                                <FormField label="Joining Date" placeholder="mm/dd/yyyy" type="date" isDatePicker error={errors.joiningDate} value={formData.joiningDate} onChange={(v) => updateForm('joiningDate', v)} />
                             </div>
                             
                             <div className="space-y-2">
-                                <label className="text-[13px] font-bold text-slate-700 ml-1">Department</label>
+                                <div className="flex justify-between items-center ml-1">
+                                    <label className="text-[13px] font-bold text-slate-700">Department</label>
+                                    <button 
+                                      onClick={() => navigate("/settings")} 
+                                      className="text-[10px] font-black text-violet-600 hover:text-violet-800 transition-colors uppercase tracking-widest"
+                                    >
+                                      Manage
+                                    </button>
+                                </div>
                                 <select 
                                   className={`w-full h-11 bg-slate-50 border-transparent rounded-xl px-4 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none appearance-none cursor-pointer ${errors.department ? 'ring-2 ring-red-500/20 border-red-200 bg-red-50/10' : ''}`}
                                   value={formData.department}
@@ -249,7 +277,15 @@ export default function EmployeeRegistrationPage() {
                                 {errors.department && <FormError msg={errors.department} />}
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[13px] font-bold text-slate-700 ml-1">Designation</label>
+                                <div className="flex justify-between items-center ml-1">
+                                    <label className="text-[13px] font-bold text-slate-700">Designation</label>
+                                    <button 
+                                      onClick={() => navigate("/settings")} 
+                                      className="text-[10px] font-black text-violet-600 hover:text-violet-800 transition-colors uppercase tracking-widest"
+                                    >
+                                      Manage
+                                    </button>
+                                </div>
                                 <select 
                                   className={`w-full h-11 bg-slate-50 border-transparent rounded-xl px-4 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none appearance-none cursor-pointer ${errors.designation ? 'ring-2 ring-red-500/20 border-red-200 bg-red-50/10' : ''}`}
                                   value={formData.designation}
@@ -261,17 +297,6 @@ export default function EmployeeRegistrationPage() {
                                 {errors.designation && <FormError msg={errors.designation} />}
                             </div>
 
-                            <div className="space-y-2 md:col-span-2">
-                                <label className="text-[13px] font-bold text-slate-700 ml-1">Reporting Manager (Optional)</label>
-                                <select 
-                                  className="w-full h-11 bg-slate-50 border-transparent rounded-xl px-4 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none appearance-none cursor-pointer"
-                                  value={formData.teamLead}
-                                  onChange={(e) => updateForm('teamLead', e.target.value)}
-                                >
-                                    <option value="">None / N/A</option>
-                                    {leads.map(l => <option key={l.id} value={l.id}>{l.first_name} {l.last_name} ({l.role})</option>)}
-                                </select>
-                            </div>
                         </div>
                     )}
 
@@ -322,11 +347,13 @@ export default function EmployeeRegistrationPage() {
                                 <h3 className="text-sm font-bold text-slate-900 border-b border-slate-200 pb-4">Onboarding Verification</h3>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                                     <ReviewItem label="Name" value={`${formData.firstName} ${formData.lastName}`} />
+                                    <ReviewItem label="Gender" value={formData.gender} />
+                                    <ReviewItem label="DOB" value={formData.dob} />
                                     <ReviewItem label="Phone" value={formData.phone} />
                                     <ReviewItem label="Role" value={roles.find(r => r.id === formData.accessRole)?.name || formData.accessRole} />
                                     <ReviewItem label="Email" value={formData.email} />
                                     <ReviewItem label="Employee ID" value={formData.employeeId} />
-                                    <ReviewItem label="Hire Date" value={formData.hireDate} />
+                                    <ReviewItem label="Joining Date" value={formData.joiningDate} />
                                 </div>
                             </div>
                             <div className="text-center py-4">

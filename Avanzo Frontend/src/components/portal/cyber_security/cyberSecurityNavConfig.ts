@@ -1,7 +1,6 @@
 import type { LucideIcon } from "lucide-react"
 import {
   AlertTriangle,
-  BarChart3,
   LayoutDashboard,
   Megaphone,
   CalendarRange,
@@ -21,5 +20,4 @@ export const CYBER_SECURITY_NAV_ITEMS: CyberSecurityNavItem[] = [
   { to: "/security/incidents", label: "Incidents", icon: AlertTriangle },
   { to: "/security/leave", label: "Leave Request", icon: CalendarRange },
   { to: "/security/announcements", label: "Announcements", icon: Megaphone },
-  { to: "/security/reports", label: "Reports", icon: BarChart3 },
 ]

@@ -56,7 +56,8 @@ export default function NewTaskModal({ open, onOpenChange, onSuccess }: NewTaskM
   const filteredEmployees = selectedProjectId 
     ? employees.filter(emp => {
         const project = projects.find(p => p.id === selectedProjectId)
-        return project?.team?.includes(emp.id)
+        // Correct check now that team is objects, not just IDs
+        return project?.team?.some((member: any) => member.id === emp.id)
       })
     : employees
 
@@ -103,7 +104,7 @@ export default function NewTaskModal({ open, onOpenChange, onSuccess }: NewTaskM
             <Plus className="size-4 stroke-[3px]" />
           </div>
           <div>
-            <h2 className="text-sm font-black tracking-tight text-slate-900 leading-none uppercase tracking-[0.05em]">Assign Task</h2>
+            <h2 className="text-sm font-black tracking-tight text-slate-900 leading-none">Assign task</h2>
             <p className="text-[11px] font-medium text-slate-400 mt-1.5 flex items-center gap-1.5 leading-none opacity-80 italic">Configure and assign technical deliverables to unit sectors.</p>
           </div>
         </div>
@@ -113,14 +114,14 @@ export default function NewTaskModal({ open, onOpenChange, onSuccess }: NewTaskM
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16 bg-white">
               <Loader2 className="size-7 animate-spin text-violet-600 mb-4" />
-              <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Synchronizing telemetry matrix...</p>
+              <p className="text-[10px] font-bold text-slate-300">Synchronizing telemetry matrix...</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="px-5 sm:px-8 md:px-12 py-6 sm:py-8 space-y-6 sm:space-y-8 bg-white">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-x-8 sm:gap-y-6">
                 {/* Sector Selection */}
                 <div className="space-y-2.5">
-                  <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                  <label className="text-[10px] font-black text-slate-300 flex items-center gap-2">
                     <Target className="size-3.5 text-slate-200 shrink-0" />
                     Mission project sector
                   </label>
@@ -146,7 +147,7 @@ export default function NewTaskModal({ open, onOpenChange, onSuccess }: NewTaskM
 
                 {/* Unit Assignee */}
                 <div className="space-y-2.5">
-                  <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                  <label className="text-[10px] font-black text-slate-300 flex items-center gap-2">
                     <UserCheck className="size-3.5 text-slate-200 shrink-0" />
                     Tactical mission unit
                   </label>
@@ -165,7 +166,7 @@ export default function NewTaskModal({ open, onOpenChange, onSuccess }: NewTaskM
 
                 {/* Directive Title — full width */}
                 <div className="space-y-2.5 sm:col-span-2">
-                  <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Mission briefing directive headline</label>
+                  <label className="text-[10px] font-black text-slate-300">Mission briefing directive headline</label>
                   <input
                     type="text"
                     className="w-full h-11 bg-slate-50 border border-slate-100 rounded-xl px-4 text-sm font-bold text-slate-950 placeholder:text-slate-300 focus:bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10 outline-none transition-all"
@@ -177,7 +178,7 @@ export default function NewTaskModal({ open, onOpenChange, onSuccess }: NewTaskM
                 </div>
 
                 <div className="space-y-2.5 sm:col-span-1">
-                  <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                  <label className="text-[10px] font-black text-slate-300 flex items-center gap-2">
                     <Calendar className="size-3.5 text-slate-200 shrink-0" />
                     Start date
                   </label>
@@ -192,7 +193,7 @@ export default function NewTaskModal({ open, onOpenChange, onSuccess }: NewTaskM
 
                 {/* Deadline */}
                 <div className="space-y-2.5 sm:col-span-1">
-                  <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                  <label className="text-[10px] font-black text-slate-300 flex items-center gap-2">
                     <Calendar className="size-3.5 text-slate-200 shrink-0" />
                     Target deadline
                   </label>
@@ -207,7 +208,7 @@ export default function NewTaskModal({ open, onOpenChange, onSuccess }: NewTaskM
 
                 {/* Priority */}
                 <div className="space-y-2.5 sm:col-span-2">
-                  <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                  <label className="text-[10px] font-black text-slate-300 flex items-center gap-2">
                     <ShieldAlert className="size-3.5 text-slate-200 shrink-0" />
                     Priority index
                   </label>
@@ -256,14 +257,14 @@ export default function NewTaskModal({ open, onOpenChange, onSuccess }: NewTaskM
                   type="button"
                   variant="ghost"
                   onClick={() => onOpenChange(false)}
-                  className="w-full sm:w-auto sm:flex-1 h-10 text-slate-400 font-medium text-[10px] uppercase tracking-widest rounded-xl hover:bg-violet-50 hover:text-violet-600 transition-all"
+                  className="w-full sm:w-auto sm:flex-1 h-10 text-slate-400 font-bold text-xs rounded-xl hover:bg-violet-50 hover:text-violet-600 transition-all"
                 >
                   Cancel mission
                 </Button>
                 <Button
                   type="submit"
                   disabled={submitting}
-                  className="w-full sm:flex-[2] h-10 bg-violet-600 hover:bg-violet-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-md shadow-violet-600/25 active:scale-95 transition-all"
+                  className="w-full sm:flex-[2] h-10 bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs rounded-xl shadow-md shadow-violet-600/25 active:scale-95 transition-all"
                 >
                   {submitting ? (
                     <Loader2 className="size-4 animate-spin mr-2" />
