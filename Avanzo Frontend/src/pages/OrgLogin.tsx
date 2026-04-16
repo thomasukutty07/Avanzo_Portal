@@ -31,7 +31,7 @@ export default function OrgLogin() {
     setSubmitting(true)
     try {
       const u = await login(trimmed, password)
-      if (u.role !== "Admin" && u.role !== "Super Admin" && u.role !== "Organization") {
+      if (u.role !== "Admin" && u.role !== "Organization") {
         logout()
         setError("Personnel credentials detected. Please use the Employee Identity Portal.")
         return

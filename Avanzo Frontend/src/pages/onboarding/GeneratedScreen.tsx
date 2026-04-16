@@ -33,7 +33,7 @@ export default function GeneratedScreenPage() {
             <p className="text-3xl font-black text-amber-900 tracking-tight mb-4">PENDING APPROVAL</p>
             
             <p className="text-[13px] leading-relaxed text-amber-800/70 mb-10">
-              A Super Admin is currently reviewing your organization profile. You will be notified via email once your account is activated.
+              An Admin is currently reviewing your organization profile. You will be notified via email once your account is activated.
             </p>
 
             <Link

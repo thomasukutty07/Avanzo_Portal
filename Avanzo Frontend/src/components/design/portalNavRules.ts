@@ -58,13 +58,3 @@ export const securityNavRules: DesignNavRule[] = [
   { match: "Dashboard", to: "/security" },
 ]
 
-export const superAdminNavRules: DesignNavRule[] = [
-  { match: "Organizations", to: "/super-admin/organizations" },
-  { match: "Pending Approvals", to: "/super-admin/pending" },
-  { match: "Reports", to: "/super-admin/reports" },
-  { match: "Settings", to: "/super-admin/settings" },
-  /* Same `to` as below: list Dashboard before Support/Documentation so `/super-admin` highlights Dashboard */
-  { match: "Dashboard", to: "/super-admin" },
-  { match: "Support", to: "/super-admin" },
-  { match: "Documentation", to: "/super-admin" },
-]

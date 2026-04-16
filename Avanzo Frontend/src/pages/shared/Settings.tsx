@@ -53,7 +53,7 @@ export default function SettingsPage() {
     )
   }
 
-  // Fallback for Super Admin or others
+  // Fallback for others
   return (
     <div className="p-8">
       <SettingsLegacyPage />

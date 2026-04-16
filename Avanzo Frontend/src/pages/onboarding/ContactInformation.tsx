@@ -27,30 +27,7 @@ export default function ContactInformationPage() {
   }
 
   return (
-    <RegisterOrgWizardLayout
-      step={2}
-      asideTitle={
-        <>
-          Personalize your <br />
-          <span className="text-[#d0beff]">administrative contact.</span>
-        </>
-      }
-      asideLead={
-        <>
-          <p>
-            Provide the primary contact we will use for account management and
-            approval notices. This is step 2 of 3 — after this you will see your
-            registration status (<strong className="text-white">PENDING</strong>{" "}
-            until a Super Admin acts).
-          </p>
-          <p className="mt-4 border-l-2 border-white/30 pl-4 text-sm leading-relaxed text-[#e8ddff]/90">
-            Use a professional email on your organization domain where possible.
-            Encrypted in transit; access follows the same hierarchy as company
-            registration.
-          </p>
-        </>
-      }
-    >
+    <RegisterOrgWizardLayout step={2}>
       <header className="mb-10">
         <h2 className="font-headline text-3xl font-bold tracking-tight text-[#191c1d]">
           Primary contact information
@@ -154,7 +131,7 @@ export default function ContactInformationPage() {
           .
         </p>
         <p className="mx-auto max-w-lg text-[11px] leading-relaxed text-[#494456]/90">
-          Next: step 3 shows your submission status. A Super Admin will set your
+          Next: step 3 shows your submission status. An Admin will set your
           organization to <strong>ACTIVE</strong> or <strong>REJECTED</strong>;
           you will be notified by email.
         </p>

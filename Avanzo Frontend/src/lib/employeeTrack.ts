@@ -65,7 +65,6 @@ export function isCyberSecurityEmployeeTrack(
 function isPreviewRole(user: User | null | undefined): boolean {
   const r = user?.role
   return (
-    r === "Super Admin" ||
     r === "Admin" ||
     r === "HR" ||
     r === "Organization"

@@ -1,7 +1,7 @@
 import { Navigate, Outlet } from "react-router-dom"
 import { useAuth } from "@/context/AuthContext"
 
-type Role = "Admin" | "HR" | "Team Lead" | "Employee" | "Super Admin" | "Organization"
+type Role = "Admin" | "HR" | "Team Lead" | "Employee" | "Organization"
 
 export function RequireRole({ roles }: { roles: Role[] }) {
   const { user } = useAuth()

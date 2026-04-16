@@ -72,7 +72,6 @@ create_user("tech@avanzo.com", pwd, "Employee", dept_name="Engineering", desig_n
 # 5. Admin (Organization Level)
 create_user("admin@avanzo.com", pwd, "Admin", first_name="Avanzo", last_name="Admin")
 
-# 6. Super Admin (System Level)
-create_user("superadmin@avanzo.com", pwd, "Super Admin", first_name="System", last_name="Root")
+
 
 print("All test users (including Admin hierarchy) created successfully.")

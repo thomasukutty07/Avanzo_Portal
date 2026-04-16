@@ -68,7 +68,7 @@ export function extractPortalHeaderFromDashboard(dashboardHtml: string): string 
 /**
  * Apply the dashboard’s top header to a subpage when `sidebarTemplateHtml` is set:
  * - Technical: prepend fixed MainHeader and remove duplicate in-main toolbars (legacy layout).
- * - Super Admin: replace the leading fixed global header.
+ * - Replace the leading fixed global header.
  * - Security / Quantum / HR / Team Lead / Employee: replace the first header in the main
  *   column (first `<header>` after `</aside>`) with the dashboard header.
  */
@@ -132,7 +132,7 @@ export function applyPortalChromeFromDashboard(
       return open + newInner + close
     }
 
-    // 2) Leading global header (e.g. Super Admin subpages)
+    // 2) Leading global header
     if (/^(?:\s|<!--[\s\S]*?-->)*<header\b/i.test(trimmed)) {
       const newInner = trimmed.replace(
         /^(?:\s|<!--[\s\S]*?-->)*<header\b[^>]*>[\s\S]*?<\/header>/i,

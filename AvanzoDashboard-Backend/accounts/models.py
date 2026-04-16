@@ -37,7 +37,7 @@ class AccessRole(TimeStampedModel):
         TEAM_LEAD = "Team Lead", "Team Lead"
         HR = "HR", "HR"
         ADMIN = "Admin", "Admin"
-        SUPER_ADMIN = "Super Admin", "Super Admin"
+
         ORGANIZATION = "Organization", "Organization"
 
     name = models.CharField(max_length=50, unique=True, choices=RoleChoices.choices)
@@ -217,9 +217,6 @@ class Employee(AbstractUser):
     def is_hr(self) -> bool:
         return self.role_name == "HR"
 
-    @property
-    def is_super_admin(self) -> bool:
-        return self.role_name == "Super Admin"
 
 
 auditlog.register(Employee)

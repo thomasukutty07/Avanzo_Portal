@@ -80,25 +80,6 @@ const CyberSecurityCreateIncidentPage = lazy(() =>
   import("@/pages/cyber_security/CyberSecurityCreateIncident")
 )
 
-const SuperAdminDashboardPage = lazy(() =>
-  import("@/pages/superadmin/SuperAdminDashboard")
-)
-const SuperAdminOrganizationsPage = lazy(() =>
-  import("@/pages/superadmin/SuperAdminOrganizations")
-)
-const SuperAdminPendingPage = lazy(() =>
-  import("@/pages/superadmin/SuperAdminPending")
-)
-const SuperAdminReportsPage = lazy(() =>
-  import("@/pages/superadmin/SuperAdminReports")
-)
-const SuperAdminAuditLogsPage = lazy(() =>
-  import("@/pages/superadmin/SuperAdminAuditLogs")
-)
-const SuperAdminSettingsPage = lazy(() =>
-  import("@/pages/superadmin/SuperAdminSettings")
-)
-
 const ContactInformationPage = lazy(() =>
   import("@/pages/onboarding/ContactInformation")
 )
@@ -120,8 +101,6 @@ function Loading() {
 
 function RoleBasedHome() {
   const { user } = useAuth()
-  if (user?.role === "Super Admin")
-    return <Navigate to="/super-admin" replace />
   if (user?.role === "Organization") return <AdminDashboard />
   if (user?.role === "Admin") return <AdminDashboard />
   if (user?.role === "HR") return <HROverview />
@@ -194,7 +173,7 @@ export default function App() {
         >
           <Route path="/" element={<RoleBasedHome />} />
 
-          <Route element={<RequireRole roles={["Admin", "Organization", "Super Admin"]} />}>
+          <Route element={<RequireRole roles={["Admin", "Organization"]} />}>
             <Route path="/users" element={<UsersPage />} />
             <Route path="/departments" element={<DepartmentsPage />} />
             <Route path="/reports" element={<ReportsPage />} />
@@ -215,7 +194,7 @@ export default function App() {
 
           <Route path="/settings" element={<SettingsPage />} />
 
-          <Route element={<RequireRole roles={["HR", "Admin", "Organization", "Super Admin"]} />}>
+          <Route element={<RequireRole roles={["HR", "Admin", "Organization"]} />}>
             <Route path="/employees" element={<HREmployees />} />
             <Route path="/attendance" element={<HRAttendanceOverview />} />
             <Route path="/leave" element={<HRLeaveRequests />} />
@@ -231,7 +210,7 @@ export default function App() {
             />
           </Route>
 
-          <Route element={<RequireRole roles={["Team Lead", "Admin", "Organization", "Super Admin"]} />}>
+          <Route element={<RequireRole roles={["Team Lead", "Admin", "Organization"]} />}>
             <Route path="/tasks" element={<TaskManagement />} />
             <Route path="/projects" element={<ProjectProgress />} />
             <Route path="/team" element={<TeamPage />} />
@@ -276,24 +255,7 @@ export default function App() {
             </Route>
           </Route>
 
-          <Route path="/super-admin" element={<SuperAdminDashboardPage />} />
-          <Route
-            path="/super-admin/organizations"
-            element={<SuperAdminOrganizationsPage />}
-          />
-          <Route
-            path="/super-admin/pending"
-            element={<SuperAdminPendingPage />}
-          />
-          <Route
-            path="/super-admin/reports"
-            element={<SuperAdminReportsPage />}
-          />
-          <Route path="/super-admin/access" element={<SuperAdminAuditLogsPage />} />
-          <Route
-            path="/super-admin/settings"
-            element={<SuperAdminSettingsPage />}
-          />
+
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

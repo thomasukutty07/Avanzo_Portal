@@ -49,7 +49,7 @@ export default function HRReports() {
         <div className="flex h-[80vh] items-center justify-center bg-[#fcfcfc]">
           <div className="flex flex-col items-center gap-6">
             <Loader2 className="h-10 w-10 animate-spin text-violet-600" />
-            <p className="text-[11px] font-black text-slate-400 tracking-[0.2em] font-headline">Decrypting workforce telemetry...</p>
+            <p className="text-[11px] font-black text-slate-400 tracking-[0.2em] font-headline">Generating workforce analytics...</p>
           </div>
         </div>
       </HRPortalChrome>
@@ -108,7 +108,7 @@ export default function HRReports() {
             <CardContent className="p-10 space-y-10">
               <div className="space-y-1.5 text-left uppercase font-headline">
                  <h3 className="text-sm font-bold text-slate-900 tracking-tight">Performance Distribution</h3>
-                 <p className="text-[10px] font-bold text-slate-300 tracking-[0.2em] opacity-60">Engagement assessment pulse</p>
+                 <p className="text-[10px] font-bold text-slate-300 tracking-[0.2em] opacity-60">Employee engagement overview</p>
               </div>
               <div className="space-y-8">
                 <PerformanceItem label="Exceeds Expectations" percent={15} color="bg-violet-600 shadow-[0_0_10px_rgba(124,58,237,0.4)]" />
@@ -123,8 +123,8 @@ export default function HRReports() {
             <CardContent className="p-10 flex flex-col items-center justify-center text-center space-y-6">
                 <Activity className="size-12 text-slate-100" />
                 <div className="space-y-2 font-headline uppercase">
-                    <h3 className="text-sm font-bold text-slate-900 tracking-tight border-b border-slate-100 pb-4">Live Workforce Telemetry</h3>
-                    <p className="text-[10px] font-bold text-slate-300 tracking-widest leading-relaxed">Advanced analytics like turnover trends and sector allocation indexes will populate as historical data clusters accumulate.</p>
+                    <h3 className="text-sm font-bold text-slate-900 tracking-tight border-b border-slate-100 pb-4">Workforce Insights</h3>
+                    <p className="text-[10px] font-bold text-slate-300 tracking-widest leading-relaxed">Advanced analytics including turnover trends and growth projections will populate as more historical data becomes available.</p>
                 </div>
             </CardContent>
           </Card>

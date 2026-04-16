@@ -58,7 +58,7 @@ export default function RoleSelectionPage() {
           <div className="mb-8 rounded-xl border border-slate-200 bg-white/80 px-4 py-3 text-center text-sm text-slate-600 shadow-sm">
             <p className="font-semibold text-slate-800">System hierarchy</p>
             <p className="mt-1 font-mono text-xs text-slate-500 md:text-sm">
-              Super Admin → Organization → Admin → HR → Team Lead → Employee
+              Organization → Admin → HR → Team Lead → Employee
             </p>
           </div>
           <div className="mb-12 text-center">

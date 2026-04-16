@@ -1,6 +1,6 @@
 import { useState } from "react"
 import type { FormEvent } from "react"
-import { useNavigate, Link } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { Loader2, AtSign, Lock, Eye, EyeOff, Check, ArrowRight } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
@@ -27,7 +27,7 @@ export default function Login() {
     setSubmitting(true)
     try {
       const u = await login(trimmed, password)
-      if (u.role === "Admin" || u.role === "Super Admin" || u.role === "Organization") {
+      if (u.role === "Admin" || u.role === "Organization") {
         logout()
         setError("Administrative credentials detected. Please use the Organization Portal.")
         return
