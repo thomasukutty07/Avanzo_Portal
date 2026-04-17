@@ -12,9 +12,6 @@ class RoleNames:
     HR = "HR"
     ADMIN = "Admin"
 
-    ORGANIZATION = "Organization"
-
     # Groups for permission checks
-    TEAM_LEAD_OR_ADMIN = (TEAM_LEAD, ADMIN, ORGANIZATION)
-    TEAM_LEAD_OR_ABOVE = (TEAM_LEAD, HR, ADMIN, ORGANIZATION)
-    ADMIN_OR_HR_OR_ABOVE = (HR, ADMIN, ORGANIZATION)
+    TEAM_LEAD_OR_ADMIN = (TEAM_LEAD, ADMIN)
+    TEAM_LEAD_OR_ABOVE = (TEAM_LEAD, HR, ADMIN)

@@ -90,7 +90,7 @@ class VelocityView(APIView):
                 # Tasks completed (resolved) this week by this department
                 tasks_completed = Task.objects.filter(
                     project__owning_department=dept,
-                    status=Task.Status.CLOSED,
+                    status=Task.Status.RESOLVED,
                     updated_at__date__gte=week_start,
                     updated_at__date__lte=week_end,
                 ).count()

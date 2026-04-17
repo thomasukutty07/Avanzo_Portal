@@ -9,27 +9,10 @@ from core.models import TimeStampedModel
 from .managers import EmployeeManager
 
 
-class TalentTag(models.Model):
-    """Categories for employee skills/talents."""
-
-    name = models.CharField(max_length=50, unique=True)
-    category = models.CharField(
-        max_length=50, blank=True, help_text="e.g. Technical, Creative, Management"
-    )
-
-    class Meta:
-        db_table = "talent_tags"
-        verbose_name = "Talent Tag"
-        verbose_name_plural = "Talent Tags"
-
-    def __str__(self):
-        return self.name
-
-
 class AccessRole(TimeStampedModel):
     """
-    Role definitions for RBAC.
-    Maps 1:1 to the frontend Role type in RequireRole.tsx.
+    Exactly 4 rows: Employee, Team Lead, HR, Admin.
+    Maps 1:1 to the frontend Role type in role-context.tsx.
     """
 
     class RoleChoices(models.TextChoices):
@@ -37,8 +20,6 @@ class AccessRole(TimeStampedModel):
         TEAM_LEAD = "Team Lead", "Team Lead"
         HR = "HR", "HR"
         ADMIN = "Admin", "Admin"
-
-        ORGANIZATION = "Organization", "Organization"
 
     name = models.CharField(max_length=50, unique=True, choices=RoleChoices.choices)
     description = models.TextField(blank=True)
@@ -63,12 +44,6 @@ class Employee(AbstractUser):
         ON_LEAVE = "on_leave", "On Leave"
         OFFBOARDING = "offboarding", "Offboarding"
 
-    class Gender(models.TextChoices):
-        MALE = "male", "Male"
-        FEMALE = "female", "Female"
-        OTHER = "other", "Other"
-        PREFER_NOT_TO_SAY = "prefer_not_to_say", "Prefer not to say"
-
     # Override PK to UUID
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -78,10 +53,6 @@ class Employee(AbstractUser):
 
     # Profile fields
     phone = models.CharField(max_length=20, blank=True)
-    gender = models.CharField(
-        max_length=20, choices=Gender.choices, blank=True, null=True
-    )
-    date_of_birth = models.DateField(null=True, blank=True)
     avatar = models.URLField(blank=True)
     employee_id = models.CharField(
         max_length=20,
@@ -91,13 +62,6 @@ class Employee(AbstractUser):
         help_text="Internal employee ID, e.g., AVZ-001",
     )
 
-    leave_balance = models.DecimalField(
-        max_digits=5,
-        decimal_places=1,
-        default=15.0,
-        help_text="Total remaining leave days available.",
-    )
-
     # RBAC
     access_role = models.ForeignKey(
         AccessRole,
@@ -105,6 +69,20 @@ class Employee(AbstractUser):
         related_name="employees",
         null=True,
         help_text="Determines UI permissions: Employee, Team Lead, HR, Admin",
+    )
+
+    # Talent/skills
+    evaluated_talents = models.ManyToManyField(
+        "TalentTag",
+        blank=True,
+        related_name="employees_evaluated",
+        help_text="Talents identified/evaluated by Team Leads.",
+    )
+    self_declared_talents = models.ManyToManyField(
+        "TalentTag",
+        blank=True,
+        related_name="employees_declared",
+        help_text="Skills self-declared by the employee.",
     )
 
     # Organization
@@ -142,20 +120,6 @@ class Employee(AbstractUser):
     )
     date_of_joining = models.DateField(null=True, blank=True)
 
-    # Talents & Skills
-    self_declared_talents = models.ManyToManyField(
-        TalentTag,
-        blank=True,
-        related_name="employees_declared",
-        help_text="Skills self-declared by the employee.",
-    )
-    evaluated_talents = models.ManyToManyField(
-        TalentTag,
-        blank=True,
-        related_name="employees_evaluated",
-        help_text="Talents identified/evaluated by Team Leads.",
-    )
-
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -183,7 +147,7 @@ class Employee(AbstractUser):
                 last_employee = (
                     Employee.objects.select_for_update()
                     .filter(employee_id__startswith="AVZ-")
-                    .order_by("employee_id")
+                    .order_by("created_at")
                     .last()
                 )
 
@@ -218,9 +182,30 @@ class Employee(AbstractUser):
         return self.role_name == "HR"
 
 
-
 auditlog.register(Employee)
 auditlog.register(AccessRole)
+
+
+class TalentTag(models.Model):
+    """
+    Skill/talent labels that can be assigned to employees.
+    Used by Team Leads (evaluated_talents) and employees themselves (self_declared_talents).
+    """
+
+    name = models.CharField(max_length=50, unique=True)
+    category = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text="e.g. Technical, Creative, Management",
+    )
+
+    class Meta:
+        db_table = "talent_tags"
+        verbose_name = "Talent Tag"
+        verbose_name_plural = "Talent Tags"
+
+    def __str__(self):
+        return self.name
 
 
 class LoginAttempt(models.Model):

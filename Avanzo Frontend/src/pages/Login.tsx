@@ -27,9 +27,9 @@ export default function Login() {
     setSubmitting(true)
     try {
       const u = await login(trimmed, password)
-      if (u.role === "Admin" || u.role === "Organization") {
+      if (u.role === "Admin") {
         logout()
-        setError("Administrative credentials detected. Please use the Organization Portal.")
+        setError("Administrative credentials detected. Please use the Management Portal.")
         return
       }
     } catch {

@@ -181,14 +181,7 @@ export default function HRAttendanceOverview() {
 
             {/* Quick Actions / Indicators */}
             <div className="lg:col-span-4 space-y-6">
-                <div className="bg-violet-600 rounded-2xl p-8 shadow-xl shadow-violet-600/20 text-white relative overflow-hidden group">
-                    <TrendingUp className="absolute -right-4 -bottom-4 size-32 text-white/10 group-hover:scale-110 transition-transform" />
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 mb-2 leading-none">Global Sync Rate</p>
-                    <h4 className="text-4xl font-black font-headline tracking-tight mb-8">98.1<span className="text-lg opacity-60 ml-1">%</span></h4>
-                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest bg-white/10 w-fit px-4 py-2 rounded-xl border border-white/10">
-                        <UserCheck className="size-3" /> All Systems Nominal
-                    </div>
-                </div>
+
                 
                 <div className="bg-white rounded-2xl border border-slate-100 p-8 shadow-sm">
                    <h5 className="text-[10px] font-black text-slate-400 tracking-widest mb-6 leading-none">Reliability Metrics</h5>

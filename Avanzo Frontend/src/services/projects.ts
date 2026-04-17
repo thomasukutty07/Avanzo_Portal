@@ -9,6 +9,10 @@ export const projectsService = {
     const response = await api.post("/api/projects/projects/", data);
     return response.data;
   },
+  updateProject: async (id: string, data: any) => {
+    const response = await api.patch(`/api/projects/projects/${id}/`, data);
+    return response.data;
+  },
   deleteProject: async (id: string) => {
     const response = await api.delete(`/api/projects/projects/${id}/`);
     return response.data;
@@ -43,6 +47,14 @@ export const projectsService = {
   },
   getServices: async () => {
     const response = await api.get("/api/projects/services/");
+    return response.data;
+  },
+  createService: async (data: { name: string }) => {
+    const response = await api.post("/api/projects/services/", data);
+    return response.data;
+  },
+  getDepartments: async () => {
+    const response = await api.get("/api/organization/departments/");
     return response.data;
   },
   getAdminVelocity: async () => {

@@ -78,19 +78,6 @@ class LeaveApplySerializer(serializers.ModelSerializer):
             else:
                 total_days = (end_date - start_date).days + 1
 
-            # Validate balance
-            request = self.context.get("request")
-            if request and request.user:
-                if float(total_days) > float(request.user.leave_balance):
-                    raise serializers.ValidationError(
-                        {
-                            "non_field_errors": (
-                                f"You requested {total_days} day(s) but only have "
-                                f"{request.user.leave_balance} day(s) available."
-                            )
-                        }
-                    )
-
             # Store total_days on the instance implicitly since we calculate it here
             data["total_days"] = total_days
 

@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { 
   ChevronLeft, 
   Users, 
@@ -13,6 +21,7 @@ import {
   ExternalLink
 } from "lucide-react"
 import { OrganizationAdminChrome } from "@/components/portal/organizationadmin/OrganizationAdminChrome"
+import { EditProjectModal } from "@/components/portal/teamlead/TeamLeadActionForms"
 import { api } from "@/lib/axios"
 import { toast } from "sonner"
 import { Progress } from "@/components/ui/progress"
@@ -22,6 +31,21 @@ export default function AdminProjectDetailsPage() {
   const navigate = useNavigate()
   const [project, setProject] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [showEditModal, setShowEditModal] = useState(false)
+
+  const fetchProject = async () => {
+    try {
+      setLoading(true)
+      const res = await api.get(`/api/projects/projects/${id}/`)
+      setProject(res.data)
+    } catch (e) {
+      console.error(e)
+      toast.error("Project details payload failed to sync.")
+      navigate("/admin/projects")
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -39,6 +63,40 @@ export default function AdminProjectDetailsPage() {
     }
     fetchProject()
   }, [id])
+
+  const handleGenerateReport = () => {
+    if (!project) return;
+    
+    const rows = [
+      ["Project Title", project.title],
+      ["Department", project.department_name],
+      ["Status", project.status],
+      ["Start Date", project.start_date || "N/A"],
+      ["Target Deadline", project.target_end_date || "N/A"],
+      ["Progress", `${project.progress || 0}%`],
+      ["Team Lead", project.manager_name || project.manager?.full_name || "N/A"],
+      ["", ""],
+      ["Team Roster", ""],
+      ["Name", "Email"],
+    ];
+
+    project.team_members?.forEach((m: any) => {
+      rows.push([m.full_name, m.email]);
+    });
+
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + rows.map(e => e.map(cell => `"${cell}"`).join(",")).join("\n");
+      
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Admin_Project_Report_${project.title.replace(/\s+/g, '_')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success("Comprehensive project audit report generated.");
+  }
 
   if (loading) {
     return (
@@ -72,9 +130,16 @@ export default function AdminProjectDetailsPage() {
               <ChevronLeft className="size-4 group-hover:-translate-x-1 transition-transform" />
               Back to list
             </button>
-            <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-none capitalize">
-              {project?.title}
-            </h1>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-none capitalize">
+                {project?.title}
+              </h1>
+              <div className="px-5 py-2.5 bg-violet-50 text-violet-700 text-[10px] font-black rounded-2xl border border-violet-100 tracking-widest shadow-sm">
+                 TEAM LEAD: <span className="text-violet-900 ml-1">
+                   {project?.manager_name || project?.manager?.full_name || project?.manager?.email || 'Assigned Lead'}
+                 </span>
+              </div>
+            </div>
             <div className="flex flex-wrap items-center gap-4">
                <span className="flex items-center gap-1.5 px-3 py-1 bg-violet-50 text-violet-700 text-xs font-bold rounded-full border border-violet-100">
                  <Target className="size-3.5" />
@@ -90,12 +155,18 @@ export default function AdminProjectDetailsPage() {
           </div>
           
           <div className="flex items-center gap-3">
-             <button className="px-6 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl text-sm hover:bg-slate-50 transition-all shadow-sm">
+             <button 
+              onClick={() => setShowEditModal(true)}
+              className="px-6 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl text-sm hover:bg-slate-50 transition-all shadow-sm"
+             >
                 Edit Details
              </button>
-             <button className="px-6 py-2.5 bg-violet-600 text-white font-bold rounded-xl text-sm hover:bg-violet-700 transition-all shadow-lg shadow-violet-600/20">
-                Generate Report
-             </button>
+             <button 
+  onClick={handleGenerateReport}
+  className="px-6 py-2.5 bg-violet-600 text-white font-bold rounded-xl text-sm hover:bg-violet-700 transition-all shadow-lg shadow-violet-600/20"
+>
+  Generate Report
+</button>
           </div>
         </div>
 
@@ -122,7 +193,7 @@ export default function AdminProjectDetailsPage() {
                   </div>
                   <div className="flex -space-x-2">
                     {project?.team?.slice(0, 4).map((m: any, i: number) => (
-                      <div key={i} className="size-6 rounded-full border-2 border-white bg-slate-100 overflow-hidden ring-1 ring-slate-100">
+                      <div key={m.id || `team-avatar-${i}`} className="size-6 rounded-full border-2 border-white bg-slate-100 overflow-hidden ring-1 ring-slate-100">
                         <img src={m.avatar || `https://api.dicebear.com/7.x/notionists/svg?seed=${m.full_name}`} alt="" />
                       </div>
                     ))}
@@ -144,13 +215,16 @@ export default function AdminProjectDetailsPage() {
                <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between">
                   <h3 className="text-xl font-bold text-slate-900">Working Persons</h3>
                   <div className="flex items-center gap-2">
-                     <span className="text-xs font-bold text-slate-400">{project?.team?.length} Personnel</span>
+                     <span className="text-xs font-bold text-slate-400">
+                       {project?.team_members?.filter((m: any) => m.id !== (project.manager?.id || project.manager)).length} Personnel
+                     </span>
                   </div>
                </div>
                
                <div className="divide-y divide-slate-50">
-                  {project?.team?.length > 0 ? project.team.map((member: any) => (
-                    <div key={member.id} className="p-6 hover:bg-slate-50/50 transition-all flex items-center justify-between group">
+                  {project?.team_members?.filter((m: any) => m.id !== (project.manager?.id || project.manager)).length > 0 ? 
+                     project.team_members.filter((m: any) => m.id !== (project.manager?.id || project.manager)).map((member: any, idx: number) => (
+                    <div key={member.id || `team-member-${idx}`} className="p-6 hover:bg-slate-50/50 transition-all flex items-center justify-between group">
                        <div className="flex items-center gap-5">
                           <div className="size-14 rounded-2xl bg-slate-100 overflow-hidden shadow-sm group-hover:scale-105 transition-transform duration-300">
                              <img 
@@ -170,15 +244,32 @@ export default function AdminProjectDetailsPage() {
                        </div>
                        
                        <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
-                          <button className="p-3 text-slate-400 hover:text-violet-600 hover:bg-white rounded-xl transition-all shadow-sm border border-transparent hover:border-slate-100">
+                          <button 
+                            onClick={() => window.location.href = `mailto:${member.email || ''}`}
+                            className="p-3 text-slate-400 hover:text-violet-600 hover:bg-white rounded-xl transition-all shadow-sm border border-transparent hover:border-slate-100"
+                          >
                              <Mail className="size-4" />
                           </button>
-                          <button className="p-3 text-slate-400 hover:text-violet-600 hover:bg-white rounded-xl transition-all shadow-sm border border-transparent hover:border-slate-100">
+                          <button 
+                            onClick={() => toast.info(`Phone: ${member.phone || member.phone_number || 'Not available'}`)}
+                            className="p-3 text-slate-400 hover:text-violet-600 hover:bg-white rounded-xl transition-all shadow-sm border border-transparent hover:border-slate-100"
+                          >
                              <Phone className="size-4" />
                           </button>
-                          <button className="p-3 text-slate-400 hover:text-slate-900 transition-all">
-                             <MoreVertical className="size-4" />
-                          </button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="p-3 text-slate-400 hover:text-slate-900 transition-all outline-none">
+                                 <MoreVertical className="size-4" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => navigate('/users')}>View Profile</DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => toast.error(`Removed ${member.full_name} from project`)} className="text-red-600 focus:text-red-600 focus:bg-red-50">Remove from Project</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                        </div>
                     </div>
                   )) : (
@@ -236,18 +327,19 @@ export default function AdminProjectDetailsPage() {
                    </div>
                 </div>
 
-                <div className="pt-6 border-t border-slate-50 space-y-4">
-                   <p className="text-[11px] font-bold text-slate-400 tracking-tight">Project Description</p>
-                   <p className="text-sm text-slate-500 leading-relaxed italic">
-                     No description provided for this operational mission node. Strategic objectives are synchronized via department leads.
-                   </p>
-                </div>
              </div>
 
           </div>
 
         </div>
       </div>
+
+      <EditProjectModal 
+        open={showEditModal} 
+        onOpenChange={setShowEditModal} 
+        project={project} 
+        onSuccess={fetchProject} 
+      />
     </OrganizationAdminChrome>
   )
 }

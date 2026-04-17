@@ -339,62 +339,7 @@ export default function DepartmentsPage() {
           </section>
         )}
 
-        {/* Recent Updates Table - Only show when no dept is selected */}
-        {!selectedDept && (
-          <section className="bg-white rounded-[40px] border border-slate-50 shadow-sm overflow-hidden flex flex-col">
-            <div className="p-10 border-b border-slate-50 flex items-center justify-between bg-slate-50/10">
-                <h3 className="text-xl font-black text-slate-900 font-display">Organizational Infrastructure Summary</h3>
-                <button 
-                  className="text-[10px] font-black text-violet-700 hover:text-violet-900 transition-colors flex items-center gap-2"
-                  onClick={() => toast.info("Deep audit log coming soon.")}
-                >
-                  View All <ChevronRight className="h-3 w-3" />
-                </button>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-slate-50/20 text-slate-400 text-[10px] font-black border-b border-slate-50">
-                  <tr>
-                    <th className="px-10 py-6">Department</th>
-                    <th className="px-10 py-6">Operational Code</th>
-                    <th className="px-10 py-6 text-center">Status</th>
-                    <th className="px-10 py-6 text-right">Latency</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {departments.slice(0, 5).map((dept) => (
-                    <tr 
-                      key={dept.id} 
-                      className="group hover:bg-slate-50/50 transition-all cursor-pointer"
-                      onClick={() => setSelectedDept(dept)}
-                    >
-                      <td className="px-10 py-8">
-                          <div className="flex items-center gap-5">
-                            <div className={`size-10 rounded-2xl flex items-center justify-center font-black text-xs bg-violet-50 text-violet-600 shadow-sm group-hover:scale-110 transition-transform`}>
-                                <Building2 className="h-4 w-4" />
-                            </div>
-                            <span className="font-bold text-slate-900 group-hover:text-violet-600 transition-colors tracking-tight">{dept.name}</span>
-                          </div>
-                      </td>
-                      <td className="px-10 py-8">
-                          <span className="text-sm font-bold text-slate-900">{dept.badge}</span>
-                      </td>
-                      <td className="px-10 py-8 text-center">
-                          <span className={`px-4 py-1.5 rounded-full text-[9px] font-black bg-emerald-50 text-emerald-600 border border-emerald-100`}>
-                            Active
-                          </span>
-                      </td>
-                      <td className="px-10 py-8 text-right">
-                          <span className="text-xs font-medium text-slate-400">System Ready</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
+
       </div>
 
         {/* New Department Dialog */}

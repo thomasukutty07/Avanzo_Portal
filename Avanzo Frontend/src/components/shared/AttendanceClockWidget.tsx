@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { 
   Clock,
@@ -22,6 +22,7 @@ export const AttendanceClockWidget: React.FC<AttendanceClockWidgetProps> = ({ on
   const [refreshing, setRefreshing] = useState(false);
   const [currentLog, setCurrentLog] = useState<any>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const hasAutoOpened = useRef(false);
 
   useEffect(() => {
     fetchCurrentStatus();
@@ -41,6 +42,13 @@ export const AttendanceClockWidget: React.FC<AttendanceClockWidgetProps> = ({ on
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!loading && !refreshing && currentLog && !currentLog.has_clocked_in && !hasAutoOpened.current) {
+       setIsOpen(true);
+       hasAutoOpened.current = true;
+    }
+  }, [loading, refreshing, currentLog]);
 
   const handleClockIn = async () => {
     try {
@@ -70,7 +78,7 @@ export const AttendanceClockWidget: React.FC<AttendanceClockWidgetProps> = ({ on
       const payload_entries = (currentLog?.entries || []).map((e: any) => ({
         entry_id: e.id,
         output_text: "Finished today's workday.",
-        outcome: "Finished"
+        outcome: "completed"
       }));
 
       await attendanceService.clockOut({ 
@@ -197,8 +205,7 @@ export const AttendanceClockWidget: React.FC<AttendanceClockWidgetProps> = ({ on
             </div>
 
             {/* Modal Footer */}
-            <div className="px-8 py-5 bg-slate-50/50 border-t border-slate-50 flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest font-headline italic">
-              <span>Avanzo Portal v4.2</span>
+            <div className="px-8 py-5 bg-slate-50/50 border-t border-slate-50 flex justify-end items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest font-headline italic">
               <span className="tabular-nums">{new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
             </div>
           </div>

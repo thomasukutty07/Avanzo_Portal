@@ -57,7 +57,13 @@ export default function NewTaskModal({ open, onOpenChange, onSuccess }: NewTaskM
     ? employees.filter(emp => {
         const project = projects.find(p => p.id === selectedProjectId)
         // Correct check now that team is objects, not just IDs
-        return project?.team?.some((member: any) => member.id === emp.id)
+        const isInTeam = project?.team?.some((member: any) => member.id === emp.id)
+        
+        // If the project was just created and only has the TL on it, 
+        // fallback to all department employees to make it usable
+        if (project?.team?.length <= 1) return true;
+        
+        return isInTeam
       })
     : employees
 
@@ -87,7 +93,17 @@ export default function NewTaskModal({ open, onOpenChange, onSuccess }: NewTaskM
       })
       setSelectedProjectId("")
     } catch (error: any) {
-      toast.error(error.response?.data?.conflict || "Workflow transmission error.")
+      const data = error.response?.data
+      if (data?.conflict) {
+        toast.error(data.conflict)
+      } else if (typeof data === 'object') {
+        const errors = Object.entries(data)
+          .map(([key, value]) => `${key}: ${Array.isArray(value) ? value[0] : value}`)
+          .join(" | ")
+        toast.error(errors || "Workflow transmission error.")
+      } else {
+        toast.error("Workflow transmission error.")
+      }
     } finally {
       setSubmitting(false)
     }
@@ -105,7 +121,7 @@ export default function NewTaskModal({ open, onOpenChange, onSuccess }: NewTaskM
           </div>
           <div>
             <h2 className="text-sm font-black tracking-tight text-slate-900 leading-none">Assign task</h2>
-            <p className="text-[11px] font-medium text-slate-400 mt-1.5 flex items-center gap-1.5 leading-none opacity-80 italic">Configure and assign technical deliverables to unit sectors.</p>
+            <p className="text-[11px] font-bold text-slate-500 mt-1.5 flex items-center gap-1.5 leading-none opacity-90 italic">Configure and assign technical deliverables to unit sectors.</p>
           </div>
         </div>
 
@@ -121,9 +137,9 @@ export default function NewTaskModal({ open, onOpenChange, onSuccess }: NewTaskM
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-x-8 sm:gap-y-6">
                 {/* Sector Selection */}
                 <div className="space-y-2.5">
-                  <label className="text-[10px] font-black text-slate-300 flex items-center gap-2">
-                    <Target className="size-3.5 text-slate-200 shrink-0" />
-                    Mission project sector
+                  <label className="text-xs font-bold text-slate-700 tracking-tight flex items-center gap-2">
+                    <Target className="size-3.5 text-slate-400 shrink-0" />
+                    Mission Project Sector
                   </label>
                   <select
                     className="w-full h-11 bg-slate-50 border border-slate-100 rounded-xl px-4 text-sm font-bold text-slate-950 hover:bg-slate-100 focus:bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10 outline-none transition-all appearance-none cursor-pointer"
@@ -147,9 +163,9 @@ export default function NewTaskModal({ open, onOpenChange, onSuccess }: NewTaskM
 
                 {/* Unit Assignee */}
                 <div className="space-y-2.5">
-                  <label className="text-[10px] font-black text-slate-300 flex items-center gap-2">
-                    <UserCheck className="size-3.5 text-slate-200 shrink-0" />
-                    Tactical mission unit
+                  <label className="text-xs font-bold text-slate-700 tracking-tight flex items-center gap-2">
+                    <UserCheck className="size-3.5 text-slate-400 shrink-0" />
+                    Tactical Mission Unit
                   </label>
                   <select
                     className="w-full h-11 bg-slate-50 border border-slate-100 rounded-xl px-4 text-sm font-bold text-slate-950 hover:bg-slate-100 focus:bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10 outline-none transition-all appearance-none cursor-pointer"
@@ -158,15 +174,19 @@ export default function NewTaskModal({ open, onOpenChange, onSuccess }: NewTaskM
                     required
                   >
                     <option value="" disabled>Select unit...</option>
-                    {filteredEmployees.map(emp => (
-                      <option key={emp.id} value={emp.id}>{emp.first_name} {emp.last_name}</option>
-                    ))}
+                    {filteredEmployees.length === 0 ? (
+                      <option disabled>No members assigned to this project's team</option>
+                    ) : (
+                      filteredEmployees.map(emp => (
+                        <option key={emp.id} value={emp.id}>{emp.first_name} {emp.last_name}</option>
+                      ))
+                    )}
                   </select>
                 </div>
 
                 {/* Directive Title — full width */}
                 <div className="space-y-2.5 sm:col-span-2">
-                  <label className="text-[10px] font-black text-slate-300">Mission briefing directive headline</label>
+                  <label className="text-xs font-bold text-slate-700 tracking-tight">Mission Briefing Directive Headline</label>
                   <input
                     type="text"
                     className="w-full h-11 bg-slate-50 border border-slate-100 rounded-xl px-4 text-sm font-bold text-slate-950 placeholder:text-slate-300 focus:bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10 outline-none transition-all"
@@ -178,9 +198,9 @@ export default function NewTaskModal({ open, onOpenChange, onSuccess }: NewTaskM
                 </div>
 
                 <div className="space-y-2.5 sm:col-span-1">
-                  <label className="text-[10px] font-black text-slate-300 flex items-center gap-2">
-                    <Calendar className="size-3.5 text-slate-200 shrink-0" />
-                    Start date
+                  <label className="text-xs font-bold text-slate-700 tracking-tight flex items-center gap-2">
+                    <Calendar className="size-3.5 text-slate-400 shrink-0" />
+                    Start Date
                   </label>
                   <input
                     type="date"
@@ -193,9 +213,9 @@ export default function NewTaskModal({ open, onOpenChange, onSuccess }: NewTaskM
 
                 {/* Deadline */}
                 <div className="space-y-2.5 sm:col-span-1">
-                  <label className="text-[10px] font-black text-slate-300 flex items-center gap-2">
-                    <Calendar className="size-3.5 text-slate-200 shrink-0" />
-                    Target deadline
+                  <label className="text-xs font-bold text-slate-700 tracking-tight flex items-center gap-2">
+                    <Calendar className="size-3.5 text-slate-400 shrink-0" />
+                    Target Deadline
                   </label>
                   <input
                     type="date"
@@ -208,9 +228,9 @@ export default function NewTaskModal({ open, onOpenChange, onSuccess }: NewTaskM
 
                 {/* Priority */}
                 <div className="space-y-2.5 sm:col-span-2">
-                  <label className="text-[10px] font-black text-slate-300 flex items-center gap-2">
-                    <ShieldAlert className="size-3.5 text-slate-200 shrink-0" />
-                    Priority index
+                  <label className="text-xs font-bold text-slate-700 tracking-tight flex items-center gap-2">
+                    <ShieldAlert className="size-3.5 text-slate-400 shrink-0" />
+                    Priority Index
                   </label>
                   <select
                     className="w-full h-11 bg-slate-50 border border-slate-100 rounded-xl px-4 text-sm font-bold text-slate-950 hover:bg-slate-100 focus:bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10 outline-none transition-all cursor-pointer appearance-none"

@@ -18,6 +18,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select"
+import { accountsService } from "@/services/accounts"
 import { toast } from "sonner"
 import { 
   Loader2,
@@ -34,6 +35,7 @@ import {
   Target,
   Users,
   X,
+  Settings,
 } from "lucide-react"
 import NewTaskModal from "./NewTaskModal"
 
@@ -298,23 +300,50 @@ export function AddMemberModal({ open, onOpenChange }: { open: boolean, onOpenCh
 
 export function CreateProjectModal({ open, onOpenChange, onSuccess }: { open: boolean, onOpenChange: (open: boolean) => void, onSuccess?: () => void }) {
   const [loading, setLoading] = useState(false)
-  const [clients, setClients] = useState<any[]>([])
+  const [services, setServices] = useState<any[]>([])
+  const [departments, setDepartments] = useState<any[]>([])
+  const [employees, setEmployees] = useState<any[]>([])
   const [formData, setFormData] = useState({
     title: "",
     is_internal: true,
     client: "",
+    service: "",
+    owning_department: "",
+    start_date: new Date().toISOString().split('T')[0],
     target_end_date: "",
+    team: [] as string[],
   })
 
   useEffect(() => {
     if (open) {
-      projectsService.getClients()
-        .then(data => setClients(Array.isArray(data) ? data : (data.results || [])))
-        .catch(() => setClients([]))
+      Promise.all([
+        projectsService.getServices(), 
+        projectsService.getDepartments(),
+        accountsService.getEmployees()
+      ])
+        .then(([servicesData, departmentsData, employeesData]) => {
+          const s = Array.isArray(servicesData) ? servicesData : (servicesData.results || [])
+          setServices(s)
+          setDepartments(Array.isArray(departmentsData) ? departmentsData : (departmentsData.results || []))
+          setEmployees(Array.isArray(employeesData) ? employeesData : (employeesData.results || []))
+        })
+        .catch(() => { setServices([]); setDepartments([]) })
     }
   }, [open])
 
-  const reset = () => setFormData({ title: "", is_internal: true, client: "", target_end_date: "" })
+  const reset = () => {
+    setFormData({ 
+      title: "", 
+      is_internal: true, 
+      client: "", 
+      service: "",
+      owning_department: "",
+      start_date: new Date().toISOString().split('T')[0],
+      target_end_date: "",
+      team: []
+    })
+  }
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -327,9 +356,13 @@ export function CreateProjectModal({ open, onOpenChange, onSuccess }: { open: bo
       const payload: any = {
         title: formData.title,
         is_internal: formData.is_internal,
+        owning_department: formData.owning_department,
+        start_date: formData.start_date || null,
         target_end_date: formData.target_end_date || null,
+        team: formData.team,
       }
       if (!formData.is_internal && formData.client) payload.client = formData.client
+      if (formData.service) payload.service = formData.service
       await projectsService.createProject(payload)
       toast.success("Project successfully initialized.")
       onSuccess?.()
@@ -337,12 +370,16 @@ export function CreateProjectModal({ open, onOpenChange, onSuccess }: { open: bo
       reset()
     } catch (err: any) {
       const data = err.response?.data
-      console.error("[CreateProject] 400 response:", data)
-      const raw = data?.detail || data?.non_field_errors?.[0]
-        || (typeof data === "object" ? Object.values(data).flat()[0] : null)
-        || "Failed to create project."
-      const msg = Array.isArray(raw) ? raw[0] : raw
-      toast.error(String(msg))
+      console.error("[CreateProject] error details:", data)
+      
+      if (typeof data === 'object') {
+        const errors = Object.entries(data)
+          .map(([key, value]) => `${key}: ${Array.isArray(value) ? value[0] : value}`)
+          .join(" | ")
+        toast.error(errors || "Failed to create project.")
+      } else {
+        toast.error("Failed to create project.")
+      }
     } finally {
       setLoading(false)
     }
@@ -351,7 +388,7 @@ export function CreateProjectModal({ open, onOpenChange, onSuccess }: { open: bo
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className="w-[95vw] sm:max-w-3xl rounded-2xl sm:rounded-3xl p-0 border border-violet-100 overflow-hidden bg-white shadow-[0_20px_50px_rgba(109,40,217,0.08)] font-sans outline-none max-h-[90vh] flex flex-col">
-        <DialogTitle className="sr-only">Initialize project</DialogTitle>
+        <DialogTitle className="sr-only">Create project</DialogTitle>
         <DialogDescription className="sr-only">Launch a new tactical project module for the unit sector.</DialogDescription>
         {/* Header */}
         <div className="bg-white px-5 sm:px-8 pt-5 pb-4 flex items-center gap-3 border-b border-violet-50 shrink-0">
@@ -359,16 +396,32 @@ export function CreateProjectModal({ open, onOpenChange, onSuccess }: { open: bo
             <Target className="size-4" />
           </div>
           <div>
-            <h2 className="text-sm font-black tracking-tight text-slate-900 leading-none">Initialize project</h2>
+            <h2 className="text-sm font-black tracking-tight text-slate-900 leading-none">Create Project</h2>
             <p className="text-[11px] font-medium text-slate-400 mt-0.5">Launch a new tactical project module for the unit sector.</p>
           </div>
         </div>
 
         <div className="overflow-y-auto">
-          <form onSubmit={handleSubmit} className="px-5 sm:px-8 py-6 space-y-5 bg-white">
+          <form onSubmit={handleSubmit} className="px-5 sm:px-8 py-6 space-y-4 bg-white">
+            {/* Department selection */}
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-slate-700 tracking-tight">Mission Department</Label>
+              <select
+                required
+                className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium text-slate-900 focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-500/10 outline-none transition-all appearance-none cursor-pointer"
+                value={formData.owning_department}
+                onChange={e => setFormData({ ...formData, owning_department: e.target.value })}
+              >
+                <option value="">Select your department...</option>
+                {departments.map(d => (
+                  <option key={d.id} value={d.id}>{d.name}</option>
+                ))}
+              </select>
+            </div>
+
             {/* Title */}
             <div className="space-y-2">
-              <Label className="text-[10px] font-bold text-slate-400 tracking-tight">Project title</Label>
+              <Label className="text-xs font-bold text-slate-700 tracking-tight">Project Title</Label>
               <input
                 required
                 placeholder="e.g. Project Aurora: API Core Refresh"
@@ -379,21 +432,59 @@ export function CreateProjectModal({ open, onOpenChange, onSuccess }: { open: bo
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Internal / External toggle */}
-              <div className="space-y-2">
-                <Label className="text-[10px] font-bold text-slate-400 tracking-tight">Deployment type</Label>
+              {/* Service selection */}
+              <div className="space-y-2 sm:col-span-2">
+                <Label className="text-xs font-bold text-slate-700 tracking-tight">Project Category / Service</Label>
                 <select
-                  className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium text-slate-900 focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-500/10 outline-none transition-all appearance-none cursor-not-allowed"
-                  value="internal"
-                  disabled
+                  required
+                  className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium text-slate-900 focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-500/10 outline-none transition-all appearance-none cursor-pointer shadow-sm"
+                  value={formData.service}
+                  onChange={e => setFormData({ ...formData, service: e.target.value })}
                 >
-                  <option value="internal">Internal Infrastructure</option>
+                  <option value="">Select a service category...</option>
+                  {services.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
                 </select>
+              </div>
+
+                 <div>
+                   <Label className="text-xs font-bold text-slate-700 tracking-tight">Assemble Project Team</Label>
+                   <div className="mt-2 grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-3 border border-slate-100 rounded-2xl bg-slate-50">
+                      {employees.map(emp => (
+                        <label key={emp.id} className="flex items-center gap-2 p-2 hover:bg-white rounded-xl cursor-pointer transition-all border border-transparent hover:border-slate-100">
+                          <input 
+                            type="checkbox"
+                            checked={formData.team.includes(emp.id)}
+                            onChange={(e) => {
+                              const newTeam = e.target.checked 
+                                ? [...formData.team, emp.id]
+                                : formData.team.filter(id => id !== emp.id)
+                              setFormData({...formData, team: newTeam})
+                            }}
+                            className="size-4 rounded border-slate-200 text-violet-600 focus:ring-violet-500"
+                          />
+                          <span className="text-xs font-bold text-slate-700">{emp.first_name} {emp.last_name}</span>
+                        </label>
+                      ))}
+                   </div>
+                 </div>
+
+              {/* Start Date */}
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-slate-700 tracking-tight">Mission Start Date</Label>
+                <input
+                  type="date"
+                  required
+                  value={formData.start_date}
+                  onChange={e => setFormData({ ...formData, start_date: e.target.value })}
+                  className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium text-slate-900 focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-500/10 outline-none transition-all cursor-pointer"
+                />
               </div>
 
               {/* Target deadline */}
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold text-slate-400 tracking-tight">Target deadline</Label>
+                <Label className="text-xs font-bold text-slate-700 tracking-tight">Target Deadline</Label>
                 <input
                   type="date"
                   value={formData.target_end_date}
@@ -411,7 +502,7 @@ export function CreateProjectModal({ open, onOpenChange, onSuccess }: { open: bo
               </Button>
               <Button type="submit" disabled={loading} className="w-full sm:flex-[2] h-10 bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs rounded-xl shadow-md shadow-violet-600/25 active:scale-95 transition-all">
                 {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : <CheckCircle2 className="size-4 mr-2" />}
-                {loading ? "Deploying..." : "Initialize mission project"}
+                {loading ? "Deploying..." : "Create Project"}
               </Button>
             </div>
           </form>
@@ -480,6 +571,167 @@ export function NewUpdateModal({ open, onOpenChange }: { open: boolean, onOpenCh
               </div>
               <Button type="submit" disabled={loading} className="sm:ml-auto h-10 px-6 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-bold text-xs shadow-md shadow-violet-600/25 active:scale-95 transition-all">
                 {loading ? <Loader2 className="size-4 animate-spin" /> : "Transmit update"}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+export function EditProjectModal({ 
+  open, 
+  onOpenChange, 
+  project, 
+  onSuccess 
+}: { 
+  open: boolean, 
+  onOpenChange: (open: boolean) => void, 
+  project: any,
+  onSuccess?: () => void 
+}) {
+  const [loading, setLoading] = useState(false)
+  const [services, setServices] = useState<any[]>([])
+  const [departments, setDepartments] = useState<any[]>([])
+  const [employees, setEmployees] = useState<any[]>([])
+  const [formData, setFormData] = useState({
+    title: "",
+    service: "",
+    owning_department: "",
+    start_date: "",
+    target_end_date: "",
+    team: [] as string[],
+  })
+
+  useEffect(() => {
+    if (open && project) {
+      setFormData({
+        title: project.title || "",
+        service: project.service || "",
+        owning_department: project.owning_department || "",
+        start_date: project.start_date || "",
+        target_end_date: project.target_end_date || "",
+        team: project.team || [],
+      })
+
+      Promise.all([
+        projectsService.getServices(), 
+        projectsService.getDepartments(),
+        accountsService.getEmployees()
+      ]).then(([servicesData, departmentsData, employeesData]) => {
+        setServices(Array.isArray(servicesData) ? servicesData : (servicesData.results || []))
+        setDepartments(Array.isArray(departmentsData) ? departmentsData : (departmentsData.results || []))
+        setEmployees(Array.isArray(employeesData) ? employeesData : (employeesData.results || []))
+      })
+    }
+  }, [open, project])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      await projectsService.updateProject(project.id, formData)
+      toast.success("Project configuration updated.")
+      onSuccess?.()
+      onOpenChange(false)
+    } catch (err) {
+      toast.error("Failed to synchronize parameters.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent showCloseButton={false} className="w-[95vw] sm:max-w-3xl rounded-2xl sm:rounded-3xl p-0 border border-violet-100 overflow-hidden bg-white shadow-2xl font-sans outline-none max-h-[90vh] flex flex-col">
+        <DialogTitle className="sr-only">Configure Project</DialogTitle>
+        <div className="bg-white px-5 sm:px-8 pt-5 pb-4 flex items-center gap-3 border-b border-violet-50 shrink-0">
+          <div className="size-8 bg-violet-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-violet-600/30">
+            <Settings className="size-4" />
+          </div>
+          <div>
+            <h2 className="text-sm font-black tracking-tight text-slate-900 leading-none">Configure Project</h2>
+            <p className="text-[11px] font-medium text-slate-400 mt-0.5">Modify operational parameters for the project node.</p>
+          </div>
+        </div>
+
+        <div className="overflow-y-auto">
+          <form onSubmit={handleSubmit} className="px-5 sm:px-8 py-6 space-y-4 bg-white">
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-slate-700">Project Title</Label>
+              <Input 
+                value={formData.title} 
+                onChange={e => setFormData({...formData, title: e.target.value})} 
+                required 
+                className="rounded-xl border-slate-100 bg-slate-50 h-10 text-sm font-medium"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-slate-700">Service Category</Label>
+                <select
+                  className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium focus:ring-2 focus:ring-violet-500/10 outline-none transition-all appearance-none cursor-pointer"
+                  value={formData.service}
+                  onChange={e => setFormData({ ...formData, service: e.target.value })}
+                >
+                  <option value="">Select Service...</option>
+                  {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-slate-700">Owning Department</Label>
+                <select
+                  className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium focus:ring-2 focus:ring-violet-500/10 outline-none transition-all appearance-none cursor-pointer"
+                  value={formData.owning_department}
+                  onChange={e => setFormData({ ...formData, owning_department: e.target.value })}
+                >
+                  <option value="">Select Department...</option>
+                  {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs font-bold text-slate-700">Personnel Registry</Label>
+              <div className="mt-2 grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-3 border border-slate-100 rounded-2xl bg-slate-50">
+                {employees.map(emp => (
+                  <label key={emp.id} className="flex items-center gap-2 p-2 hover:bg-white rounded-xl cursor-pointer transition-all border border-transparent hover:border-slate-100">
+                    <input 
+                      type="checkbox"
+                      checked={formData.team.includes(emp.id)}
+                      onChange={(e) => {
+                        const newTeam = e.target.checked 
+                          ? [...formData.team, emp.id]
+                          : formData.team.filter(id => id !== emp.id)
+                        setFormData({...formData, team: newTeam})
+                      }}
+                      className="size-4 rounded border-slate-200 text-violet-600"
+                    />
+                    <span className="text-[11px] font-bold text-slate-600">{emp.first_name} {emp.last_name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-slate-700">Start Date</Label>
+                <Input type="date" value={formData.start_date} onChange={e => setFormData({...formData, start_date: e.target.value})} className="rounded-xl border-slate-100 bg-slate-50" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-slate-700">Target Deadline</Label>
+                <Input type="date" value={formData.target_end_date} onChange={e => setFormData({...formData, target_end_date: e.target.value})} className="rounded-xl border-slate-100 bg-slate-50" />
+              </div>
+            </div>
+
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3 pt-4 border-t border-slate-50">
+              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="w-full sm:flex-1 h-10 text-slate-400 font-bold text-xs rounded-xl">Cancel</Button>
+              <Button type="submit" disabled={loading} className="w-full sm:flex-[2] h-10 bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs rounded-xl shadow-md">
+                {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : <CheckCircle2 className="size-4 mr-2" />}
+                Save Changes
               </Button>
             </div>
           </form>

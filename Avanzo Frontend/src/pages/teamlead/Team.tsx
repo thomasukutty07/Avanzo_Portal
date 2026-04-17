@@ -1,13 +1,13 @@
 import TeamLeadChrome from "@/components/portal/teamlead/TeamLeadChrome"
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
+import { useNavigate } from "react-router-dom"
 import { accountsService } from "@/services/accounts"
 import { useState, useEffect } from "react"
+import { NewTaskModal } from "@/components/portal/teamlead/TeamLeadActionForms"
 import { toast } from "sonner"
 import { 
   Plus, 
   Search, 
-  Mail, 
-  MessageSquare, 
   MoreHorizontal,
   ChevronRight,
   Shield,
@@ -16,7 +16,14 @@ import {
   Loader2,
   Users,
   Award,
-  CheckCircle2
+  CheckCircle2,
+  PlusCircle,
+  BarChart3,
+  Calendar,
+  UserCog,
+  MessageSquare,
+  BadgeInfo,
+  FileSearch
 } from "lucide-react"
 import { api } from "@/lib/axios"
 import { extractResults } from "@/lib/apiResults"
@@ -25,15 +32,25 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu"
 
 
 export default function TeamPage() {
   useDesignPortalLightTheme()
+  const navigate = useNavigate()
   const [members, setMembers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [talentTags, setTalentTags] = useState<any[]>([])
   const [isEvalOpen, setIsEvalOpen] = useState(false)
+  const [isNewTaskOpen, setIsNewTaskOpen] = useState(false)
   const [selectedMember, setSelectedMember] = useState<any>(null)
   const [updating, setUpdating] = useState(false)
   const [customTagName, setCustomTagName] = useState("")
@@ -146,9 +163,55 @@ export default function TeamPage() {
           ) : filteredMembers.map((member, i) => (
             <div key={i} className="bg-white rounded-[1.8rem] border border-slate-100 p-6 shadow-sm group hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 relative flex flex-col items-center text-center">
               <div className="absolute top-6 right-6">
-                 <button onClick={() => toast.info(`Syncing unit metadata: ${member.full_name}`)} className="p-1.5 text-slate-300 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all">
-                   <MoreHorizontal className="size-4" />
-                 </button>
+                 <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                       <button className="p-1.5 text-slate-300 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all outline-none">
+                          <MoreHorizontal className="size-4" />
+                       </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56 rounded-2xl border border-slate-100 shadow-2xl font-sans p-2">
+                       <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-3 py-2.5">Unit Operations</DropdownMenuLabel>
+                       <DropdownMenuItem 
+                        onClick={() => {
+                          setSelectedMember(member);
+                          setIsNewTaskOpen(true);
+                        }} 
+                        className="text-xs font-bold gap-3 px-3 py-3 cursor-pointer rounded-xl hover:bg-violet-50 hover:text-violet-600 transition-colors"
+                       >
+                          <PlusCircle className="size-4 text-violet-600" />
+                          Assign Tactical Task
+                       </DropdownMenuItem>
+                       <DropdownMenuItem 
+                        onClick={() => navigate(`/tasks`)} 
+                        className="text-xs font-bold gap-3 px-3 py-3 cursor-pointer rounded-xl hover:bg-violet-50 hover:text-violet-600 transition-colors"
+                       >
+                          <FileSearch className="size-4 text-emerald-500" />
+                          View Active Tasks
+                       </DropdownMenuItem>
+                       
+                       <DropdownMenuSeparator className="bg-slate-50 my-1" />
+                       <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-3 py-2.5">Personnel Data</DropdownMenuLabel>
+                       
+                       <DropdownMenuItem 
+                        onClick={() => {
+                          setSelectedMember(member);
+                          setIsEvalOpen(true);
+                        }} 
+                        className="text-xs font-bold gap-3 px-3 py-3 cursor-pointer rounded-xl hover:bg-violet-50 hover:text-violet-600 transition-colors"
+                       >
+                          <Award className="size-4 text-amber-500" />
+                          Skills Evaluation
+                       </DropdownMenuItem>
+
+                       <DropdownMenuItem 
+                        onClick={() => toast.info(`Initializing attendance log for ${member.full_name}`)} 
+                        className="text-xs font-bold gap-3 px-3 py-3 cursor-pointer rounded-xl hover:bg-violet-50 hover:text-violet-600 transition-colors"
+                       >
+                          <Calendar className="size-4 text-blue-500" />
+                          Attendance History
+                       </DropdownMenuItem>
+                    </DropdownMenuContent>
+                 </DropdownMenu>
               </div>
               
               <div className="relative mb-6">
@@ -168,22 +231,6 @@ export default function TeamPage() {
                  </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 w-full mb-6">
-                 <button 
-                  onClick={() => toast.info(`Initializing Direct Comms: ${member.email}`)}
-                  className="flex flex-col items-center gap-1.5 p-3.5 bg-slate-50 border border-slate-100 rounded-[1.2rem] hover:bg-violet-600 hover:text-white hover:border-violet-600 transition-all group/btn"
-                 >
-                    <Mail className="size-4 text-slate-400 group-hover/btn:text-white group-hover/btn:rotate-12 transition-all" />
-                    <span className="text-[10px] font-bold">Interface</span>
-                 </button>
-                 <button 
-                  onClick={() => toast.info(`Inpulse Sync: ${member.full_name}`)}
-                  className="flex flex-col items-center gap-1.5 p-3.5 bg-slate-50 border border-slate-100 rounded-[1.2rem] hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all group/btn"
-                 >
-                    <MessageSquare className="size-4 text-slate-400 group-hover/btn:text-white group-hover/btn:-rotate-12 transition-all" />
-                    <span className="text-[10px] font-bold">Inpulse</span>
-                 </button>
-              </div>
 
               <button 
                 onClick={() => {
@@ -311,6 +358,15 @@ export default function TeamPage() {
           </div>
         </DialogContent>
       </Dialog>
+      
+      <NewTaskModal 
+        open={isNewTaskOpen} 
+        onOpenChange={setIsNewTaskOpen} 
+        onSuccess={() => {
+          toast.success("Tactical task successfully assigned.")
+          setIsNewTaskOpen(false)
+        }}
+      />
     </TeamLeadChrome>
   )
 }

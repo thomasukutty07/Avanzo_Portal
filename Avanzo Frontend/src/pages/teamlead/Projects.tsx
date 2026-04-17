@@ -1,10 +1,11 @@
 import TeamLeadChrome from "@/components/portal/teamlead/TeamLeadChrome"
+import { CreateProjectModal } from "@/components/portal/teamlead/TeamLeadActionForms"
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
 import { projectsService } from "@/services/projects"
 import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { 
-  Plus, 
   Search, 
   Filter, 
   Zap, 
@@ -15,14 +16,25 @@ import {
   Calendar,
   Layout,
   Users,
-  Trash2
+  Trash2,
+  X,
+  Mail,
 } from "lucide-react"
+import { useAuth } from "@/context/AuthContext"
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 export default function LeadProjectsPage() {
   useDesignPortalLightTheme()
+  const { user } = useAuth()
+  const navigate = useNavigate()
   const [projects, setProjects] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+  const [showCreateModal, setShowCreateModal] = useState(false)
 
   useEffect(() => {
     fetchProjects()
@@ -78,8 +90,8 @@ export default function LeadProjectsPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
           <header>
-            <h2 className="text-2xl font-black tracking-tight text-slate-900 font-headline leading-none">Project List</h2>
-            <p className="text-xs font-bold text-slate-400 mt-2 font-headline leading-none opacity-60">Track and manage team projects</p>
+            <h2 className="text-3xl font-black tracking-tight text-slate-900 font-headline leading-none">Project List</h2>
+            <p className="text-sm font-bold text-slate-400 mt-2 font-headline leading-none opacity-60">Track and manage team projects</p>
           </header>
           <div className="flex gap-3.5">
              <button 
@@ -87,6 +99,12 @@ export default function LeadProjectsPage() {
               className="px-6 py-2.5 bg-white border border-slate-100 text-slate-900 font-black rounded-xl hover:bg-slate-50 transition-all text-[10px] active:scale-95 shadow-sm"
             >
               Export Report
+            </button>
+            <button 
+              onClick={() => setShowCreateModal(true)}
+              className="px-6 py-2.5 bg-violet-600 text-white font-black rounded-xl hover:bg-violet-700 transition-all text-[10px] active:scale-95 shadow-md shadow-violet-600/20"
+            >
+              Create Project
             </button>
           </div>
         </div>
@@ -104,11 +122,11 @@ export default function LeadProjectsPage() {
                  } transition-all group-hover:scale-110`}>
                    <stat.icon className="h-5 w-5 stroke-[3px]" />
                  </div>
-                 <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100/50">{stat.sub}</span>
+                 <span className="text-xs font-black text-slate-300 uppercase tracking-widest bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100/50">{stat.sub}</span>
                </div>
                <div className="space-y-1">
                  <h3 className="text-2xl font-black text-slate-900 font-headline tabular-nums tracking-tight leading-none">{stat.value}</h3>
-                 <p className="text-[10px] font-bold text-slate-400 opacity-80">{stat.label}</p>
+                 <p className="text-xs font-bold text-slate-400 opacity-80">{stat.label}</p>
                </div>
             </div>
           ))}
@@ -123,7 +141,7 @@ export default function LeadProjectsPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search projects and clients..." 
-              className="w-full bg-white border border-slate-100 rounded-2xl pl-12 pr-4 py-4 text-[13px] font-bold text-slate-900 focus:ring-4 focus:ring-violet-600/5 focus:border-violet-200 transition-all placeholder:text-slate-200 outline-none shadow-sm shadow-slate-200/10 tracking-tight"
+              className="w-full bg-white border border-slate-100 rounded-2xl pl-12 pr-4 py-4 text-sm font-bold text-slate-900 focus:ring-4 focus:ring-violet-600/5 focus:border-violet-200 transition-all placeholder:text-slate-200 outline-none shadow-sm shadow-slate-200/10 tracking-tight"
             />
           </div>
           <button className="flex items-center gap-2.5 px-7 py-4 bg-white border border-slate-100 text-slate-900 font-bold rounded-2xl hover:bg-slate-50 transition-all text-xs shadow-sm shadow-slate-200/10 active:scale-95 group tracking-tight">
@@ -144,7 +162,7 @@ export default function LeadProjectsPage() {
           
           <div className="overflow-x-auto">
             <table className="w-full text-left">
-              <thead className="bg-slate-50/50 text-slate-400 text-[9px] font-black uppercase tracking-[0.15em]">
+              <thead className="bg-slate-50/50 text-slate-400 text-xs font-black uppercase tracking-[0.15em]">
                 <tr>
                   <th className="px-8 py-5">Project Name</th>
                   <th className="px-8 py-5">Progress</th>
@@ -169,15 +187,25 @@ export default function LeadProjectsPage() {
                      </td>
                    </tr>
                 ) : filteredProjects.map((p, i) => (
-                  <tr key={i} className="group hover:bg-slate-50/30 transition-all cursor-pointer" onClick={() => toast.info(`Accessing project details: ${p.title}`)}>
+                  <tr 
+                    key={i} 
+                    className="group hover:bg-slate-50/30 transition-all cursor-pointer" 
+                    onClick={() => {
+                      if (user?.role === 'Admin' || user?.role === 'Organization') {
+                        navigate(`/admin/projects/${p.id}`)
+                      } else {
+                        navigate(`/projects/${p.id}`)
+                      }
+                    }}
+                  >
                     <td className="px-8 py-7">
                        <div className="flex items-center gap-5">
                           <div className="size-12 rounded-[1.2rem] bg-white border border-slate-100 flex items-center justify-center p-2 shadow-sm group-hover:rounded-xl group-hover:border-violet-100 group-hover:shadow-lg transition-all">
                              <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(p.title)}&background=f5f3ff&color=7c3aed&bold=true`} alt={p.title} className="size-full rounded-xl" />
                           </div>
                           <div className="min-w-0">
-                             <p className="text-sm font-bold text-slate-900 group-hover:text-violet-600 transition-colors tracking-tight leading-none truncate capitalize">{p.title}</p>
-                             <p className="text-[10px] text-slate-400 font-bold mt-2 leading-none opacity-80">{p.client_name || 'Global Strategic Init.'}</p>
+                             <p className="text-base font-bold text-slate-900 group-hover:text-violet-600 transition-colors tracking-tight leading-none truncate capitalize">{p.title}</p>
+                             <p className="text-xs text-slate-400 font-bold mt-2 leading-none opacity-80">{p.client_name || 'Global Strategic Init.'}</p>
                           </div>
                        </div>
                     </td>
@@ -186,11 +214,11 @@ export default function LeadProjectsPage() {
                           <div className="w-full bg-slate-50 rounded-full h-1.5 overflow-hidden border border-slate-100 shadow-inner group-hover:border-violet-100 transition-colors">
                             <div className="bg-violet-600 h-full rounded-full transition-all duration-[2000ms] shadow-[0_0_8px_rgba(124,58,237,0.4)]" style={{ width: `${p.progress || 0}%` }} />
                           </div>
-                          <span className="text-[10px] font-bold text-slate-600 tabular-nums">{p.progress || 0}% completed</span>
+                          <span className="text-xs font-bold text-slate-600 tabular-nums">{p.progress || 0}% completed</span>
                        </div>
                     </td>
                     <td className="px-8 py-7">
-                      <div className="inline-flex items-center gap-2 px-3 py-1.5 text-[10px] font-bold rounded-lg border transition-all bg-white shadow-sm group-hover:shadow-lg">
+                      <div className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-lg border transition-all bg-white shadow-sm group-hover:shadow-lg">
                         <span className={`size-2 rounded-full ${
                           p.priority === 'high' || p.priority === 'urgent' ? 'bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.4)]' :
                           p.priority === 'medium' ? 'bg-blue-500' :
@@ -200,7 +228,7 @@ export default function LeadProjectsPage() {
                       </div>
                     </td>
                     <td className="px-8 py-7">
-                       <div className="flex items-center gap-2.5 text-[10px] font-bold text-slate-400 tabular-nums opacity-60">
+                       <div className="flex items-center gap-2.5 text-xs font-bold text-slate-400 tabular-nums opacity-60">
                           <Calendar className="size-3.5" />
                           {p.target_end_date ? new Date(p.target_end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No target date'}
                        </div>
@@ -223,6 +251,11 @@ export default function LeadProjectsPage() {
           </div>
         </div>
       </div>
+      <CreateProjectModal 
+        open={showCreateModal} 
+        onOpenChange={setShowCreateModal} 
+        onSuccess={fetchProjects} 
+      />
     </TeamLeadChrome>
   )
 }

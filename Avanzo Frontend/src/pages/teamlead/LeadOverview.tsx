@@ -2,6 +2,7 @@ import TeamLeadChrome from "@/components/portal/teamlead/TeamLeadChrome"
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
 import { useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
+import { useAuth } from "@/context/AuthContext"
 import { attendanceService } from "@/services/attendance"
 import { leavesService } from "@/services/leaves"
 import { projectsService } from "@/services/projects"
@@ -16,10 +17,15 @@ import {
   Clock,
   Check,
   XCircle,
-  Calendar
+  Calendar,
+  ShieldAlert,
+  Fingerprint,
+  Activity
 } from "lucide-react"
 
 export default function LeadOverview() {
+  const { user } = useAuth()
+  const isCyber = user?.department_name === "Cybersecurity"
   useDesignPortalLightTheme()
   const navigate = useNavigate()
   const [feed, setFeed] = useState<any[]>([])
@@ -89,17 +95,26 @@ export default function LeadOverview() {
     { label: "Total Projects", value: projects.length.toString(), sub: "Active Projects", color: "primary", icon: CalendarDays },
   ]
 
+  const CYBER_STATS = [
+    { label: "Security Audits", value: projects.filter(p => p.service_name?.includes('Audit') || p.service_name?.includes('VAPT')).length.toString(), sub: "In Progress", color: "blue", icon: ShieldAlert },
+    { label: "Vulnerability Find", value: criticalTasks.toString(), sub: "Critical / High", color: "orange", icon: AlertTriangle },
+    { label: "Compliance Score", value: "94%", sub: "Team Avg", color: "green", icon: Fingerprint },
+    { label: "Unit Activity", value: feed.length.toString(), sub: "Signals Detected", color: "primary", icon: Activity },
+  ]
+
+  const displayStats = isCyber ? CYBER_STATS : STATS
+
   return (
     <TeamLeadChrome>
       <div className="p-4 md:p-8 space-y-10 animate-in fade-in duration-700 font-sans">
         <header>
-          <h2 className="text-2xl font-black tracking-tight text-slate-900 font-headline leading-none">Dashboard</h2>
-          <p className="text-xs font-bold text-slate-400 mt-2 font-headline leading-none opacity-60">Team overview and progress</p>
+          <h2 className="text-3xl font-black tracking-tight text-slate-900 font-headline leading-none">Dashboard</h2>
+          <p className="text-sm font-bold text-slate-400 mt-2 font-headline leading-none opacity-60">Team overview and progress</p>
         </header>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {STATS.map((stat, i) => (
+          {displayStats.map((stat, i) => (
             <button
               key={i}
               onClick={() => toast.info(`Viewing analytics for ${stat.label}`)}
@@ -114,11 +129,11 @@ export default function LeadOverview() {
                 }`}>
                   <stat.icon className="size-5 stroke-[3px]" />
                 </div>
-                <span className={`text-[9px] font-bold px-2 py-1 rounded-lg text-slate-400 bg-slate-50 border border-slate-100/50 shadow-sm`}>
+                <span className={`text-xs font-bold px-2 py-1 rounded-lg text-slate-400 bg-slate-50 border border-slate-100/50 shadow-sm`}>
                   {stat.sub}
                 </span>
               </div>
-              <p className="text-slate-400 text-[10px] font-black leading-none">{stat.label}</p>
+              <p className="text-slate-400 text-xs font-black leading-none">{stat.label}</p>
               <h3 className="text-3xl font-black mt-2.5 text-slate-900 font-headline tabular-nums tracking-tight">{stat.value}</h3>
               {stat.color === "orange" && criticalTasks > 0 && (
                 <div className="mt-3 text-[9px] text-orange-600 font-bold flex items-center gap-1.5 animate-pulse">
@@ -129,6 +144,7 @@ export default function LeadOverview() {
             </button>
           ))}
         </div>
+
 
         {/* Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -206,11 +222,11 @@ export default function LeadOverview() {
                       </span>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[13px] leading-tight mb-1.5">
+                      <p className="text-sm leading-tight mb-1.5">
                         <span className="font-bold text-slate-900 group-hover:text-violet-600 transition-colors tracking-tight capitalize">{entry.employee_name}</span>
                         <span className="text-slate-400 font-bold ml-1.5 opacity-60"> {getAction(entry)}</span>
                       </p>
-                      <p className="text-[10px] text-slate-300 font-bold flex items-center gap-2 opacity-80">
+                      <p className="text-xs text-slate-300 font-bold flex items-center gap-2 opacity-80">
                         <Clock className="size-3" />
                         {entry.clock_in_time ? `${entry.clock_in_time}` : 'Activity log'}
                       </p>
@@ -260,8 +276,8 @@ export default function LeadOverview() {
                        {req.employee_name?.split(' ').map((n:any) => n[0]).join('')}
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-bold text-slate-900 leading-tight group-hover:text-violet-600 transition-colors mb-1.5 capitalize tracking-tight">{req.employee_name}</p>
-                      <span className="text-[9px] text-slate-400 font-bold bg-white px-2 py-0.5 rounded-lg border border-slate-100/50 shadow-sm capitalize">{req.leave_type_display || req.leave_type}</span>
+                      <p className="text-base font-bold text-slate-900 leading-tight group-hover:text-violet-600 transition-colors mb-1.5 capitalize tracking-tight">{req.employee_name}</p>
+                      <span className="text-xs text-slate-400 font-bold bg-white px-2 py-0.5 rounded-lg border border-slate-100/50 shadow-sm capitalize">{req.leave_type_display || req.leave_type}</span>
                     </div>
                   </div>
                   
@@ -314,7 +330,7 @@ export default function LeadOverview() {
           
           <div className="overflow-x-auto">
             <table className="w-full text-left">
-              <thead className="bg-slate-50/50 text-slate-400 text-[9px] font-black uppercase tracking-[0.15em]">
+              <thead className="bg-slate-50/50 text-slate-400 text-xs font-black uppercase tracking-[0.15em]">
                 <tr>
                   <th className="px-8 py-5">Task Name</th>
                   <th className="px-8 py-5">Category</th>
@@ -335,7 +351,7 @@ export default function LeadOverview() {
                   <tr key={i} className="group hover:bg-slate-50/30 transition-all cursor-pointer" onClick={() => toast.info(`Syncing unit metadata: ${task.title}`)}>
                     <td className="px-8 py-6">
                        <div className="flex flex-col gap-1 min-w-[220px]">
-                         <span className="font-black text-sm text-slate-900 group-hover:text-violet-600 transition-colors leading-none tracking-tight uppercase">{task.title}</span>
+                         <span className="font-black text-base text-slate-900 group-hover:text-violet-600 transition-colors leading-none tracking-tight uppercase">{task.title}</span>
                          <span className="text-[9px] font-black text-slate-300 opacity-80 leading-none">General Task</span>
                        </div>
                     </td>

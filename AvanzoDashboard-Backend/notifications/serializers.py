@@ -40,7 +40,6 @@ class BroadcastSerializer(serializers.ModelSerializer):
             "is_active",
             "is_acknowledged",
             "created_at",
-            "expiry_date",
         ]
         read_only_fields = fields
 
@@ -58,22 +57,16 @@ class BroadcastCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Broadcast
-        fields = ["severity", "target_scope", "department", "title", "message", "expiry_date"]
+        fields = ["severity", "target_scope", "department", "title", "message"]
 
     def validate(self, data):
         scope = data.get("target_scope")
         department = data.get("department")
 
-        request = self.context.get("request")
-        user = request.user if request else None
-
         if scope == Broadcast.TargetScope.DEPARTMENT and not department:
-            if user and user.is_team_lead and user.department:
-                data["department"] = user.department
-            else:
-                raise serializers.ValidationError(
-                    {"department": "A department must be selected for department-scoped broadcasts."}
-                )
+            raise serializers.ValidationError(
+                {"department": "A department must be selected for department-scoped broadcasts."}
+            )
 
         if scope == Broadcast.TargetScope.ORG_WIDE and department:
             # Clean up department if it was provided for org-wide

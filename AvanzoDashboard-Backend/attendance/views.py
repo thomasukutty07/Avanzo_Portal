@@ -4,7 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from core.permissions import IsAdmin, IsAdminOrHR, IsTeamLead
+from core.permissions import IsAdminOrHR, IsTeamLead
 
 from .models import DailyLog, DailyLogEntry
 from .serializers import (

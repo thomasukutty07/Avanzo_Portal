@@ -2,8 +2,16 @@ from rest_framework import serializers
 
 from leaves.models import LeaveRequest
 
-from accounts.serializers import EmployeePublicSerializer
 from .models import ExternalClient, Project, Service, Task
+from accounts.models import Employee
+
+
+class ProjectMemberSerializer(serializers.ModelSerializer):
+    full_name = serializers.CharField(source="get_full_name", read_only=True)
+
+    class Meta:
+        model = Employee
+        fields = ["id", "full_name", "avatar", "email"]
 
 
 class ExternalClientSerializer(serializers.ModelSerializer):
@@ -13,17 +21,21 @@ class ExternalClientSerializer(serializers.ModelSerializer):
 
 
 class ServiceSerializer(serializers.ModelSerializer):
+    department_name = serializers.CharField(source="department.name", read_only=True)
+
     class Meta:
         model = Service
-        fields = "__all__"
+        fields = ["id", "name", "description", "department", "department_name", "is_active"]
 
 
 class ProjectSerializer(serializers.ModelSerializer):
     client_name = serializers.CharField(source="client.name", read_only=True, default=None)
     service_name = serializers.CharField(source="service.name", read_only=True, default=None)
     department_name = serializers.CharField(source="owning_department.name", read_only=True)
+    manager = ProjectMemberSerializer(read_only=True)
+    manager_name = serializers.SerializerMethodField()
     progress = serializers.IntegerField(source="weighted_progress", read_only=True)
-    team = EmployeePublicSerializer(many=True, read_only=True)
+    team_members = ProjectMemberSerializer(source="team", many=True, read_only=True)
 
     class Meta:
         model = Project
@@ -38,25 +50,57 @@ class ProjectSerializer(serializers.ModelSerializer):
             "owning_department",
             "department_name",
             "manager",
+            "manager_name",
             "team",
+            "team_members",
             "status",
             "start_date",
             "target_end_date",
             "progress",
             "created_at",
         ]
-        read_only_fields = ["owning_department", "manager", "status"]
+        read_only_fields = ["manager", "status"]
+
+    def get_manager_name(self, obj) -> str | None:
+        if obj.manager:
+            name = obj.manager.get_full_name().strip()
+            return name if name else obj.manager.email
+        return None
 
     def validate(self, data):
         is_internal = data.get("is_internal", getattr(self.instance, "is_internal", False))
         client = data.get("client", getattr(self.instance, "client", None))
 
+        user = self.context["request"].user if "request" in self.context else None
+
         if self.instance:
             department = self.instance.owning_department
         else:
-            department = (
-                self.context["request"].user.department if "request" in self.context else None
-            )
+            provided_dept = data.get("owning_department")
+
+            if provided_dept:
+                if user and not user.is_admin and provided_dept != user.department:
+                    raise serializers.ValidationError(
+                        {
+                            "owning_department": (
+                                "Only Admins can create projects for other departments."
+                            )
+                        }
+                    )
+                department = provided_dept
+            else:
+                department = user.department if user else None
+
+            if not department:
+                raise serializers.ValidationError(
+                    {
+                        "owning_department": (
+                            "Must provide a department or belong to one to create a project."
+                        )
+                    }
+                )
+
+            data["owning_department"] = department
 
         service = data.get("service", getattr(self.instance, "service", None))
 
@@ -119,12 +163,6 @@ class TaskSerializer(serializers.ModelSerializer):
         if start_date and due_date and start_date > due_date:
             raise serializers.ValidationError({"due_date": "Due date cannot be before start date."})
 
-        # SECURE: Employee must explicitly be on the Project Team
-        if project and assignee and not project.team.filter(id=assignee.id).exists():
-            raise serializers.ValidationError(
-                {"assignee": f"{assignee.get_full_name()} is not assigned to this project's team."}
-            )
-
         # OVERLAP ENGINE: Prevent assignment during approved leaves
         if assignee and start_date and due_date and not force_assign:
             overlapping_leaves = LeaveRequest.objects.filter(
@@ -148,10 +186,9 @@ class TaskSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        force_assign = validated_data.pop("force_assign", False)
-        instance = super().create(validated_data)
-        validated_data["force_assign"] = force_assign
-        return instance
+        """Remove write-only virtual field before hitting DB."""
+        validated_data.pop("force_assign", None)
+        return super().create(validated_data)
 
 
 class TaskProgressSerializer(serializers.Serializer):

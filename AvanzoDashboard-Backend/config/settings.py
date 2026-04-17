@@ -22,34 +22,50 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env()
 environ.Env.read_env(BASE_DIR / ".env")
 
-# Detect SQLite early
-default_db_url = f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
-db_url = env("DATABASE_URL", default=default_db_url)
-is_sqlite = db_url.startswith("sqlite")
-
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG", default=False)
 
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
+# ── Hosts & CORS — Dev vs Production ────────────────────────
+# In development (DEBUG=True):
+#   • ALLOWED_HOSTS = ["*"]  → accept requests from any hostname/IP
+#   • CORS_ALLOW_ALL_ORIGINS = True → accept requests from any frontend origin
+#
+# In production (DEBUG=False):
+#   • ALLOWED_HOSTS reads from the ALLOWED_HOSTS env var (set in Coolify)
+#   • CORS_ALLOWED_ORIGINS reads from CORS_ALLOWED_ORIGINS env var
+#
+# 🚨 NEVER set DEBUG=True in production. These open settings are only
+#    safe because they are gated behind the DEBUG flag.
+if DEBUG:
+    ALLOWED_HOSTS = ["*"]
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
+    CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
+
+# ── Reverse Proxy (Coolify / Traefik) ───────────────────────
+# CRITICAL for Coolify deployments: Traefik passes the real hostname
+# in the X-Forwarded-Host header. Without this, Django reads the
+# internal container address and django-tenants can't detect the tenant.
+USE_X_FORWARDED_HOST = True
 
 
-SHARED_APPS = (
-    "django_tenants",
-    "clients",
+INSTALLED_APPS = [
+    "django.contrib.admin",
+    "django.contrib.auth",
     "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
     "django.contrib.staticfiles",
     "corsheaders",
     "drf_spectacular",
-)
-
-TENANT_APPS = (
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.sessions",
-    "django.contrib.messages",
+    "rest_framework",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
+    "auditlog",
     "core",
     "accounts",
     "organization",
@@ -58,23 +74,10 @@ TENANT_APPS = (
     "leaves",
     "notifications",
     "tickets",
-    "rest_framework",
-    "rest_framework_simplejwt",
-    "rest_framework_simplejwt.token_blacklist",
-    "auditlog",
-)
-
-# Shared apps filtering for SQLite
-final_shared_apps = list(SHARED_APPS)
-if is_sqlite:
-    final_shared_apps = [app for app in final_shared_apps if "tenants" not in app]
-
-INSTALLED_APPS = final_shared_apps + [app for app in TENANT_APPS if app not in final_shared_apps]
-TENANT_MODEL = "clients.Client"
-TENANT_DOMAIN_MODEL = "clients.Domain"
+    "clients",
+]
 
 MIDDLEWARE = [
-    "django_tenants.middleware.main.TenantMainMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -86,8 +89,6 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "config.urls"
-PUBLIC_SCHEMA_URLCONF = "config.public_urls"
-SHOW_PUBLIC_IF_NO_TENANT_FOUND = True
 
 TEMPLATES = [
     {
@@ -112,16 +113,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASES = {"default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")}
 
-if is_sqlite:
-    DATABASES["default"]["ENGINE"] = "django.db.backends.sqlite3"
-    # Remove tenant middleware and router if using SQLite
-    MIDDLEWARE = [m for m in MIDDLEWARE if "django_tenants" not in m]
-    DATABASE_ROUTERS = []
-else:
-    DATABASES["default"]["ENGINE"] = "django_tenants.postgresql_backend"
-    DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)
-    DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
-    DATABASE_ROUTERS = ("django_tenants.routers.TenantSyncRouter",)
+DATABASE_ROUTERS = []
 
 # Password Hashing Strategy
 PASSWORD_HASHERS = [
@@ -182,8 +174,8 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.UserRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "anon": "100/minute",
-        "user": "1000/minute",
+        "anon": "1000/minute",
+        "user": "10000/minute",
     },
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
@@ -200,15 +192,20 @@ SIMPLE_JWT = {
 }
 
 
-# CORS
-CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:5173"])
-
 # drf-spectacular
 SPECTACULAR_SETTINGS = {
     "TITLE": "Avanzo Dashboard API",
     "DESCRIPTION": "Internal company dashboard REST API",
     "VERSION": "0.1.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    # ── Global security requirement ───────────────────────────────────────────
+    # Declares that every endpoint requires jwtAuth by default.
+    # "jwtAuth" matches TenantAwareJWTAuthenticationExtension.name in
+    # core/authentication.py — that extension generates the securitySchemes
+    # definition; this line applies it globally to every operation.
+    # Endpoints that are intentionally public (e.g. /api/auth/login/) can
+    # override this with @extend_schema(security=[]) on the view.
+    "SECURITY": [{"jwtAuth": []}],
     "ENUM_NAME_OVERRIDES": {
         "ProjectStatusEnum": "projects.models.Project.Status",
         "TaskStatusEnum": "projects.models.Task.Status",

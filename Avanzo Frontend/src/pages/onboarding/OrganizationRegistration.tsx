@@ -1,5 +1,5 @@
 import type { FormEvent } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { RegisterOrgWizardLayout } from "@/components/onboarding/RegisterOrgWizardLayout"
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
 
@@ -30,8 +30,14 @@ const labelClass =
 export default function OrganizationRegistrationPage() {
   useDesignPortalLightTheme()
 
+  const navigate = useNavigate()
+
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
+    const formData = new FormData(e.target as HTMLFormElement)
+    navigate("/register-org/contact", {
+      state: Object.fromEntries(formData.entries()),
+    })
   }
 
   return (
@@ -74,9 +80,23 @@ export default function OrganizationRegistrationPage() {
               placeholder="e.g. Acme Corp"
               type="text"
               name="name"
+              required
             />
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <label className={labelClass}>Subdomain</label>
+              <div className="flex items-center">
+                <input
+                  className={inputClass}
+                  placeholder="e.g. acme"
+                  type="text"
+                  name="subdomain"
+                  required
+                />
+                <span className="ml-2 text-sm text-[#7a7488]">.avanzo.com</span>
+              </div>
+            </div>
             <div>
               <label className={labelClass}>Business Email</label>
               <input
@@ -86,6 +106,8 @@ export default function OrganizationRegistrationPage() {
                 name="email"
               />
             </div>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <label className={labelClass}>Website</label>
               <input
@@ -148,15 +170,15 @@ export default function OrganizationRegistrationPage() {
           >
             Save for later
           </button>
-          <Link
-            to="/register-org/contact"
+          <button
+            type="submit"
             className="group flex items-center gap-2 rounded-xl bg-gradient-to-br from-[#4800b2] to-[#6200ee] px-10 py-3.5 font-bold text-white shadow-lg shadow-[#4800b2]/20 transition-all hover:scale-[1.02] active:scale-95"
           >
             Next: Contact Info
             <span className="material-symbols-outlined text-sm">
               arrow_forward
             </span>
-          </Link>
+          </button>
         </div>
       </form>
       <footer className="mt-4 border-t border-[#edeeef] pt-4 text-center space-y-2">

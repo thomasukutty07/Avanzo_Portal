@@ -13,34 +13,36 @@ export default function GeneratedScreenPage() {
             check_circle
           </span>
         </div>
-        
+
         <header className="mb-10">
           <h2 className="font-headline text-3xl font-bold tracking-tight text-[#191c1d]">
-            Registration Successful
+            Registration Complete!
           </h2>
           <p className="mt-3 text-[#494456] max-w-md mx-auto">
-            Your application for <strong>AVANZO CYBER SECURITY</strong> has been received and is now in the review queue.
+            Your organization has been successfully registered and your admin account is ready to use.
           </p>
         </header>
 
         <div className="mt-12 mb-12 flex justify-center">
-          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-amber-100 bg-amber-50/30 p-10 text-center shadow-lg shadow-amber-600/5">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-emerald-100 bg-emerald-50/30 p-10 text-center shadow-lg shadow-emerald-600/5">
             <div className="flex items-center justify-center gap-3 mb-4">
-              <span className="material-symbols-outlined text-amber-600 size-5">pending_actions</span>
-              <span className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-800">Current Status</span>
+              <span className="material-symbols-outlined text-emerald-600 size-5" style={{ fontVariationSettings: "'FILL' 1" }}>
+                verified
+              </span>
+              <span className="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-800">Account Status</span>
             </div>
-            
-            <p className="text-3xl font-black text-amber-900 tracking-tight mb-4">PENDING APPROVAL</p>
-            
-            <p className="text-[13px] leading-relaxed text-amber-800/70 mb-10">
-              An Admin is currently reviewing your organization profile. You will be notified via email once your account is activated.
+
+            <p className="text-3xl font-black text-emerald-900 tracking-tight mb-4">ACTIVE</p>
+
+            <p className="text-[13px] leading-relaxed text-emerald-800/70 mb-10">
+              You can sign in immediately using the credentials you provided during registration.
             </p>
 
             <Link
-              to="/login"
-              className="group flex w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-6 py-4 font-bold text-white shadow-xl shadow-amber-600/20 transition-all hover:bg-amber-700 active:scale-[0.98]"
+              to="/org-login"
+              className="group flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-4 font-bold text-white shadow-xl shadow-emerald-600/20 transition-all hover:bg-emerald-700 active:scale-[0.98]"
             >
-              Return to Login
+              Sign In to Your Portal
               <span className="material-symbols-outlined text-sm transition-transform group-hover:translate-x-0.5">arrow_forward</span>
             </Link>
           </div>

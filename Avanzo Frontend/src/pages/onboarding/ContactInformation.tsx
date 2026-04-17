@@ -1,7 +1,10 @@
+import { useState } from "react"
 import type { FormEvent } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate, useLocation } from "react-router-dom"
+import { Loader2 } from "lucide-react"
 import { RegisterOrgWizardLayout } from "@/components/onboarding/RegisterOrgWizardLayout"
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
+import { accountsService } from "@/services/accounts"
 
 const departments = [
   "Select Department",
@@ -22,8 +25,41 @@ const labelClass =
 export default function ContactInformationPage() {
   useDesignPortalLightTheme()
 
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault()
+  const navigate = useNavigate();
+  const { state } = useLocation();
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const onSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    const formData = new FormData(e.target as HTMLFormElement);
+
+    const legalName = formData.get("legalName") as string;
+    const parts = legalName.trim().split(" ");
+    const firstName = parts[0] || "";
+    const lastName = parts.slice(1).join(" ") || "Admin";
+
+    const email = formData.get("professionalEmail") as string;
+    const password = formData.get("password") as string;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      await accountsService.registerTenant({
+        company_name: state?.name || "Acme Corp",
+        subdomain: state?.subdomain || "acme",
+        admin_email: email,
+        admin_password: password,
+        admin_first_name: firstName,
+        admin_last_name: lastName,
+      });
+      navigate("/register-org/status");
+    } catch (err) {
+      setError("Registration failed, please check your network or subdomain and try again.");
+      setLoading(false);
+    }
   }
 
   return (
@@ -46,6 +82,7 @@ export default function ContactInformationPage() {
                 placeholder="e.g., Alexander Sterling"
                 type="text"
                 name="legalName"
+                required
               />
             </div>
             <div>
@@ -55,6 +92,7 @@ export default function ContactInformationPage() {
                 placeholder="e.g., alexander@organization.com"
                 type="email"
                 name="professionalEmail"
+                required
               />
             </div>
           </div>
@@ -83,14 +121,26 @@ export default function ContactInformationPage() {
               />
             </div>
           </div>
-          <div>
-            <label className={labelClass}>Job Title / Designation</label>
-            <input
-              className={inputClass}
-              placeholder="e.g., Chief Information Security Officer"
-              type="text"
-              name="title"
-            />
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+            <div>
+              <label className={labelClass}>Job Title / Designation</label>
+              <input
+                className={inputClass}
+                placeholder="e.g., Chief Information Security Officer"
+                type="text"
+                name="title"
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Admin Password</label>
+              <input
+                className={inputClass}
+                placeholder="••••••••"
+                type="password"
+                name="password"
+                required
+              />
+            </div>
           </div>
         </div>
         <div className="flex items-center justify-between gap-4 pt-8">
@@ -101,15 +151,17 @@ export default function ContactInformationPage() {
             <span className="material-symbols-outlined text-lg">arrow_back</span>
             Back
           </Link>
-          <Link
-            to="/register-org/status"
-            className="group flex items-center gap-2 rounded-xl bg-gradient-to-br from-[#4800b2] to-[#6200ee] px-10 py-3.5 font-bold text-white shadow-lg shadow-[#4800b2]/20 transition-all hover:scale-[1.02] active:scale-95"
-          >
-            Confirm identity
-            <span className="material-symbols-outlined text-sm">
-              check_circle
-            </span>
-          </Link>
+          <div className="flex flex-col items-end gap-2">
+            {error && <span className="text-red-500 text-sm font-medium">{error}</span>}
+            <button
+              type="submit"
+              disabled={loading}
+              className="group flex items-center gap-2 rounded-xl bg-gradient-to-br from-[#4800b2] to-[#6200ee] px-10 py-3.5 font-bold text-white shadow-lg shadow-[#4800b2]/20 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+            >
+              {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "Confirm identity"}
+              {!loading && <span className="material-symbols-outlined text-sm">check_circle</span>}
+            </button>
+          </div>
         </div>
       </form>
       <footer className="mt-16 space-y-3 border-t border-[#edeeef] pt-8 text-center">

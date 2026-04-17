@@ -48,6 +48,7 @@ const TeamAnnouncementsPage = lazy(() =>
 const TeamLeadCreateAnnouncementPage = lazy(() =>
   import("@/pages/teamlead/CreateAnnouncement")
 )
+const LeadProjectDetailsPage = lazy(() => import("@/pages/teamlead/ProjectDetails"))
 
 const TechnicalDashboardPage = lazy(() =>
   import("@/pages/technical/TechnicalDashboard")
@@ -101,7 +102,6 @@ function Loading() {
 
 function RoleBasedHome() {
   const { user } = useAuth()
-  if (user?.role === "Organization") return <AdminDashboard />
   if (user?.role === "Admin") return <AdminDashboard />
   if (user?.role === "HR") return <HROverview />
   if (user?.role === "Team Lead") return <LeadOverview />
@@ -173,7 +173,7 @@ export default function App() {
         >
           <Route path="/" element={<RoleBasedHome />} />
 
-          <Route element={<RequireRole roles={["Admin", "Organization"]} />}>
+          <Route element={<RequireRole roles={["Admin"]} />}>
             <Route path="/users" element={<UsersPage />} />
             <Route path="/departments" element={<DepartmentsPage />} />
             <Route path="/reports" element={<ReportsPage />} />
@@ -194,7 +194,7 @@ export default function App() {
 
           <Route path="/settings" element={<SettingsPage />} />
 
-          <Route element={<RequireRole roles={["HR", "Admin", "Organization"]} />}>
+          <Route element={<RequireRole roles={["HR", "Admin"]} />}>
             <Route path="/employees" element={<HREmployees />} />
             <Route path="/attendance" element={<HRAttendanceOverview />} />
             <Route path="/leave" element={<HRLeaveRequests />} />
@@ -210,16 +210,17 @@ export default function App() {
             />
           </Route>
 
-          <Route element={<RequireRole roles={["Team Lead", "Admin", "Organization"]} />}>
+          <Route element={<RequireRole roles={["Team Lead", "Admin"]} />}>
             <Route path="/tasks" element={<TaskManagement />} />
             <Route path="/projects" element={<ProjectProgress />} />
+            <Route path="/projects/:id" element={<LeadProjectDetailsPage />} />
             <Route path="/team" element={<TeamPage />} />
             <Route
               path="/team-announcements"
               element={<TeamAnnouncementsPage />}
             />
             <Route
-              path="/team/create-announcement"
+              path="/team-announcements/create"
               element={<TeamLeadCreateAnnouncementPage />}
             />
           </Route>

@@ -42,10 +42,6 @@ export default function RoleSelectionPage() {
           <h2 className="text-xl font-bold tracking-tight">Avanzo</h2>
         </div>
         <div className="flex items-center gap-4">
-          <div className="hidden flex-col items-end md:flex">
-            <span className="text-sm font-medium">System Gateway</span>
-            <span className="text-xs text-slate-500">v4.2.0-stable</span>
-          </div>
           <div className="flex size-10 items-center justify-center rounded-full border border-[#5a5af6]/30 bg-[#5a5af6]/20">
             <span className="material-symbols-outlined text-[#5a5af6]">
               person
@@ -58,7 +54,7 @@ export default function RoleSelectionPage() {
           <div className="mb-8 rounded-xl border border-slate-200 bg-white/80 px-4 py-3 text-center text-sm text-slate-600 shadow-sm">
             <p className="font-semibold text-slate-800">System hierarchy</p>
             <p className="mt-1 font-mono text-xs text-slate-500 md:text-sm">
-              Organization → Admin → HR → Team Lead → Employee
+              Admin → HR → Team Lead → Employee
             </p>
           </div>
           <div className="mb-12 text-center">

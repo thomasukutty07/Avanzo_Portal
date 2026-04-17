@@ -121,7 +121,7 @@ export default function TeamLeadCreateAnnouncementPage() {
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder="Enter a high-impact title..."
-                className="w-full bg-transparent border-none p-0 text-2xl font-bold text-slate-900 placeholder:text-slate-100 focus:ring-0 tracking-tight font-headline"
+                className="w-full bg-transparent border-0 border-none outline-none focus:outline-none ring-0 focus:ring-0 p-0 text-2xl font-bold text-slate-900 placeholder:text-slate-100 tracking-tight font-headline"
               />
             </div>
 
@@ -136,7 +136,7 @@ export default function TeamLeadCreateAnnouncementPage() {
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Broadcast your mission parameters or updates here..."
-                className="w-full min-h-[300px] bg-transparent border-none p-0 text-lg font-medium text-slate-600 placeholder:text-slate-100 focus:ring-0 resize-none leading-relaxed"
+                className="w-full min-h-[300px] bg-transparent border-0 border-none outline-none focus:outline-none ring-0 focus:ring-0 p-0 text-lg font-medium text-slate-600 placeholder:text-slate-100 resize-none leading-relaxed"
               />
             </div>
 
@@ -225,23 +225,6 @@ export default function TeamLeadCreateAnnouncementPage() {
           </div>
         </section>
 
-        {/* Security / Info Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="p-6 rounded-[1.8rem] bg-white border border-slate-100 shadow-sm flex gap-5 hover:shadow-xl hover:-translate-y-1 transition-all group">
-             <div className="size-12 bg-violet-50 border border-violet-100 rounded-2xl flex items-center justify-center text-violet-600 shrink-0 group-hover:scale-110 transition-transform shadow-sm"><Zap className="size-5" /></div>
-             <div>
-                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Global Sector Sync</h4>
-                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-2 leading-relaxed opacity-60">This intelligence update will be synchronized across all unified mission unit dashboards instantly.</p>
-             </div>
-          </div>
-          <div className="p-6 rounded-[1.8rem] bg-white border border-slate-100 shadow-sm flex gap-5 hover:shadow-xl hover:-translate-y-1 transition-all group">
-             <div className="size-12 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 shrink-0 group-hover:scale-110 transition-transform shadow-sm"><BadgeCheck className="size-5" /></div>
-             <div>
-                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Immutable Register</h4>
-                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-2 leading-relaxed opacity-60">Transmission will be cryptographically registered in the departmental audit log for total transparency.</p>
-             </div>
-          </div>
-        </div>
       </div>
     </TeamLeadChrome>
   )

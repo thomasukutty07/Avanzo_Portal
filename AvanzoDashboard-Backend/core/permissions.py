@@ -12,14 +12,14 @@ class IsAdmin(BasePermission):
     """Admin-only access (Settings page, system config)."""
 
     def has_permission(self, request, view):
-        return _has_role(request.user, RoleNames.ADMIN)
+        return _has_role(request.user, RoleNames.ADMIN, RoleNames.ORGANIZATION)
 
 
 class IsAdminOrHR(BasePermission):
     """Admin or HR access (User management)."""
 
     def has_permission(self, request, view):
-        return _has_role(request.user, *RoleNames.ADMIN_OR_HR_OR_ABOVE)
+        return _has_role(request.user, RoleNames.ADMIN, RoleNames.ORGANIZATION, RoleNames.HR)
 
 
 class IsAdminOrHRReadOnly(BasePermission):
@@ -29,14 +29,14 @@ class IsAdminOrHRReadOnly(BasePermission):
         if not request.user.is_authenticated:
             return False
 
-        if request.user.role_name in (RoleNames.ADMIN, RoleNames.ORGANIZATION):
+        if request.user.role_name in [RoleNames.ADMIN, RoleNames.ORGANIZATION]:
             return True
 
-        # Allow all authenticated users to VIEW (GET/HEAD/OPTIONS)
+        # Allow HR and Team Leads to VIEW (GET/HEAD/OPTIONS)
         from rest_framework.permissions import SAFE_METHODS
 
         if request.method in SAFE_METHODS:
-            return True
+            return request.user.role_name in [RoleNames.HR, RoleNames.TEAM_LEAD]
 
         return False
 

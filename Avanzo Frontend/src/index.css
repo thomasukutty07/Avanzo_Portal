@@ -153,18 +153,18 @@
   * {
     @apply border-border outline-ring/50;
     box-sizing: border-box;
+    font-family: var(--default-font-family) !important;
   }
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground;
     -webkit-font-smoothing: antialiased;
     letter-spacing: -0.0125em;
   }
   html {
-    @apply font-sans;
     line-height: 1.6;
   }
   .material-symbols-outlined {
-    font-family: "Material Symbols Outlined", sans-serif;
+    font-family: "Material Symbols Outlined", sans-serif !important;
     font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
   }
   .design-portal-light {

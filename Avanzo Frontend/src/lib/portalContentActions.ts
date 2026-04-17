@@ -121,12 +121,6 @@ function pathScopedRules(pathname: string): Rule[] {
     )
   }
 
-  if (p.startsWith("/super-admin")) {
-    rules.push(
-      { match: "view all", to: "/super-admin/organizations" },
-      { match: "generate report", to: "/super-admin/reports" }
-    )
-  }
 
   if (p.startsWith("/technical")) {
     rules.push(

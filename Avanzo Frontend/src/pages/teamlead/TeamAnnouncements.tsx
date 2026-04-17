@@ -2,7 +2,7 @@ import TeamLeadChrome from "@/components/portal/teamlead/TeamLeadChrome"
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
 import { notificationsService } from "@/services/notifications"
 import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { 
   Plus, 
@@ -20,6 +20,7 @@ export default function TeamAnnouncementsPage() {
   const [broadcasts, setBroadcasts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+  const navigate = useNavigate()
 
   useEffect(() => {
     fetchBroadcasts()
@@ -54,7 +55,7 @@ export default function TeamAnnouncementsPage() {
           </div>
           <div className="flex gap-4 shrink-0">
              <button 
-              onClick={() => window.location.href = "/team/create-announcement"}
+              onClick={() => navigate("/team-announcements/create")}
               className="flex items-center gap-2.5 px-6 py-3 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 hover:shadow-xl hover:shadow-violet-600/20 transition-all text-sm active:scale-95 shadow-md shadow-violet-600/10"
             >
               <Plus className="size-4 stroke-[3px]" />
@@ -97,7 +98,7 @@ export default function TeamAnnouncementsPage() {
                   <p className="text-sm font-medium text-slate-400">No announcements found</p>
                 </div>
                 <button 
-                  onClick={() => window.location.href = "/team/create-announcement"}
+                  onClick={() => navigate("/team-announcements/create")}
                   className="px-8 py-3 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 transition-all shadow-lg shadow-violet-600/20 active:scale-95 text-xs mx-auto"
                 >
                   Create announcement

@@ -1,9 +1,9 @@
 from datetime import timedelta
 
 from django.utils import timezone
-from rest_framework.decorators import action
 from drf_spectacular.utils import OpenApiResponse, extend_schema, inline_serializer
-from rest_framework import serializers, viewsets
+from rest_framework import serializers, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import BlacklistedToken, OutstandingToken, RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from core.permissions import IsAdminOrHR, IsAdminOrHRReadOnly
+from core.permissions import IsAdminOrHR
 
 from .models import AccessRole, Employee, LoginAttempt, TalentTag
 from .serializers import (
@@ -20,18 +20,64 @@ from .serializers import (
     EmployeeSerializer,
     MeSerializer,
     TalentTagSerializer,
+    TenantRegistrationSerializer,
 )
+from .services import TenantOrchestrator
+
+
+class RegistrationRateThrottle(AnonRateThrottle):
+    rate = "5/hour"
+
+
+class TenantRegistrationView(APIView):
+    """Public organization sign-up gateway."""
+
+    permission_classes = [AllowAny]
+    throttle_classes = [RegistrationRateThrottle]
+
+    @extend_schema(
+        summary="Register a new organization (tenant)",
+        request=TenantRegistrationSerializer,
+        responses={201: OpenApiResponse(description="Workspace provisioned.")},
+        tags=["Registration"],
+    )
+    def post(self, request):
+        serializer = TenantRegistrationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        data = serializer.validated_data
+        orchestrator = TenantOrchestrator()
+
+        try:
+            orchestrator.provision_new_workspace(
+                company_name=data["company_name"],
+                subdomain=data["subdomain"],
+                admin_data={
+                    "email": data["admin_email"],
+                    "password": data["admin_password"],
+                    "first_name": data.get("admin_first_name", ""),
+                    "last_name": data.get("admin_last_name", ""),
+                },
+            )
+            return Response(
+                {"message": "Workspace provisioned successfully. Redirect to login."},
+                status=status.HTTP_201_CREATED,
+            )
+        except Exception:
+            return Response(
+                {"detail": "Provisioning failed. Contact support."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class LoginRateThrottle(AnonRateThrottle):
-    rate = "60/minute"
+    rate = "5/minute"
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     """Login endpoint that returns JWT tokens with embedded role claims."""
 
     serializer_class = CustomTokenObtainPairSerializer
-    permission_classes = [AllowAny]
     throttle_classes = [LoginRateThrottle]
 
     def post(self, request, *args, **kwargs):
@@ -123,12 +169,30 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         "department", "designation", "access_role", "team_lead"
     )
     serializer_class = EmployeeSerializer
+    permission_classes = [IsAuthenticated, IsAdminOrHR]
+
+    def get_queryset(self):
+        user = self.request.user
+        # Team Leads can read the employee list (for their Team page)
+        # but cannot create/update/delete — that's handled by perform_create etc.
+        return Employee.objects.select_related(
+            "department", "designation", "access_role", "team_lead"
+        )
 
     def get_permissions(self):
-        # Team Leads can see the list and update skills
-        if self.action in ["list", "retrieve", "update_skills", "evaluate"]:
+        # Allow Team Lead to list/retrieve but not mutate
+        if self.action in ("list", "retrieve"):
+            from rest_framework.permissions import IsAuthenticated
             return [IsAuthenticated()]
         return [IsAuthenticated(), IsAdminOrHR()]
+
+    @action(detail=True, methods=["post"], url_path="update-skills")
+    def update_skills(self, request, pk=None):
+        """Team Lead endpoint to set evaluated talents on an employee."""
+        employee = self.get_object()
+        talent_ids = request.data.get("talent_ids", [])
+        employee.evaluated_talents.set(talent_ids)
+        return Response({"detail": "Skills updated."})
 
     def _revoke_tokens(self, user):
         """Forcefully expires all outstanding JWTs for a user."""
@@ -146,42 +210,6 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         self._revoke_tokens(instance)
         super().perform_destroy(instance)
 
-    @action(
-        detail=True,
-        methods=["post"],
-        url_path="update-skills",
-        permission_classes=[IsAuthenticated],
-    )
-    def update_skills(self, request, pk=None):
-        """
-        POST /api/auth/employees/{id}/update-skills/
-        Allows Team Lead to update employee skills.
-        """
-        if not (request.user.is_team_lead or request.user.is_admin):
-            return Response({"detail": "Only Team Leads can update skills."}, status=403)
-
-        employee = self.get_object()
-        talent_ids = request.data.get("talent_ids", [])
-
-        if not isinstance(talent_ids, list):
-            return Response({"detail": "talent_ids must be a list of IDs."}, status=400)
-
-        employee.evaluated_talents.set(talent_ids)
-        return Response(EmployeeSerializer(employee).data)
-
-    @action(detail=True, methods=["post"], url_path="evaluate", permission_classes=[IsAuthenticated])
-    def evaluate(self, request, pk=None):
-        """
-        Legacy endpoint — redirects to update_skills.
-        """
-        return self.update_skills(request, pk)
-
-
-class TalentTagViewSet(viewsets.ModelViewSet):
-    queryset = TalentTag.objects.all()
-    serializer_class = TalentTagSerializer
-    permission_classes = [IsAuthenticated]
-
 
 class AccessRoleViewSet(viewsets.ReadOnlyModelViewSet):
     """
@@ -190,4 +218,15 @@ class AccessRoleViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = AccessRole.objects.all()
     serializer_class = AccessRoleSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class TalentTagViewSet(viewsets.ModelViewSet):
+    """
+    CRUD for talent/skill tags. Readable by all authenticated users.
+    Creation allowed for Team Leads and above.
+    """
+
+    queryset = TalentTag.objects.all().order_by("category", "name")
+    serializer_class = TalentTagSerializer
     permission_classes = [IsAuthenticated]

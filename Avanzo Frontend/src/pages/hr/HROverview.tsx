@@ -242,24 +242,6 @@ export default function HROverview() {
                 </button>
              </div>
 
-             <div className="bg-violet-600 rounded-[2.5rem] p-10 text-white shadow-xl shadow-violet-600/20 overflow-hidden relative group hover:scale-[1.02] transition-all duration-700 min-h-[300px] flex flex-col justify-between">
-                <div className="absolute -right-10 -top-10 p-4 opacity-10 group-hover:scale-125 group-hover:rotate-12 transition-all duration-1000">
-                   <Activity className="size-48" />
-                </div>
-                <div className="relative z-10">
-                   <h4 className="text-2xl font-black mb-3 font-headline uppercase tracking-tight">System Status</h4>
-                   <p className="text-violet-100 text-[11px] font-black uppercase tracking-widest opacity-60 leading-relaxed">System-wide background synchronization of personnel metrics is currently operational.</p>
-                </div>
-                <div className="mt-10 relative z-10">
-                   <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden border border-white/5 shadow-inner">
-                      <div className="h-full bg-white w-2/3 animate-pulse shadow-[0_0_10px_white]" />
-                   </div>
-                   <div className="flex justify-between items-center mt-4">
-                      <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">PROTOCOL 88-X</span>
-                      <Shield className="size-4 opacity-40" />
-                   </div>
-                </div>
-             </div>
           </div>
         </div>
       </div>

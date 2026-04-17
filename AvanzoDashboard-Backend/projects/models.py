@@ -30,6 +30,9 @@ class Service(TimeStampedModel):
 
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True)
+    department = models.ForeignKey(
+        Department, on_delete=models.CASCADE, null=True, blank=True, related_name="services"
+    )
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
@@ -124,9 +127,7 @@ class Task(TimeStampedModel):
     class Status(models.TextChoices):
         OPEN = "open", "Open"
         IN_PROGRESS = "progress", "In Progress"
-        IN_REVIEW = "review", "In Review"
-        REWORK = "rework", "Rework"
-        CLOSED = "closed", "Closed"
+        RESOLVED = "resolved", "Resolved"
 
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)

@@ -43,8 +43,8 @@ export default function ReportsPage() {
 
   return (
     <OrganizationAdminChrome>
-      <div className="p-0 space-y-10 animate-in fade-in duration-500 min-h-screen font-display bg-[#fcfcfc] text-slate-900">
-        <div className="sticky top-0 z-30 -mx-4 md:-mx-8 px-4 md:px-8 py-6 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-transparent transition-all">
+      <div className="p-6 md:p-10 space-y-10 animate-in fade-in duration-500 min-h-screen font-display bg-[#fcfcfc] text-slate-900">
+        <div className="sticky top-0 z-30 -mx-6 md:-mx-10 px-6 md:px-10 py-6 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-transparent transition-all">
            <div>
               <h1 className="text-3xl font-black tracking-tight text-slate-900 leading-tight font-headline">
                 Company Reports
@@ -64,7 +64,7 @@ export default function ReportsPage() {
            </div>
         </div>
 
-        <div className="px-6 md:px-10 space-y-10 pb-12">
+        <div className="space-y-10 pb-12">
           <section className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
              {dynamicKpis.map((kpi, i) => (
                 <div key={i} className="bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-sm hover:shadow-xl transition-all group text-center">
