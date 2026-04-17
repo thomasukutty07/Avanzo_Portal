@@ -12,12 +12,10 @@ import {
   X,
   Type,
   Layout,
-  Zap,
   Globe,
   Loader2,
   ChevronLeft,
-  FileText,
-  BadgeCheck
+  FileText
 } from "lucide-react"
 import { 
   DropdownMenu, 

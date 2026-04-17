@@ -1,5 +1,5 @@
 import { NavLink, useNavigate, useLocation } from "react-router-dom"
-import { LogOut, LayoutDashboard, CheckSquare, Folder, Users, Megaphone, Settings, Search, Bell, Menu, X, Clock } from "lucide-react"
+import { LogOut, LayoutDashboard, CheckSquare, Folder, Users, Megaphone, Search, Bell, Menu, X, Clock } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { toast } from "sonner"
