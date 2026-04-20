@@ -1,13 +1,5 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { 
   ChevronLeft, 
   Users, 
@@ -15,13 +7,12 @@ import {
   Calendar,
   Mail,
   Phone,
-  MoreVertical,
   Briefcase,
   Loader2,
-  ExternalLink
+  Plus,
 } from "lucide-react"
 import TeamLeadChrome from "@/components/portal/teamlead/TeamLeadChrome"
-import { EditProjectModal } from "@/components/portal/teamlead/TeamLeadActionForms"
+import { EditProjectModal, CreateTaskModal } from "@/components/portal/teamlead/TeamLeadActionForms"
 import { api } from "@/lib/axios"
 import { toast } from "sonner"
 import { Progress } from "@/components/ui/progress"
@@ -34,6 +25,7 @@ export default function LeadProjectDetailsPage() {
   const [project, setProject] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showCreateTaskModal, setShowCreateTaskModal] = useState(false)
 
   const fetchProject = async () => {
     try {
@@ -56,7 +48,6 @@ export default function LeadProjectDetailsPage() {
   const handleGenerateReport = () => {
     if (!project) return;
     
-    const headers = ["Attribute", "Details"];
     const rows = [
       ["Project Title", project.title],
       ["Department", project.department_name],
@@ -100,7 +91,7 @@ export default function LeadProjectDetailsPage() {
 
   return (
     <TeamLeadChrome>
-      <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-10 animate-in fade-in duration-700 font-sans">
+      <div className="p-2 space-y-10 animate-in fade-in duration-700 font-sans">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-10 border-b border-slate-100">
           <div className="space-y-6">
@@ -133,20 +124,33 @@ export default function LeadProjectDetailsPage() {
                  Created: {project?.created_at ? new Date(project.created_at).toLocaleDateString() : 'N/A'}
                </span>
             </div>
+            
+            <div className="max-w-3xl mt-6">
+               <p className="text-sm font-medium text-slate-500 leading-relaxed italic">
+                  {project?.description || "No mission description provided for this operational node."}
+               </p>
+            </div>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
              <button 
               onClick={() => setShowEditModal(true)}
-              className="px-8 py-3 bg-white border border-slate-100 text-slate-900 font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm active:scale-95"
+              className="px-6 py-3 bg-white border border-slate-100 text-slate-900 font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm active:scale-95 whitespace-nowrap"
              >
                 Settings
              </button>
              <button 
                onClick={handleGenerateReport}
-               className="px-8 py-3 bg-violet-600 text-white font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-violet-700 transition-all shadow-xl shadow-violet-600/20 active:scale-95"
+               className="px-6 py-3 bg-white border border-slate-100 text-slate-900 font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm active:scale-95 whitespace-nowrap"
              >
-                Generate Report
+                Report
+             </button>
+             <button 
+               onClick={() => setShowCreateTaskModal(true)}
+               className="flex items-center gap-2 px-6 py-3 bg-violet-600 border border-violet-500 text-white font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-violet-700 transition-all shadow-xl shadow-violet-600/20 active:scale-95 whitespace-nowrap"
+             >
+                <Plus className="size-3.5" />
+                Assign Task
              </button>
           </div>
         </div>
@@ -301,6 +305,12 @@ export default function LeadProjectDetailsPage() {
         onOpenChange={setShowEditModal} 
         project={project} 
         onSuccess={fetchProject} 
+      />
+      <CreateTaskModal 
+        open={showCreateTaskModal}
+        onOpenChange={setShowCreateTaskModal}
+        initialProjectId={id}
+        onSuccess={fetchProject}
       />
     </TeamLeadChrome>
   )

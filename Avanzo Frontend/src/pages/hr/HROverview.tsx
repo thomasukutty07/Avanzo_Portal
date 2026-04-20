@@ -116,7 +116,7 @@ export default function HROverview() {
         </div>
 
         {/* KPI Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {stats.map((s: any) => (
                 <div key={s.label} className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-8 hover:shadow-xl hover:-translate-y-1 transition-all group">
                     <div className="flex items-center justify-between mb-6">
@@ -158,19 +158,19 @@ export default function HROverview() {
                 </thead>
                 <tbody className="divide-y divide-slate-50">
                   {recentEmployees.length > 0 ? recentEmployees.map((emp) => (
-                    <tr key={emp.id} className="hover:bg-slate-50/30 transition-all group cursor-pointer" onClick={() => toast.info(`Viewing employee details: ${emp.first_name}`)}>
-                      <td className="px-10 py-8">
-                        <div className="flex items-center gap-6">
-                          <div className="size-14 rounded-2xl bg-white border border-slate-100 p-2 shadow-sm flex items-center justify-center font-black text-slate-300 text-sm uppercase group-hover:rounded-xl group-hover:border-violet-100 group-hover:shadow-xl transition-all">
+                    <tr key={emp.id} className="hover:bg-slate-50/30 transition-all group cursor-pointer" onClick={() => navigate(`/employees/${emp.id}`)}>
+                      <td className="px-6 md:px-10 py-8">
+                        <div className="flex items-center gap-4 md:gap-6">
+                          <div className="size-10 md:size-14 rounded-2xl bg-white border border-slate-100 p-2 shadow-sm flex items-center justify-center font-black text-slate-300 text-[10px] md:text-sm uppercase group-hover:rounded-xl group-hover:border-violet-100 group-hover:shadow-xl transition-all">
                             {emp.first_name?.[0]}{emp.last_name?.[0]}
                           </div>
                           <div>
-                            <p className="text-[16px] font-black text-slate-900 font-headline uppercase tracking-tight group-hover:text-violet-600 transition-colors leading-none">{emp.first_name} {emp.last_name}</p>
-                            <p className="text-[10px] text-slate-300 font-black uppercase tracking-widest mt-2">{emp.role_display || emp.role || 'Sector Unit'}</p>
+                            <p className="text-sm md:text-[16px] font-black text-slate-900 font-headline uppercase tracking-tight group-hover:text-violet-600 transition-colors leading-none">{emp.first_name} {emp.last_name}</p>
+                            <p className="text-[9px] md:text-[10px] text-slate-300 font-black uppercase tracking-widest mt-2">{emp.role_display || emp.role || 'Sector Unit'}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-10 py-8">
+                      <td className="hidden sm:table-cell px-10 py-8">
                          <div className="flex justify-center">
                             <span className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest border border-emerald-100 shadow-sm">
                                 ACTIVE
@@ -178,7 +178,7 @@ export default function HROverview() {
                          </div>
                       </td>
                       <td className="px-10 py-8 text-right">
-                        <p className="text-[12px] font-black text-slate-400 tabular-nums uppercase tracking-widest opacity-60">
+                        <p className="text-[10px] md:text-[12px] font-black text-slate-400 tabular-nums uppercase tracking-widest opacity-60">
                           {emp.date_of_joining ? new Date(emp.date_of_joining).toLocaleDateString() : 'Pending'}
                         </p>
                       </td>

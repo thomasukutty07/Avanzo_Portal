@@ -64,11 +64,10 @@ class MeSerializer(serializers.ModelSerializer):
     user's full profile including role, department, and designation."""
 
     role = serializers.CharField(source="role_name", read_only=True)
-    department_name = serializers.CharField(source="department.name", read_only=True, default=None)
-    designation_name = serializers.CharField(
-        source="designation.name", read_only=True, default=None
-    )
+    department_name = serializers.SerializerMethodField()
+    designation_name = serializers.SerializerMethodField()
     team_lead_name = serializers.SerializerMethodField()
+    assigned_projects = serializers.SerializerMethodField()
 
     class Meta:
         model = Employee
@@ -81,9 +80,13 @@ class MeSerializer(serializers.ModelSerializer):
             "avatar",
             "employee_id",
             "role",
+            "department",
             "department_name",
+            "designation",
             "designation_name",
+            "team_lead",
             "team_lead_name",
+            "assigned_projects",
             "status",
             "date_of_joining",
         ]
@@ -93,15 +96,28 @@ class MeSerializer(serializers.ModelSerializer):
             "avatar",
             "employee_id",
             "role",
+            "department",
             "department_name",
+            "designation",
             "designation_name",
+            "team_lead",
             "team_lead_name",
+            "assigned_projects",
             "status",
             "date_of_joining",
         ]
 
     def get_team_lead_name(self, obj) -> str | None:
         return obj.team_lead.get_full_name() if obj.team_lead else None
+
+    def get_department_name(self, obj):
+        return obj.department.name if obj.department else None
+
+    def get_designation_name(self, obj):
+        return obj.designation.name if obj.designation else None
+
+    def get_assigned_projects(self, obj):
+        return [p.title for p in obj.assigned_projects.all()]
 
 
 class AccessRoleSerializer(serializers.ModelSerializer):
@@ -124,6 +140,10 @@ class EmployeeSerializer(serializers.ModelSerializer):
     """Used by Admin and HR for managing users."""
 
     password = serializers.CharField(write_only=True, required=False)
+    department_name = serializers.SerializerMethodField()
+    designation_name = serializers.SerializerMethodField()
+    access_role_name = serializers.SerializerMethodField()
+    assigned_projects = serializers.SerializerMethodField()
 
     class Meta:
         model = Employee
@@ -136,12 +156,30 @@ class EmployeeSerializer(serializers.ModelSerializer):
             "phone",
             "employee_id",
             "access_role",
+            "access_role_name",
             "department",
+            "department_name",
             "designation",
+            "designation_name",
+            "gender",
+            "date_of_birth",
             "team_lead",
+            "assigned_projects",
             "status",
             "date_of_joining",
         ]
+
+    def get_department_name(self, obj):
+        return obj.department.name if obj.department else None
+
+    def get_designation_name(self, obj):
+        return obj.designation.name if obj.designation else None
+
+    def get_access_role_name(self, obj):
+        return obj.access_role.name if obj.access_role else None
+
+    def get_assigned_projects(self, obj):
+        return [p.title for p in obj.assigned_projects.all()]
 
     def validate_access_role(self, value):
         request = self.context.get("request")

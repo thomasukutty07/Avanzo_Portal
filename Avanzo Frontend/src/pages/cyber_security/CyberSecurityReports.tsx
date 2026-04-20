@@ -22,7 +22,7 @@ const HISTORY = [
     name: "Monthly_CyberSecurity_Audit_Jan_2024.pdf", 
     by: "John Doe", 
     initial: "JD", 
-    time: "Feb 01, 2024 09:15 AM", 
+    time: "Feb 01, 2024 09:30 AM", 
     status: "Completed",
     type: "pdf"
   },

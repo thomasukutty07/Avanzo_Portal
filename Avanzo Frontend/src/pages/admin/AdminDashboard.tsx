@@ -3,15 +3,16 @@ import { useNavigate } from "react-router-dom"
 import { api } from "@/lib/axios"
 import { extractResults } from "@/lib/apiResults"
 import { toast } from "sonner"
-import { MoreVertical, Shield, ExternalLink, Loader2 } from "lucide-react"
+import { MoreVertical, Shield, ExternalLink, Loader2, Clock } from "lucide-react"
 import { OrganizationAdminChrome } from "@/components/portal/organizationadmin/OrganizationAdminChrome"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
 
 
 export default function AdminDashboard() {
   const navigate = useNavigate()
   const [tasks, setTasks] = useState<any[]>([])
   const [projects, setProjects] = useState<any[]>([])
-  const [updates, setUpdates] = useState<any[]>([])
   const [attendancePulse, setAttendancePulse] = useState<any>({ clocked_in: 0, missing: 0, total: 0 })
   const [loading, setLoading] = useState(true)
 
@@ -32,7 +33,6 @@ export default function AdminDashboard() {
 
         setTasks(rawTasks);
         setProjects(rawProjects);
-        setUpdates(rawBroadcasts);
         setAttendancePulse(pulseRes.data);
       } catch (e) {
         console.error("Failed to load dashboard data", e);
@@ -92,6 +92,9 @@ export default function AdminDashboard() {
     title: t.title,
     sub: `${t.project_name || 'Global'} • ${t.completion_pct || t.progress || 0}% complete`,
     priority: (t.priority || 'Normal'),
+    project_name: t.project_name,
+    completion_pct: t.completion_pct,
+    progress: t.progress,
     priorityStyle: (t.priority === "high" || t.priority === "urgent") ? "bg-red-50 text-red-600 border border-red-100" : 
                    t.priority === "medium" || t.priority === "tactical" ? "bg-violet-50 text-violet-600 border border-violet-100" :
                    "bg-slate-50 text-slate-400 border border-slate-100"
@@ -143,7 +146,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* KPI Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {dynamicStats.map((s) => (
             <div key={s.label} className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-8 hover:shadow-xl hover:-translate-y-1 transition-all group">
               <div className="flex items-center justify-between mb-6">
@@ -182,34 +185,74 @@ export default function AdminDashboard() {
                 <ExternalLink className="size-3.5" />
               </button>
             </div>
-            <div className="divide-y divide-slate-50">
-              {dynamicTasks.length > 0 ? dynamicTasks.map((t, i) => (
-                <div key={i} className="flex items-center gap-8 px-10 py-8 group hover:bg-slate-50/30 transition-all cursor-pointer">
-                  <div className="size-14 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-3xl shadow-sm group-hover:scale-110 transition-all group-hover:border-violet-100 group-hover:shadow-xl group-hover:rotate-6">
-                    {t.icon}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[16px] font-bold text-slate-900 group-hover:text-violet-700 transition-colors tracking-tight leading-none mb-2.5">{t.title}</p>
-                    <p className="text-[11px] text-slate-300 font-bold leading-none opacity-80">{t.sub}</p>
-                  </div>
-                  <div className={`px-5 py-2 rounded-xl text-[10px] font-bold shrink-0 border transition-all shadow-sm ${t.priorityStyle}`}>
-                    {t.priority}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); toast.info(`Options for: ${t.title}`) }}
-                    className="p-3 text-slate-200 hover:text-slate-600 hover:bg-white rounded-xl transition-all border border-transparent hover:border-slate-100 shadow-sm"
-                  >
-                    <MoreVertical className="size-5" />
-                  </button>
-                </div>
-              )) : (
-                <div className="px-10 py-24 text-center opacity-30">
-                   <Shield className="size-12 mx-auto mb-6 text-slate-200" />
-                   <p className="text-[11px] font-bold">No tasks found</p>
-                </div>
-              )}
-            </div>
+             <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                   <thead className="bg-slate-50/50 border-b border-slate-100">
+                      <tr>
+                         <th className="px-10 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Task Designation</th>
+                         <th className="px-10 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] text-center">Priority Status</th>
+                         <th className="hidden md:table-cell px-10 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] text-center">Operational Progress</th>
+                         <th className="px-10 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] text-right">Actions</th>
+                      </tr>
+                   </thead>
+                   <tbody className="divide-y divide-slate-50">
+                     {dynamicTasks.length > 0 ? dynamicTasks.map((t, i) => (
+                       <tr key={i} className="group hover:bg-slate-50/30 transition-all cursor-pointer">
+                          <td className="px-10 py-6">
+                             <div className="flex items-center gap-4">
+                                <div className={`size-2 rounded-full ${
+                                  t.priority === "high" || t.priority === "urgent" ? "bg-rose-500" : 
+                                  t.priority === "medium" ? "bg-indigo-500" : "bg-slate-300"
+                                }`} />
+                                <div>
+                                   <p className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{t.title}</p>
+                                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">{t.project_name || 'General Operations'}</p>
+                                </div>
+                             </div>
+                          </td>
+                          <td className="px-10 py-6">
+                             <div className="flex justify-center">
+                                <Badge variant="outline" className={`text-[9px] font-bold uppercase tracking-widest px-3 py-1 rounded-lg border-slate-100 bg-slate-50/50 ${
+                                  t.priority === 'urgent' ? 'text-rose-500 border-rose-100 bg-rose-50/30' : 
+                                  t.priority === 'medium' ? 'text-indigo-600 border-indigo-100 bg-indigo-50/30' : 
+                                  'text-slate-500'
+                                }`}>
+                                   {t.priority}
+                                </Badge>
+                             </div>
+                          </td>
+                          <td className="hidden md:table-cell px-10 py-6">
+                             <div className="flex flex-col items-center gap-2">
+                                <div className="w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                   <div 
+                                     className="h-full bg-slate-900 rounded-full transition-all duration-1000" 
+                                     style={{ width: `${t.completion_pct || t.progress || 0}%` }}
+                                   />
+                                </div>
+                                <span className="text-[10px] font-bold text-slate-500 tabular-nums">{t.completion_pct || t.progress || 0}% Verified</span>
+                             </div>
+                          </td>
+                          <td className="px-10 py-6">
+                             <div className="flex justify-end items-center gap-3">
+                                <button className="text-[10px] font-bold text-slate-400 hover:text-indigo-600 border border-slate-100 px-4 py-1.5 rounded-lg hover:bg-white hover:shadow-sm transition-all opacity-0 group-hover:opacity-100">
+                                   Details
+                                </button>
+                                <button className="text-slate-200 hover:text-slate-600 transition-colors">
+                                   <MoreVertical className="size-4" />
+                                </button>
+                             </div>
+                          </td>
+                       </tr>
+                     )) : (
+                       <tr>
+                          <td colSpan={4} className="px-10 py-24 text-center opacity-30">
+                             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 leading-none">Node Sync Complete: No Active Tasks</p>
+                          </td>
+                       </tr>
+                     )}
+                   </tbody>
+                </table>
+             </div>
           </div>
         </div>
       </div>

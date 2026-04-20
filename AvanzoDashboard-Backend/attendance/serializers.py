@@ -74,6 +74,7 @@ class DailyLogSerializer(serializers.ModelSerializer):
     entries = DailyLogEntryReadSerializer(many=True, read_only=True)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
     employee_name = serializers.CharField(source="employee.get_full_name", read_only=True)
+    is_early_exit = serializers.SerializerMethodField()
 
     class Meta:
         model = DailyLog
@@ -92,8 +93,19 @@ class DailyLogSerializer(serializers.ModelSerializer):
             "entries",
             "has_clocked_in",
             "has_clocked_out",
+            "is_early_exit",
         ]
         read_only_fields = fields
+
+    def get_is_early_exit(self, obj):
+        from django.utils import timezone
+
+        if obj.clock_out_time:
+            local_time = timezone.localtime(obj.clock_out_time)
+            # Threshold is 5:30 PM (17:30)
+            if local_time.hour < 17 or (local_time.hour == 17 and local_time.minute < 30):
+                return True
+        return False
 
 
 # ─────────────────────────────────────────────────────────────

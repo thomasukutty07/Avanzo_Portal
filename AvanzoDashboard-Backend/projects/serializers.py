@@ -42,6 +42,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "title",
+            "description",
             "is_internal",
             "client",
             "client_name",
@@ -78,27 +79,21 @@ class ProjectSerializer(serializers.ModelSerializer):
         else:
             provided_dept = data.get("owning_department")
 
-            if provided_dept:
-                if user and not user.is_admin and provided_dept != user.department:
+            if not user or user.is_admin:
+                # Admins can assign to any department
+                provided_dept = data.get("owning_department")
+                if not provided_dept:
                     raise serializers.ValidationError(
-                        {
-                            "owning_department": (
-                                "Only Admins can create projects for other departments."
-                            )
-                        }
+                        {"owning_department": "Please select a department for this project."}
                     )
                 department = provided_dept
             else:
-                department = user.department if user else None
-
-            if not department:
-                raise serializers.ValidationError(
-                    {
-                        "owning_department": (
-                            "Must provide a department or belong to one to create a project."
-                        )
-                    }
-                )
+                # Team Leads always create in their own department — ignore submitted value
+                department = user.department
+                if not department:
+                    raise serializers.ValidationError(
+                        {"owning_department": "Your account has no department assigned. Contact an admin."}
+                    )
 
             data["owning_department"] = department
 

@@ -3,13 +3,14 @@ import { LogOut, LayoutDashboard, CheckSquare, Folder, Users, Megaphone, Search,
 import { useState, useEffect } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { toast } from "sonner"
-import { NewTaskModal, NewUpdateModal, SearchModal } from "./TeamLeadActionForms"
+import { NewUpdateModal, SearchModal } from "./TeamLeadActionForms"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { extractResults } from "@/lib/apiResults"
 import { api } from "@/lib/axios"
 import { AttendanceClockWidget } from "@/components/shared/AttendanceClockWidget"
+import { UserAvatar } from "@/components/shared/UserAvatar"
 
 const NAV_ITEMS = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -24,7 +25,6 @@ export default function TeamLeadChrome({ children }: { children: React.ReactNode
   const navigate = useNavigate()
   const location = useLocation()
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
-  const [isNewTaskOpen, setIsNewTaskOpen] = useState(false)
   const [isNewUpdateOpen, setIsNewUpdateOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [notifications, setNotifications] = useState<any[]>([])
@@ -65,7 +65,7 @@ export default function TeamLeadChrome({ children }: { children: React.ReactNode
     "flex items-center gap-3 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-violet-600/20 transition-all duration-200 font-headline"
 
   return (
-    <div className="design-portal design-portal-light flex h-screen w-full bg-[#fcfcfc] text-slate-900 overflow-hidden font-display">
+    <div className="design-portal design-portal-light flex min-h-screen w-full bg-[#fcfcfc] text-slate-900 font-display">
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
@@ -75,7 +75,7 @@ export default function TeamLeadChrome({ children }: { children: React.ReactNode
       )}
 
       {/* Sidebar - Full height anchor */}
-      <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 shrink-0 flex-col border-r border-slate-100 bg-white transition-transform duration-300 ease-in-out md:translate-x-0 md:relative ${isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 shrink-0 flex-col border-r border-slate-100 bg-white transition-transform duration-300 ease-in-out md:translate-x-0 md:sticky md:top-0 md:h-screen ${isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full hidden'}`}>
         <div className="flex h-20 items-center justify-between px-6">
           <div className="flex flex-col gap-2">
              <img 
@@ -129,7 +129,7 @@ export default function TeamLeadChrome({ children }: { children: React.ReactNode
       {/* Main Workspace Frame */}
       <div className="flex flex-1 flex-col min-w-0">
         {/* Header */}
-        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between bg-white/80 border-b border-slate-100 px-6 md:px-8 backdrop-blur-md">
+        <header className="sticky top-0 z-30 flex h-20 shrink-0 items-center justify-between bg-white/80 border-b border-slate-100 px-6 md:px-8 backdrop-blur-md">
           <div className="flex items-center gap-5 flex-1 max-w-2xl">
             <button 
               onClick={() => setIsSidebarOpen(true)}
@@ -203,32 +203,29 @@ export default function TeamLeadChrome({ children }: { children: React.ReactNode
 
 
               {/* Profile Access */}
-              <button 
+              <div 
                 onClick={() => navigate("/settings")}
-                className="flex items-center gap-2.5 p-1 rounded-full hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100 group ml-1"
+                className="flex items-center gap-3 px-2 py-1 group transition-opacity hover:opacity-80 cursor-pointer ml-1"
                 title="My Profile & Settings"
               >
-                <div className="flex size-8 items-center justify-center overflow-hidden rounded-full bg-violet-100 uppercase font-black text-violet-700 text-[10px] shrink-0 ring-2 ring-white shadow-sm group-hover:ring-violet-50 transition-all">
-                  {displayName.slice(0, 2)}
+                <div className="hidden sm:block text-right">
+                   <p className="text-sm font-bold text-slate-900 leading-none italic">{displayName}</p>
+                   <p className="text-[11px] font-medium text-slate-400 mt-1 italic leading-none">Team Lead</p>
                 </div>
-                <div className="hidden sm:block text-left mr-2">
-                   <p className="text-xs font-black text-slate-900 leading-none uppercase tracking-tight">{displayName}</p>
-                   <p className="text-[10px] font-bold text-slate-400 mt-1 leading-none uppercase">Team Lead</p>
-                </div>
-              </button>
+                <UserAvatar firstName={user?.first_name} lastName={user?.last_name} gender={user?.gender} size={40} />
+              </div>
             </div>
           </div>
         </header>
 
-        <main key={location.pathname} className="min-h-0 flex-1 overflow-y-auto relative">
-          <div className="p-6 md:p-8 lg:p-10">
+        <main key={location.pathname} className="flex-1 relative">
+          <div className="p-4 md:p-6">
             {children}
           </div>
         </main>
       </div>
 
       {/* Action Modals */}
-      <NewTaskModal open={isNewTaskOpen} onOpenChange={setIsNewTaskOpen} />
       <NewUpdateModal open={isNewUpdateOpen} onOpenChange={setIsNewUpdateOpen} />
       <SearchModal open={isSearchOpen} onOpenChange={setIsSearchOpen} />
     </div>

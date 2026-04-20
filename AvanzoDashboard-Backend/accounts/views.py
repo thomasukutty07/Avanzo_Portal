@@ -173,16 +173,17 @@ class EmployeeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        # Team Leads can read the employee list (for their Team page)
-        # but cannot create/update/delete — that's handled by perform_create etc.
-        return Employee.objects.select_related(
+        base_qs = Employee.objects.select_related(
             "department", "designation", "access_role", "team_lead"
         )
+        # Team Leads only see employees in their own department
+        if user.is_team_lead and user.department:
+            return base_qs.filter(department=user.department)
+        return base_qs
 
     def get_permissions(self):
         # Allow Team Lead to list/retrieve but not mutate
         if self.action in ("list", "retrieve"):
-            from rest_framework.permissions import IsAuthenticated
             return [IsAuthenticated()]
         return [IsAuthenticated(), IsAdminOrHR()]
 

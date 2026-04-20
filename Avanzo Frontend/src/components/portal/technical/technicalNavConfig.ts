@@ -17,8 +17,8 @@ export type TechnicalNavItem = {
 
 export const TECHNICAL_NAV_ITEMS: TechnicalNavItem[] = [
   { to: "/technical", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/technical/tasks", label: "Technical Tasks", icon: ListTodo },
-  { to: "/technical/leave", label: "Leave Requests", icon: Umbrella },
+  { to: "/technical/tasks", label: "Technical tasks", icon: ListTodo },
+  { to: "/technical/leave", label: "Leave requests", icon: Umbrella },
   { to: "/technical/announcements", label: "Announcements", icon: Megaphone },
-  { to: "/technical/profile", label: "My Profile", icon: User },
+  { to: "/technical/profile", label: "My profile", icon: User },
 ]

@@ -22,6 +22,7 @@ class BroadcastSerializer(serializers.ModelSerializer):
     """Used for displaying broadcasts to employees."""
 
     created_by_name = serializers.CharField(source="created_by.get_full_name", read_only=True)
+    created_by_role = serializers.CharField(source="created_by.access_role.name", read_only=True)
     department_name = serializers.CharField(source="department.name", read_only=True)
     is_acknowledged = serializers.SerializerMethodField()
 
@@ -37,6 +38,7 @@ class BroadcastSerializer(serializers.ModelSerializer):
             "message",
             "created_by",
             "created_by_name",
+            "created_by_role",
             "is_active",
             "is_acknowledged",
             "created_at",

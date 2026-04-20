@@ -19,6 +19,8 @@ import {
   SelectValue 
 } from "@/components/ui/select"
 import { accountsService } from "@/services/accounts"
+import { useAuth } from "@/context/AuthContext"
+import { extractResults } from "@/lib/apiResults"
 import { toast } from "sonner"
 import { 
   Loader2,
@@ -37,10 +39,9 @@ import {
   X,
   Settings,
 } from "lucide-react"
-import NewTaskModal from "./NewTaskModal"
 
 
-export { NewTaskModal }
+
 
 export function ReviewTaskModal({ open, onOpenChange, task, onSuccess }: { open: boolean, onOpenChange: (open: boolean) => void, task: any, onSuccess?: () => void }) {
   const [loading, setLoading] = useState(false)
@@ -299,12 +300,14 @@ export function AddMemberModal({ open, onOpenChange }: { open: boolean, onOpenCh
 }
 
 export function CreateProjectModal({ open, onOpenChange, onSuccess }: { open: boolean, onOpenChange: (open: boolean) => void, onSuccess?: () => void }) {
+  const { user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [services, setServices] = useState<any[]>([])
   const [departments, setDepartments] = useState<any[]>([])
   const [employees, setEmployees] = useState<any[]>([])
   const [formData, setFormData] = useState({
     title: "",
+    description: "",
     is_internal: true,
     client: "",
     service: "",
@@ -322,18 +325,24 @@ export function CreateProjectModal({ open, onOpenChange, onSuccess }: { open: bo
         accountsService.getEmployees()
       ])
         .then(([servicesData, departmentsData, employeesData]) => {
-          const s = Array.isArray(servicesData) ? servicesData : (servicesData.results || [])
-          setServices(s)
-          setDepartments(Array.isArray(departmentsData) ? departmentsData : (departmentsData.results || []))
-          setEmployees(Array.isArray(employeesData) ? employeesData : (employeesData.results || []))
+          setServices(extractResults(servicesData))
+          const depts = extractResults<any>(departmentsData)
+          setDepartments(depts)
+          setEmployees(extractResults(employeesData))
+          
+          // Auto-select user's department if not set
+          if (!formData.owning_department && user?.department) {
+            setFormData(prev => ({ ...prev, owning_department: user.department || "" }))
+          }
         })
-        .catch(() => { setServices([]); setDepartments([]) })
+        .catch(() => { setServices([]); setDepartments([]); setEmployees([]) })
     }
-  }, [open])
+  }, [open, user])
 
   const reset = () => {
     setFormData({ 
       title: "", 
+      description: "",
       is_internal: true, 
       client: "", 
       service: "",
@@ -355,26 +364,29 @@ export function CreateProjectModal({ open, onOpenChange, onSuccess }: { open: bo
     try {
       const payload: any = {
         title: formData.title,
+        description: formData.description,
         is_internal: formData.is_internal,
-        owning_department: formData.owning_department,
+        owning_department: formData.owning_department || null,
         start_date: formData.start_date || null,
         target_end_date: formData.target_end_date || null,
         team: formData.team,
       }
       if (!formData.is_internal && formData.client) payload.client = formData.client
       if (formData.service) payload.service = formData.service
+      
+      console.log("[CreateProject] Payload:", payload)
       await projectsService.createProject(payload)
-      toast.success("Project successfully initialized.")
+      toast.success("Project successfully initialised in sector.")
       onSuccess?.()
       onOpenChange(false)
       reset()
     } catch (err: any) {
       const data = err.response?.data
-      console.error("[CreateProject] error details:", data)
+      console.error("[CreateProject] 400 error response:", data)
       
-      if (typeof data === 'object') {
+      if (data && typeof data === 'object') {
         const errors = Object.entries(data)
-          .map(([key, value]) => `${key}: ${Array.isArray(value) ? value[0] : value}`)
+          .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
           .join(" | ")
         toast.error(errors || "Failed to create project.")
       } else {
@@ -403,21 +415,31 @@ export function CreateProjectModal({ open, onOpenChange, onSuccess }: { open: bo
 
         <div className="overflow-y-auto">
           <form onSubmit={handleSubmit} className="px-5 sm:px-8 py-6 space-y-4 bg-white">
-            {/* Department selection */}
-            <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-700 tracking-tight">Mission Department</Label>
-              <select
-                required
-                className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium text-slate-900 focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-500/10 outline-none transition-all appearance-none cursor-pointer"
-                value={formData.owning_department}
-                onChange={e => setFormData({ ...formData, owning_department: e.target.value })}
-              >
-                <option value="">Select your department...</option>
-                {departments.map(d => (
-                  <option key={d.id} value={d.id}>{d.name}</option>
-                ))}
-              </select>
-            </div>
+            {/* Department selection — admin: picker, team lead: read-only badge */}
+            {user?.role === 'Admin' ? (
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-slate-700 tracking-tight">Mission Department</Label>
+                <select
+                  required
+                  className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium text-slate-900 focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-500/10 outline-none transition-all appearance-none cursor-pointer"
+                  value={formData.owning_department}
+                  onChange={e => setFormData({ ...formData, owning_department: e.target.value })}
+                >
+                  <option value="">Select a department...</option>
+                  {departments.map(d => (
+                    <option key={d.id} value={d.id}>{d.name}</option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-slate-700 tracking-tight">Department</Label>
+                <div className="flex items-center gap-2 h-10 px-4 rounded-xl bg-violet-50 border border-violet-100">
+                  <span className="text-xs font-bold text-violet-700">{user?.department_name || 'Your Department'}</span>
+                  <span className="ml-auto text-[10px] font-black text-violet-400 uppercase tracking-widest">Auto-assigned</span>
+                </div>
+              </div>
+            )}
 
             {/* Title */}
             <div className="space-y-2">
@@ -428,6 +450,17 @@ export function CreateProjectModal({ open, onOpenChange, onSuccess }: { open: bo
                 value={formData.title}
                 onChange={e => setFormData({ ...formData, title: e.target.value })}
                 className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium text-slate-900 placeholder:text-slate-300 focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-500/10 outline-none transition-all"
+              />
+            </div>
+
+            {/* Description */}
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-slate-700 tracking-tight">Mission Description</Label>
+              <Textarea
+                placeholder="Enter core mission objectives and technical parameters..."
+                value={formData.description}
+                onChange={e => setFormData({ ...formData, description: e.target.value })}
+                className="rounded-xl border-slate-100 bg-slate-50 min-h-[80px] p-4 text-sm font-medium resize-none focus:border-violet-500 focus:bg-white transition-all placeholder:text-slate-300 outline-none"
               />
             </div>
 
@@ -595,8 +628,12 @@ export function EditProjectModal({
   const [services, setServices] = useState<any[]>([])
   const [departments, setDepartments] = useState<any[]>([])
   const [employees, setEmployees] = useState<any[]>([])
+  const [clients, setClients] = useState<any[]>([])
   const [formData, setFormData] = useState({
     title: "",
+    description: "",
+    is_internal: true,
+    client: "",
     service: "",
     owning_department: "",
     start_date: "",
@@ -608,6 +645,9 @@ export function EditProjectModal({
     if (open && project) {
       setFormData({
         title: project.title || "",
+        description: project.description || "",
+        is_internal: project.is_internal !== undefined ? project.is_internal : true,
+        client: project.client || "",
         service: project.service || "",
         owning_department: project.owning_department || "",
         start_date: project.start_date || "",
@@ -618,11 +658,13 @@ export function EditProjectModal({
       Promise.all([
         projectsService.getServices(), 
         projectsService.getDepartments(),
-        accountsService.getEmployees()
-      ]).then(([servicesData, departmentsData, employeesData]) => {
+        accountsService.getEmployees(),
+        projectsService.getClients()
+      ]).then(([servicesData, departmentsData, employeesData, clientsData]) => {
         setServices(Array.isArray(servicesData) ? servicesData : (servicesData.results || []))
         setDepartments(Array.isArray(departmentsData) ? departmentsData : (departmentsData.results || []))
         setEmployees(Array.isArray(employeesData) ? employeesData : (employeesData.results || []))
+        setClients(extractResults(clientsData))
       })
     }
   }, [open, project])
@@ -631,12 +673,36 @@ export function EditProjectModal({
     e.preventDefault()
     setLoading(true)
     try {
-      await projectsService.updateProject(project.id, formData)
+      const payload: any = {
+        title: formData.title,
+        description: formData.description,
+        is_internal: formData.is_internal,
+        service: formData.service || null,
+        owning_department: formData.owning_department || null,
+        start_date: formData.start_date || null,
+        target_end_date: formData.target_end_date || null,
+        team: formData.team,
+      }
+      if (!formData.is_internal && formData.client) {
+        payload.client = formData.client
+      } else {
+        payload.client = null
+      }
+      await projectsService.updateProject(project.id, payload)
       toast.success("Project configuration updated.")
       onSuccess?.()
       onOpenChange(false)
-    } catch (err) {
-      toast.error("Failed to synchronize parameters.")
+    } catch (err: any) {
+      const data = err.response?.data
+      console.error("[EditProject] 400 error response:", data)
+      if (data && typeof data === 'object') {
+        const errors = Object.entries(data)
+          .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+          .join(" | ")
+        toast.error(errors || "Failed to synchronize parameters.")
+      } else {
+        toast.error("Failed to synchronize parameters.")
+      }
     } finally {
       setLoading(false)
     }
@@ -666,6 +732,44 @@ export function EditProjectModal({
                 required 
                 className="rounded-xl border-slate-100 bg-slate-50 h-10 text-sm font-medium"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-slate-700">Project Description</Label>
+              <Textarea 
+                value={formData.description} 
+                onChange={e => setFormData({...formData, description: e.target.value})} 
+                className="rounded-xl border-slate-100 bg-slate-50 min-h-[80px] text-sm font-medium p-4 resize-none focus:bg-white transition-all outline-none"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-slate-700">Mission Type</Label>
+                <select
+                  className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium focus:ring-2 focus:ring-violet-500/10 outline-none transition-all appearance-none cursor-pointer"
+                  value={formData.is_internal ? "true" : "false"}
+                  onChange={e => setFormData({ ...formData, is_internal: e.target.value === "true" })}
+                >
+                  <option value="true">Internal Project</option>
+                  <option value="false">External Project</option>
+                </select>
+              </div>
+
+              {!formData.is_internal && (
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-slate-700">Mission Client</Label>
+                  <select
+                    required
+                    className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium focus:ring-2 focus:ring-violet-500/10 outline-none transition-all appearance-none cursor-pointer"
+                    value={formData.client}
+                    onChange={e => setFormData({ ...formData, client: e.target.value })}
+                  >
+                    <option value="">Select Client...</option>
+                    {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -736,6 +840,204 @@ export function EditProjectModal({
             </div>
           </form>
         </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+export function CreateTaskModal({ 
+  open, 
+  onOpenChange, 
+  onSuccess, 
+  initialProjectId 
+}: { 
+  open: boolean, 
+  onOpenChange: (open: boolean) => void, 
+  onSuccess?: () => void, 
+  initialProjectId?: string 
+}) {
+  const [loading, setLoading] = useState(false)
+  const [projects, setProjects] = useState<any[]>([])
+  const [employees, setEmployees] = useState<any[]>([])
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    project: initialProjectId || "",
+    assignee: "",
+    priority: "medium",
+    task_type: "General",
+    start_date: new Date().toISOString().split('T')[0],
+    due_date: "",
+  })
+
+  useEffect(() => {
+    if (open) {
+      setFormData(prev => ({ ...prev, project: initialProjectId || "" }))
+      Promise.all([
+        projectsService.getProjects(),
+        accountsService.getEmployees()
+      ]).then(([projData, empData]) => {
+        setProjects(extractResults(projData))
+        setEmployees(extractResults(empData))
+      })
+    }
+  }, [open, initialProjectId])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!formData.project || !formData.assignee) {
+      toast.error("Please select both a project and an assignee.")
+      return
+    }
+    setLoading(true)
+    try {
+      await projectsService.createTask(formData)
+      toast.success("Mission task successfully assigned.")
+      onSuccess?.()
+      onOpenChange(false)
+      setFormData({
+        title: "",
+        description: "",
+        project: initialProjectId || "",
+        assignee: "",
+        priority: "medium",
+        task_type: "General",
+        start_date: new Date().toISOString().split('T')[0],
+        due_date: "",
+      })
+    } catch (err: any) {
+      toast.error("Failed to assign mission task.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent showCloseButton={false} className="w-[95vw] sm:max-w-2xl rounded-2xl sm:rounded-3xl p-0 border border-violet-100 overflow-hidden bg-white shadow-2xl font-sans outline-none max-h-[90vh] flex flex-col">
+          <DialogTitle className="sr-only">Assign Tactical Task</DialogTitle>
+          <div className="bg-white px-5 sm:px-8 pt-5 pb-4 flex items-center gap-3 border-b border-violet-50 shrink-0">
+            <div className="size-8 bg-violet-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-violet-600/30">
+              <CheckSquare className="size-4" />
+            </div>
+            <div>
+              <h2 className="text-sm font-black tracking-tight text-slate-900 leading-none">Assign Task</h2>
+              <p className="text-[11px] font-medium text-slate-400 mt-0.5">Deploy a new work module to a specialized operative.</p>
+            </div>
+          </div>
+
+          <div className="overflow-y-auto">
+            <form onSubmit={handleSubmit} className="px-5 sm:px-8 py-6 space-y-4 bg-white">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-slate-700">Task Objective</Label>
+                <Input 
+                  placeholder="e.g. Core System Debugging..."
+                  value={formData.title}
+                  onChange={e => setFormData({ ...formData, title: e.target.value })}
+                  required
+                  className="rounded-xl border-slate-100 bg-slate-50 h-10 text-sm font-medium"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-slate-700">Detailed Description</Label>
+                <Textarea 
+                  placeholder="Brief the operative on technical requirements..."
+                  value={formData.description}
+                  onChange={e => setFormData({ ...formData, description: e.target.value })}
+                  className="rounded-xl border-slate-100 bg-slate-50 min-h-[80px] text-sm font-medium p-4 resize-none focus:bg-white transition-all outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-slate-700">Mission Project</Label>
+                  <select
+                    className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium focus:ring-2 focus:ring-violet-500/10 outline-none transition-all appearance-none cursor-pointer"
+                    value={formData.project}
+                    onChange={e => setFormData({ ...formData, project: e.target.value })}
+                    required
+                  >
+                    <option value="">Select Project...</option>
+                    {projects.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-slate-700">Assigned Operative</Label>
+                  <select
+                    className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium focus:ring-2 focus:ring-violet-500/10 outline-none transition-all appearance-none cursor-pointer"
+                    value={formData.assignee}
+                    onChange={e => setFormData({ ...formData, assignee: e.target.value })}
+                    required
+                  >
+                    <option value="">Select Member...</option>
+                    {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.first_name} {emp.last_name}</option>)}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-slate-700">Task Priority</Label>
+                  <select
+                    className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium focus:ring-2 focus:ring-violet-500/10 outline-none transition-all appearance-none cursor-pointer"
+                    value={formData.priority}
+                    onChange={e => setFormData({ ...formData, priority: e.target.value })}
+                  >
+                    <option value="low">Low Priority</option>
+                    <option value="medium">Medium Priority</option>
+                    <option value="high">High Priority</option>
+                    <option value="critical">Critical / Urgent</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-slate-700">Mission Category</Label>
+                  <select
+                    className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium focus:ring-2 focus:ring-violet-500/10 outline-none transition-all appearance-none cursor-pointer"
+                    value={formData.task_type}
+                    onChange={e => setFormData({ ...formData, task_type: e.target.value })}
+                  >
+                    <option value="General">General</option>
+                    <option value="Development">Development</option>
+                    <option value="Research">Research</option>
+                    <option value="UI/UX">UI/UX Design</option>
+                    <option value="DevOps">DevOps / Cloud</option>
+                    <option value="Security">Security Audit</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-slate-700">Start Date</Label>
+                  <Input 
+                    type="date"
+                    value={formData.start_date}
+                    onChange={e => setFormData({ ...formData, start_date: e.target.value })}
+                    className="rounded-xl border-slate-100 bg-slate-50 h-10 text-sm font-medium cursor-pointer"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-slate-700">Due Date</Label>
+                  <Input 
+                    type="date"
+                    value={formData.due_date}
+                    onChange={e => setFormData({ ...formData, due_date: e.target.value })}
+                    className="rounded-xl border-slate-100 bg-slate-50 h-10 text-sm font-medium cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3 pt-4 border-t border-slate-50 mt-4">
+                <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="w-full sm:flex-1 h-11 text-slate-400 font-bold text-xs rounded-xl hover:bg-slate-50 transition-all">
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={loading} className="w-full sm:flex-[2] h-11 bg-violet-600 border border-violet-500 hover:bg-violet-700 text-white font-bold text-xs rounded-xl shadow-lg active:scale-95 transition-all flex gap-2 items-center justify-center">
+                  {loading ? <Loader2 className="size-4 animate-spin" /> : <CheckSquare className="size-4" />}
+                  Deploy Assignment
+                </Button>
+              </div>
+            </form>
+          </div>
       </DialogContent>
     </Dialog>
   )

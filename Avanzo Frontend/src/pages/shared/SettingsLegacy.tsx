@@ -12,6 +12,7 @@ import {
   UserCircle,
   CheckCircle2
 } from "lucide-react"
+import { UserAvatar } from "@/components/shared/UserAvatar"
 import { OrgDepartmentsDesignations } from "@/components/organization/OrgDepartmentsDesignations"
 import { useState, useRef, useEffect } from "react"
 import { toast } from "sonner"
@@ -166,12 +167,8 @@ export default function SettingsLegacyPage() {
                 <div className="relative group/avatar cursor-pointer">
                   <div className="p-1.5 rounded-full bg-gradient-to-br from-violet-200 to-violet-600 shadow-xl shadow-violet-600/20 group-hover:rotate-12 transition-transform duration-700">
                     <div className="h-28 w-28 bg-white rounded-full p-1.5 shadow-inner">
-                       <div className="h-full w-full bg-violet-50 rounded-full flex items-center justify-center text-violet-600 text-3xl font-black font-display overflow-hidden relative shadow-inner">
-                          <img 
-                            src={`https://api.dicebear.com/7.x/notionists/svg?seed=${fullName}&backgroundColor=f5f3ff`} 
-                            alt={fullName}
-                            className="h-full w-full object-cover scale-110 group-hover/avatar:scale-125 transition-transform duration-700"
-                          />
+                       <div className="h-full w-full rounded-full flex items-center justify-center overflow-hidden relative">
+                          <UserAvatar firstName={user?.first_name} lastName={user?.last_name} gender={user?.gender} size={112} className="!border-none !ring-0 text-4xl" />
                        </div>
                     </div>
                   </div>

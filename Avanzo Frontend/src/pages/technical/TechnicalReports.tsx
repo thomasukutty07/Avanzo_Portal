@@ -45,7 +45,7 @@ export default function TechnicalReportsPage() {
         <div className="flex h-[80vh] items-center justify-center bg-[#fcfcfc]">
             <div className="flex flex-col items-center gap-6">
                 <Loader2 className="h-10 w-10 animate-spin text-violet-600 mb-6" />
-                <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] font-headline">Aggregating Engineering Performance Metrics...</p>
+                <p className="text-[11px] font-black text-slate-400 tracking-[0.2em] font-headline">Aggregating engineering performance metrics...</p>
             </div>
         </div>
     );
@@ -55,8 +55,8 @@ export default function TechnicalReportsPage() {
     <div className="space-y-10 pb-12 font-display bg-[#fcfcfc] min-h-screen animate-in fade-in duration-700 p-4 md:p-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-4">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-violet-600 mb-2 leading-none">
-            TECHNICAL ANALYTICS SECTOR
+          <p className="text-[10px] font-black tracking-[0.3em] text-violet-600 mb-2 leading-none">
+            Technical analytics sector
           </p>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight font-headline">
             Engineering Telemetry
@@ -72,10 +72,10 @@ export default function TechnicalReportsPage() {
                 toast.error("Failed to generate report.");
              }
           }}
-          className="flex items-center gap-3 rounded-xl border border-slate-100 bg-white px-7 py-3 text-[11px] font-black text-slate-900 hover:bg-slate-50 shadow-sm transition-all active:scale-95 font-headline uppercase tracking-widest"
+          className="flex items-center gap-3 rounded-xl border border-slate-100 bg-white px-7 py-3 text-[11px] font-black text-slate-900 hover:bg-slate-50 shadow-sm transition-all active:scale-95 font-headline tracking-widest"
         >
           <Download className="size-4 stroke-[3px] text-violet-600" />
-          Export Dossier
+          Export dossier
         </button>
       </div>
 
@@ -86,22 +86,22 @@ export default function TechnicalReportsPage() {
               <div className="size-12 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center border border-violet-100 group-hover:bg-violet-600 group-hover:text-white transition-all">
                 <stat.icon className="size-6 stroke-[2.5px]" />
               </div>
-              <span className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-xl border ${stat.bad ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
+              <span className={`flex items-center gap-1.5 text-[10px] font-black tracking-widest px-3 py-1 rounded-xl border ${stat.bad ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
                 {stat.bad ? <TrendingUp className="size-3.5" /> : <TrendingDown className="size-3.5 transform rotate-235" />}
                 {stat.trend}
               </span>
             </div>
-            <h2 className="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 opacity-60 font-headline">
-              {stat.title}
+            <h2 className="mb-3 text-[10px] font-black tracking-[0.2em] text-slate-400 opacity-60 font-headline">
+              {stat.title.charAt(0).toUpperCase() + stat.title.slice(1).toLowerCase()}
             </h2>
             <div className="flex items-baseline gap-2">
               <p className="text-4xl font-black text-slate-900 font-headline tabular-nums leading-none tracking-tighter">{stat.val}</p>
               <span className="text-[11px] font-black text-slate-300 uppercase tracking-widest font-headline">{stat.unit}</span>
             </div>
             <div className="mt-8 border-t border-slate-50 pt-6">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic opacity-50 flex items-center gap-2">
+              <p className="text-[10px] font-black text-slate-400 tracking-widest italic opacity-50 flex items-center gap-2">
                  <Activity className="size-3.5 text-violet-600" />
-                 {stat.desc}
+                 {stat.desc.charAt(0).toUpperCase() + stat.desc.slice(1).toLowerCase()}
               </p>
             </div>
           </div>
@@ -114,19 +114,19 @@ export default function TechnicalReportsPage() {
             <div className="size-20 rounded-[2rem] bg-slate-50 flex items-center justify-center mb-8 text-slate-200 border border-slate-100 shadow-inner group-hover:scale-110 group-hover:border-violet-100 transition-all duration-700">
                 <BarChart3 className="size-10" />
             </div>
-            <h3 className="text-2xl font-black text-slate-900 font-headline tracking-tight">Throughput Visualization</h3>
+            <h3 className="text-2xl font-black text-slate-900 font-headline tracking-tight">Throughput visualization</h3>
             <p className="text-sm font-medium text-slate-500 max-w-sm mt-4 opacity-70 leading-relaxed">
                 Sector performance charts will be synchronized once analytical clusters complete their mission processing.
             </p>
-            <button className="mt-10 px-8 py-4 bg-slate-50 text-[10px] font-black uppercase tracking-[0.3em] text-slate-300 rounded-2xl border border-slate-100 hover:bg-violet-600 hover:text-white hover:border-violet-600 transition-all shadow-sm">
-               Request Re-Sync
+            <button className="mt-10 px-8 py-4 bg-slate-50 text-[10px] font-black tracking-[0.3em] text-slate-300 rounded-2xl border border-slate-100 hover:bg-violet-600 hover:text-white hover:border-violet-600 transition-all shadow-sm">
+               Request re-sync
             </button>
         </div>
 
         <div className="rounded-[2.5rem] border border-slate-100 bg-white p-10 shadow-sm h-[480px] flex flex-col hover:shadow-xl transition-all duration-700 relative overflow-hidden group">
             <div className="absolute top-0 left-0 w-full h-1 bg-violet-600/10" />
             <div className="flex items-center justify-between mb-10">
-               <h3 className="text-sm font-black text-slate-900 font-headline uppercase tracking-widest">Automation Logs</h3>
+               <h3 className="text-sm font-black text-slate-900 font-headline tracking-widest">Automation logs</h3>
                <Layers className="size-5 text-slate-200" />
             </div>
             <div className="space-y-6 flex-1 overflow-y-auto scrollbar-hide">
@@ -138,15 +138,15 @@ export default function TechnicalReportsPage() {
                                 <Download className="size-5 stroke-[2.5px]" />
                             </div>
                             <div>
-                                <p className="text-[13px] font-black text-slate-900 group-hover/item:text-violet-700 transition-colors uppercase tracking-tight leading-none mb-1.5">Sector-{i} Cycle Analysis</p>
-                                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest opacity-60 leading-none">PDF • 2.4 MB • Mission Phase 42</p>
+                                <p className="text-[13px] font-black text-slate-900 group-hover/item:text-violet-700 transition-colors tracking-tight leading-none mb-1.5">Sector-{i} cycle analysis</p>
+                                <p className="text-[9px] font-black text-slate-300 tracking-widest opacity-60 leading-none">PDF • 2.4 MB • mission phase 42</p>
                             </div>
                         </div>
                     </div>
                 ))}
             </div>
-            <button className="w-full mt-10 py-5 bg-white border border-slate-100 text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] rounded-2xl hover:bg-slate-50 hover:text-violet-600 transition-all shadow-sm">
-               Access Mission Archive
+            <button className="w-full mt-10 py-5 bg-white border border-slate-100 text-slate-400 text-[10px] font-black tracking-[0.3em] rounded-2xl hover:bg-slate-50 hover:text-violet-600 transition-all shadow-sm">
+               Access mission archive
             </button>
         </div>
       </div>

@@ -16,7 +16,7 @@ from .serializers import (
 # Late threshold — hardcoded for now.
 # TODO: Pull from tenant/org config when per-tenant settings are built.
 LATE_THRESHOLD_HOUR = 9
-LATE_THRESHOLD_MINUTE = 15
+LATE_THRESHOLD_MINUTE = 30
 
 
 class AttendanceViewSet(viewsets.ReadOnlyModelViewSet):
@@ -430,6 +430,10 @@ class AttendanceViewSet(viewsets.ReadOnlyModelViewSet):
                 "missing": missing,
                 "late": late,
                 "on_time": clocked_in - late,
+                # Frontend expectations
+                "total_workforce": total,
+                "present_now": clocked_in,
+                "attendance_rate": (clocked_in / total * 100) if total > 0 else 0,
                 "employees": pulse_data,
             }
         )

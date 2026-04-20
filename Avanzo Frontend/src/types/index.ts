@@ -35,6 +35,7 @@ export interface User {
   designation_name?: string // display name (from read)
   team_lead?: string | null // ← NEW: UUID of manager
   team_lead_name?: string | null // ← NEW: display name
+  gender?: string // ← NEW: for profile placeholders
   date_of_joining?: string | null
   self_declared_talents?: number[]
   evaluated_talents?: number[]

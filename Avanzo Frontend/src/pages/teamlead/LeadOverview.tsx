@@ -86,7 +86,10 @@ export default function LeadOverview() {
 
   const pendingTasks = tasks.filter(t => t.status !== 'completed').length
   const completedTasks = tasks.filter(t => t.status === 'completed').length
-  const criticalTasks = tasks.filter(t => t.priority === 'urgent' || t.priority === 'high').length
+  const criticalTasks = tasks.filter(t => (t.priority === 'urgent' || t.priority === 'high' || t.priority === 'critical')).length
+  const avgCompletion = tasks.length > 0 
+    ? Math.round(tasks.reduce((acc, t) => acc + (t.completion_pct || 0), 0) / tasks.length)
+    : 0
 
   const STATS = [
     { label: "Pending Tasks", value: pendingTasks.toString(), sub: "Current Work", color: "blue", icon: ClipboardList },
@@ -96,24 +99,24 @@ export default function LeadOverview() {
   ]
 
   const CYBER_STATS = [
-    { label: "Security Audits", value: projects.filter(p => p.service_name?.includes('Audit') || p.service_name?.includes('VAPT')).length.toString(), sub: "In Progress", color: "blue", icon: ShieldAlert },
-    { label: "Vulnerability Find", value: criticalTasks.toString(), sub: "Critical / High", color: "orange", icon: AlertTriangle },
-    { label: "Compliance Score", value: "94%", sub: "Team Avg", color: "green", icon: Fingerprint },
-    { label: "Unit Activity", value: feed.length.toString(), sub: "Signals Detected", color: "primary", icon: Activity },
+    { label: "Security Audits", value: projects.filter(p => p.service_name?.toLowerCase().includes('audit') || p.service_name?.toLowerCase().includes('vapt')).length.toString(), sub: "In Progress", color: "blue", icon: ShieldAlert },
+    { label: "Risk Items", value: criticalTasks.toString(), sub: "High / Critical", color: "orange", icon: AlertTriangle },
+    { label: "Completion Rate", value: `${avgCompletion}%`, sub: "Team Avg", color: "green", icon: Fingerprint },
+    { label: "Log signals", value: feed.length.toString(), sub: "Detections", color: "primary", icon: Activity },
   ]
 
   const displayStats = isCyber ? CYBER_STATS : STATS
 
   return (
     <TeamLeadChrome>
-      <div className="p-4 md:p-8 space-y-10 animate-in fade-in duration-700 font-sans">
+      <div className="p-4 space-y-10 animate-in fade-in duration-700 font-sans">
         <header>
           <h2 className="text-3xl font-black tracking-tight text-slate-900 font-headline leading-none">Dashboard</h2>
           <p className="text-sm font-bold text-slate-400 mt-2 font-headline leading-none opacity-60">Team overview and progress</p>
         </header>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {displayStats.map((stat, i) => (
             <button
               key={i}
@@ -170,7 +173,7 @@ export default function LeadOverview() {
                  projects.slice(0, 3).map((p, i) => {
                    const percentage = p.completion_percentage || 0;
                    return (
-                     <div key={i} className="group cursor-pointer" onClick={() => toast.info(`Syncing project metadata: ${p.title}`)}>
+                     <div key={i} className="group cursor-pointer">
                         <div className="flex items-center justify-between mb-3.5">
                           <div className="space-y-1">
                              <p className="text-slate-900 text-sm font-bold group-hover:text-violet-600 transition-colors leading-none tracking-tight capitalize">{p.title}</p>
@@ -333,9 +336,9 @@ export default function LeadOverview() {
               <thead className="bg-slate-50/50 text-slate-400 text-xs font-black uppercase tracking-[0.15em]">
                 <tr>
                   <th className="px-8 py-5">Task Name</th>
-                  <th className="px-8 py-5">Category</th>
+                  <th className="hidden sm:table-cell px-8 py-5">Category</th>
                   <th className="px-8 py-5">Priority</th>
-                  <th className="px-8 py-5">Deadline</th>
+                  <th className="hidden lg:table-cell px-8 py-5">Deadline</th>
                   <th className="px-8 py-5 text-right">Status</th>
                 </tr>
               </thead>
@@ -348,20 +351,20 @@ export default function LeadOverview() {
                      </td>
                    </tr>
                 ) : tasks.slice(0, 5).map((task, i) => (
-                  <tr key={i} className="group hover:bg-slate-50/30 transition-all cursor-pointer" onClick={() => toast.info(`Syncing unit metadata: ${task.title}`)}>
+                  <tr key={i} className="group hover:bg-slate-50/30 transition-all cursor-pointer">
                     <td className="px-8 py-6">
-                       <div className="flex flex-col gap-1 min-w-[220px]">
-                         <span className="font-black text-base text-slate-900 group-hover:text-violet-600 transition-colors leading-none tracking-tight uppercase">{task.title}</span>
+                       <div className="flex flex-col gap-1 min-w-[150px] md:min-w-[220px]">
+                         <span className="font-black text-sm md:text-base text-slate-900 group-hover:text-violet-600 transition-colors leading-none tracking-tight uppercase truncate">{task.title}</span>
                          <span className="text-[9px] font-black text-slate-300 opacity-80 leading-none">General Task</span>
                        </div>
                     </td>
-                    <td className="px-8 py-6">
+                    <td className="hidden sm:table-cell px-8 py-6">
                        <span className="inline-flex px-2.5 py-1 bg-slate-50 text-[9px] font-black text-slate-400 uppercase tracking-widest rounded-lg border border-slate-100 shadow-sm">
                          {task.task_type || 'General'}
                        </span>
                     </td>
                     <td className="px-8 py-6">
-                      <span className={`px-3 py-1.5 text-[9px] font-black rounded-lg uppercase tracking-widest border transition-all ${
+                      <span className={`px-3 py-1.5 text-[8px] md:text-[9px] font-black rounded-lg uppercase tracking-widest border transition-all ${
                         task.priority === 'urgent' || task.priority === 'high' ? 'bg-red-50 text-red-600 border-red-100 shadow-sm shadow-red-500/5' :
                         task.priority === 'tactical' || task.priority === 'medium' ? 'bg-amber-50 text-amber-600 border-amber-100 shadow-sm' :
                         'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-sm'
@@ -369,20 +372,20 @@ export default function LeadOverview() {
                         {task.priority || 'Normal'}
                       </span>
                     </td>
-                    <td className="px-8 py-6 text-[10px] font-black text-slate-400 tabular-nums lowercase opacity-80">
+                    <td className="hidden lg:table-cell px-8 py-6 text-[10px] font-black text-slate-400 tabular-nums lowercase opacity-80">
                        <div className="flex items-center gap-2">
                          <Calendar className="size-3" />
                          {task.due_date || 'tbd'}
                        </div>
                     </td>
                     <td className="px-8 py-6 text-right">
-                      <div className="inline-flex items-center gap-2.5 bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm group-hover:border-violet-100 transition-colors">
-                        <span className={`size-2.5 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.1)] ${
+                      <div className="inline-flex items-center gap-2 md:gap-2.5 bg-white px-3 md:px-4 py-1.5 md:py-2 rounded-xl border border-slate-100 shadow-sm group-hover:border-violet-100 transition-colors">
+                        <span className={`size-2 md:size-2.5 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.1)] ${
                            task.status === 'completed' ? 'bg-emerald-500' :
                            task.status === 'in_progress' ? 'bg-blue-500 animate-pulse' :
                            'bg-slate-300'
                         }`}></span>
-                        <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">{task.status?.replace('_', ' ') || 'Open'}</span>
+                        <span className="text-[8px] md:text-[10px] font-black text-slate-800 uppercase tracking-widest">{task.status?.replace('_', ' ') || 'Open'}</span>
                       </div>
                     </td>
                   </tr>

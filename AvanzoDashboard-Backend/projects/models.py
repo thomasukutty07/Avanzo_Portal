@@ -47,6 +47,7 @@ class Project(TimeStampedModel):
         COMPLETED = "completed", "Completed"
 
     title = models.CharField(max_length=255)
+    description = models.TextField(blank=True, default="")
 
     # Routing Logic
     is_internal = models.BooleanField(

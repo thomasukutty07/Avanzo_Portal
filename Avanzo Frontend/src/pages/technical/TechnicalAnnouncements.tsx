@@ -51,7 +51,7 @@ export default function TechnicalAnnouncementsPage() {
         <div className="flex h-[80vh] items-center justify-center bg-[#fcfcfc]">
             <div className="flex flex-col items-center gap-4">
                 <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
-                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Compiling Broadcast Registry...</p>
+                <p className="text-sm font-bold text-slate-500 tracking-widest">Compiling broadcast registry...</p>
             </div>
         </div>
     );
@@ -61,8 +61,8 @@ export default function TechnicalAnnouncementsPage() {
     <div className="space-y-6 pb-12 font-display bg-[#fcfcfc] min-h-screen">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-600 mb-1">
-            TECHNICAL MANAGEMENT
+          <p className="text-[10px] font-black tracking-[0.2em] text-violet-600 mb-1">
+            Technical management
           </p>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight font-headline">
             Announcements
@@ -80,8 +80,8 @@ export default function TechnicalAnnouncementsPage() {
                 className={`relative rounded-2xl border bg-white p-8 shadow-sm transition-all duration-300 ${read[a.id] ? 'border-slate-100 opacity-70' : 'border-violet-100 hover:shadow-md'}`}
               >
                 {a.urgent && !read[a.id] && (
-                  <div className="absolute top-0 right-8 -translate-y-1/2 bg-red-500 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-sm">
-                    Urgent Notice
+                  <div className="absolute top-0 right-8 -translate-y-1/2 bg-red-500 text-white text-[9px] font-black tracking-widest px-3 py-1 rounded-full shadow-sm">
+                    Urgent notice
                   </div>
                 )}
                 
@@ -92,12 +92,12 @@ export default function TechnicalAnnouncementsPage() {
                     </div>
                     <div>
                       <div className="flex items-center gap-3 mb-2">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                        <p className="text-[10px] font-black tracking-widest text-slate-400 flex items-center gap-1.5">
                           <Calendar className="size-3" />
                           {a.date}
                         </p>
                         {a.isExpired && (
-                          <span className="px-2 py-0.5 bg-red-50 text-red-600 border border-red-100 rounded-md text-[8px] font-black uppercase tracking-widest">
+                          <span className="px-2 py-0.5 bg-red-50 text-red-600 border border-red-100 rounded-md text-[8px] font-black tracking-widest">
                             Expired
                           </span>
                         )}
@@ -112,7 +112,7 @@ export default function TechnicalAnnouncementsPage() {
                     </button>
                     <button
                       type="button"
-                      className={`mt-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest px-4 py-2 rounded-lg transition-colors ${read[a.id] ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-600 hover:bg-violet-50 hover:text-violet-700'}`}
+                      className={`mt-4 flex items-center gap-2 text-[11px] font-bold tracking-widest px-4 py-2 rounded-lg transition-colors ${read[a.id] ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-600 hover:bg-violet-50 hover:text-violet-700'}`}
                       disabled={read[a.id]}
                       onClick={() => setRead((r: Record<string, boolean>) => ({ ...r, [a.id]: true }))}
                     >

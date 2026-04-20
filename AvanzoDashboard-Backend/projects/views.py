@@ -68,6 +68,18 @@ class ProjectViewSet(viewsets.ModelViewSet):
         project = serializer.save(manager=self.request.user)
         project.team.add(self.request.user)
 
+        # Auto-create one initial setup task for the manager/lead
+        Task.objects.create(
+            project=project,
+            title=f"{project.title} - Global Launch",
+            description="Initial project initialization. Review parameters and assign specialized sub-tasks.",
+            assignee=project.manager,
+            priority="medium",
+            status="progress",
+            start_date=project.start_date,
+            due_date=project.target_end_date,
+        )
+
     # ── A-14: Project Progress Summary ────────────────────────
     @action(
         detail=True,
@@ -121,11 +133,25 @@ class TaskViewSet(viewsets.ModelViewSet):
         """Row-Level Security for Tasks"""
         user = self.request.user
         qs = Task.objects.select_related("project", "assignee")
-        if user.is_admin:
-            return qs
-        if user.is_team_lead:
-            return qs.filter(project__owning_department=user.department)
-        return qs.filter(assignee=user)
+
+        # Row-level security scoping
+        if not user.is_admin:
+            if user.is_team_lead:
+                from django.db.models import Q
+                qs = qs.filter(
+                    Q(project__owning_department=user.department) |
+                    Q(assignee__department=user.department)
+                ).distinct()
+            else:
+                qs = qs.filter(assignee=user)
+
+        # Optional filter: ?assignee=<employee_id> — works for all roles
+        assignee_id = self.request.query_params.get("assignee")
+        if assignee_id:
+            qs = qs.filter(assignee__id=assignee_id)
+
+        print(f"[DEBUG TaskViewSet] user={user.email} role={user.role_name} admin={user.is_admin} tl={user.is_team_lead} assignee_id={assignee_id} qs_count={qs.count()}")
+        return qs
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

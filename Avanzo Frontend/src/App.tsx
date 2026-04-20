@@ -19,10 +19,12 @@ const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard"))
 const UsersPage = lazy(() => import("@/pages/admin/Users"))
 const DepartmentsPage = lazy(() => import("@/pages/admin/Departments"))
 const ReportsPage = lazy(() => import("@/pages/admin/Reports"))
+const EmployeeWorkingReportDetail = lazy(() => import("@/pages/admin/EmployeeWorkingReportDetail"))
 const AdminNotificationsPage = lazy(() => import("@/pages/admin/AdminNotifications"))
 const AdminAnnouncementsPage = lazy(() => import("@/pages/admin/AdminAnnouncements"))
 const AdminEmployeeRegistrationPage = lazy(() => import("@/pages/admin/AdminEmployeeRegistration"))
 const SettingsPage = lazy(() => import("@/pages/shared/Settings"))
+const EmployeeProfilePage = lazy(() => import("@/pages/shared/EmployeeProfile"))
 const AdminProjectDetailsPage = lazy(() => import("@/pages/admin/ProjectDetails"))
 const HROverview = lazy(() => import("@/pages/hr/HROverview"))
 const HREmployees = lazy(() => import("@/pages/hr/Employees"))
@@ -49,6 +51,7 @@ const TeamLeadCreateAnnouncementPage = lazy(() =>
   import("@/pages/teamlead/CreateAnnouncement")
 )
 const LeadProjectDetailsPage = lazy(() => import("@/pages/teamlead/ProjectDetails"))
+const TeamMemberDetailPage = lazy(() => import("@/pages/teamlead/TeamMemberDetail"))
 
 const TechnicalDashboardPage = lazy(() =>
   import("@/pages/technical/TechnicalDashboard")
@@ -177,6 +180,7 @@ export default function App() {
             <Route path="/users" element={<UsersPage />} />
             <Route path="/departments" element={<DepartmentsPage />} />
             <Route path="/reports" element={<ReportsPage />} />
+            <Route path="/reports/working/:id" element={<EmployeeWorkingReportDetail />} />
             <Route
               path="/admin-notifications"
               element={<AdminNotificationsPage />}
@@ -196,6 +200,7 @@ export default function App() {
 
           <Route element={<RequireRole roles={["HR", "Admin"]} />}>
             <Route path="/employees" element={<HREmployees />} />
+            <Route path="/employees/:id" element={<EmployeeProfilePage />} />
             <Route path="/attendance" element={<HRAttendanceOverview />} />
             <Route path="/leave" element={<HRLeaveRequests />} />
             <Route path="/hrreports" element={<HRReports />} />
@@ -215,6 +220,7 @@ export default function App() {
             <Route path="/projects" element={<ProjectProgress />} />
             <Route path="/projects/:id" element={<LeadProjectDetailsPage />} />
             <Route path="/team" element={<TeamPage />} />
+            <Route path="/team/:id" element={<TeamMemberDetailPage />} />
             <Route
               path="/team-announcements"
               element={<TeamAnnouncementsPage />}

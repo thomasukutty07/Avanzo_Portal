@@ -52,7 +52,7 @@ class Employee(AbstractUser):
     email = models.EmailField("work email", unique=True, db_index=True)
 
     # Profile fields
-    phone = models.CharField(max_length=20, blank=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
     avatar = models.URLField(blank=True)
     employee_id = models.CharField(
         max_length=20,
@@ -119,6 +119,21 @@ class Employee(AbstractUser):
         db_index=True,
     )
     date_of_joining = models.DateField(null=True, blank=True)
+
+    # Personal details
+    class GenderChoices(models.TextChoices):
+        MALE = "male", "Male"
+        FEMALE = "female", "Female"
+        OTHER = "other", "Other"
+        PREFER_NOT = "prefer_not_to_say", "Prefer not to say"
+
+    gender = models.CharField(
+        max_length=20,
+        choices=GenderChoices.choices,
+        blank=True,
+        null=True,
+    )
+    date_of_birth = models.DateField(null=True, blank=True)
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)

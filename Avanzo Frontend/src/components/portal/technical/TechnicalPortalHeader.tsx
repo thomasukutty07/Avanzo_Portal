@@ -4,9 +4,9 @@ import { Bell, Search } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { toast } from "sonner"
 import { AttendanceClockWidget } from "@/components/shared/AttendanceClockWidget"
+import { UserAvatar } from "@/components/shared/UserAvatar"
 
-const PROFILE_IMG =
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuDzgVkabVGiXiA6U8CKH1uEo2cviFMMhGE3m61Lf-HlkVCFU0mxSigT7qAoTykRrl1baKV1YIvoQUH5rUYo-xmTt4SVHNeuMb0ea2lBxVyMjDVZOzjhGcdbmzIQYvZO0BHOU2lBwKYGyHAZd9Nc62y03TuhGlGkcHqNi7d-ZEHFs5NMYQG4ODpY6IsuWG31eC6vuIaEaWGg4H66p1UmBoHr9uSbLl03VivPw1e5vXOCzk-rQ3R_Me2jBcFdLjfIqxWfcqSQmDFliE4"
+
 
 export function TechnicalPortalHeader({ onToggleSidebar }: { onToggleSidebar?: (open: boolean) => void }) {
   const [query, setQuery] = useState("")
@@ -56,18 +56,21 @@ export function TechnicalPortalHeader({ onToggleSidebar }: { onToggleSidebar?: (
         
         <Link 
           to="/technical/profile"
-          className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer group"
+          className="flex items-center gap-3 group px-2 py-1 transition-opacity hover:opacity-80"
         >
           <div className="hidden sm:block text-right">
-            <p className="text-xs font-bold leading-none text-slate-900 group-hover:text-violet-600 transition-colors uppercase italic">
-              {name}
+            <p className="text-sm font-bold leading-none text-slate-900 italic">
+              {name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()}
             </p>
-            <p className="text-[9px] font-black text-slate-400 mt-1 uppercase tracking-widest italic">{role}</p>
+            <p className="text-[11px] font-medium text-slate-400 mt-1 italic">
+              {role.charAt(0).toUpperCase() + role.slice(1).toLowerCase()}
+            </p>
           </div>
-          <img
-            alt=""
-            className="size-10 rounded-full object-cover shadow-sm ring-2 ring-white group-hover:ring-violet-100 transition-all"
-            src={PROFILE_IMG}
+          <UserAvatar 
+            firstName={user?.first_name || (user?.email ? user.email[0] : "T")} 
+            lastName={user?.last_name || (user?.email ? user.email[1] : "S")} 
+            gender={user?.gender}
+            size={40}
           />
         </Link>
       </div>

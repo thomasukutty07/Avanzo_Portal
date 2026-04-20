@@ -54,13 +54,13 @@ export default function CyberSecurityCreateIncidentPage() {
       <div className="mb-6">
         <Link
           to="/security"
-          className="group flex items-center gap-2 text-[10px] font-black text-violet-600 tracking-widest hover:text-violet-800 transition-colors uppercase"
+          className="group flex items-center gap-2 text-[10px] font-bold text-violet-600 tracking-widest hover:text-violet-800 transition-colors uppercase"
         >
           <ArrowLeft className="size-3 group-hover:-translate-x-1 transition-transform" />
           Back to operations center
         </Link>
-        <h1 className="mt-6 text-2xl font-black text-slate-900 tracking-tight leading-none">Log security incident</h1>
-        <p className="text-slate-500 mt-3 text-xs font-medium">Initialize a new tactical incident report and alert the response team.</p>
+        <h1 className="mt-6 text-2xl font-bold text-slate-900 tracking-tight leading-none">Log security incident</h1>
+        <p className="text-slate-500 mt-3 text-xs font-normal text-slate-400">Report a new security vulnerability or threat.</p>
       </div>
 
       <form
@@ -69,8 +69,8 @@ export default function CyberSecurityCreateIncidentPage() {
       >
         <div className="space-y-6">
           <div className="space-y-3">
-            <label htmlFor="title" className="block text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">
-              Incident Headline
+            <label htmlFor="title" className="block text-[11px] font-semibold text-slate-400 uppercase tracking-widest">
+              Intel Headline
             </label>
             <input
               id="title"
@@ -86,7 +86,7 @@ export default function CyberSecurityCreateIncidentPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
-              <label htmlFor="type" className="block text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">
+              <label htmlFor="type" className="block text-[11px] font-semibold text-slate-400 uppercase tracking-widest">
                 Threat category
               </label>
               <select
@@ -102,17 +102,17 @@ export default function CyberSecurityCreateIncidentPage() {
               </select>
             </div>
             <div className="space-y-3 opacity-50 cursor-not-allowed">
-              <label className="block text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">
+              <label className="block text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase">
                 Routing Logic
               </label>
-              <div className="w-full h-12 bg-slate-50 border border-slate-100 rounded-2xl px-6 flex items-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              <div className="w-full h-12 bg-slate-50 border border-slate-100 rounded-2xl px-6 flex items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                  AUTO-TRIAGE / ALPHA
               </div>
             </div>
           </div>
 
           <div className="space-y-3">
-            <label htmlFor="description" className="block text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">
+            <label htmlFor="description" className="block text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase">
               Tactical intel & description
             </label>
             <textarea
@@ -131,23 +131,23 @@ export default function CyberSecurityCreateIncidentPage() {
           <Button
             type="submit"
             disabled={submitting}
-            className="h-12 px-10 bg-violet-600 hover:bg-violet-700 text-white font-black text-[10px] tracking-[0.2em] rounded-2xl shadow-xl shadow-violet-600/20 active:scale-95 transition-all"
+            className="h-12 px-10 bg-violet-600 hover:bg-violet-700 text-white font-bold text-[10px] tracking-[0.2em] rounded-2xl shadow-xl shadow-violet-600/20 active:scale-95 transition-all"
           >
             {submitting ? (
               <Loader2 className="size-3.5 mr-3 animate-spin" />
             ) : (
               <ShieldAlert className="size-3.5 mr-3" />
             )}
-            {submitting ? "INITIALIZING..." : "INITIALIZE RESPONSE"}
+            {submitting ? "SENDING..." : "LOG INCIDENT"}
           </Button>
           <Button
             type="button"
             variant="outline"
             disabled={submitting}
-            className="h-12 px-8 border-slate-100 bg-white text-[10px] font-black tracking-[0.2em] text-slate-500 hover:bg-slate-50 rounded-2xl"
+            className="h-12 px-8 border-slate-100 bg-white text-[10px] font-bold tracking-[0.2em] text-slate-500 hover:bg-slate-50 rounded-2xl"
             onClick={() => navigate("/security")}
           >
-            ABORT INTEL
+            CANCEL
           </Button>
         </div>
       </form>

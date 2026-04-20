@@ -1,5 +1,5 @@
 import TeamLeadChrome from "@/components/portal/teamlead/TeamLeadChrome"
-import { CreateProjectModal } from "@/components/portal/teamlead/TeamLeadActionForms"
+import { CreateProjectModal, EditProjectModal } from "@/components/portal/teamlead/TeamLeadActionForms"
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
 import { projectsService } from "@/services/projects"
 import { useState, useEffect } from "react"
@@ -19,6 +19,7 @@ import {
   Trash2,
   X,
   Mail,
+  Edit2,
 } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import {
@@ -35,6 +36,8 @@ export default function LeadProjectsPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [selectedProject, setSelectedProject] = useState<any>(null)
 
   useEffect(() => {
     fetchProjects()
@@ -86,7 +89,7 @@ export default function LeadProjectsPage() {
 
   return (
     <TeamLeadChrome>
-      <div className="p-4 md:p-8 space-y-10 animate-in fade-in duration-700 font-sans">
+      <div className="p-4 space-y-10 animate-in fade-in duration-700 font-sans">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
           <header>
@@ -206,6 +209,11 @@ export default function LeadProjectsPage() {
                           <div className="min-w-0">
                              <p className="text-base font-bold text-slate-900 group-hover:text-violet-600 transition-colors tracking-tight leading-none truncate capitalize">{p.title}</p>
                              <p className="text-xs text-slate-400 font-bold mt-2 leading-none opacity-80">{p.client_name || 'Global Strategic Init.'}</p>
+                             {p.description && (
+                                <p className="text-[11px] text-slate-400 mt-2 line-clamp-1 max-w-[250px] italic">
+                                  "{p.description}"
+                                </p>
+                             )}
                           </div>
                        </div>
                     </td>
@@ -234,15 +242,26 @@ export default function LeadProjectsPage() {
                        </div>
                     </td>
                     <td className="px-8 py-7 text-right">
-                       <div className="flex items-center justify-end gap-3">
-                         <button 
-                           onClick={(e) => handleDeleteProject(e, p.id, p.title)}
-                           className="p-2.5 bg-white border border-slate-100 hover:border-red-100 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-xl shadow-sm transition-all"
-                           title="Delete Project"
-                         >
-                           <Trash2 className="size-4" />
-                         </button>
-                       </div>
+                        <div className="flex items-center justify-end gap-3">
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedProject(p);
+                              setShowEditModal(true);
+                            }}
+                            className="p-2.5 bg-white border border-slate-100 hover:border-violet-100 hover:bg-violet-50 text-slate-400 hover:text-violet-600 rounded-xl shadow-sm transition-all"
+                            title="Edit Project"
+                          >
+                            <Edit2 className="size-4" />
+                          </button>
+                          <button 
+                            onClick={(e) => handleDeleteProject(e, p.id, p.title)}
+                            className="p-2.5 bg-white border border-slate-100 hover:border-red-100 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-xl shadow-sm transition-all"
+                            title="Delete Project"
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
+                        </div>
                     </td>
                   </tr>
                 ))}
@@ -255,6 +274,12 @@ export default function LeadProjectsPage() {
         open={showCreateModal} 
         onOpenChange={setShowCreateModal} 
         onSuccess={fetchProjects} 
+      />
+      <EditProjectModal 
+        open={showEditModal}
+        onOpenChange={setShowEditModal}
+        project={selectedProject}
+        onSuccess={fetchProjects}
       />
     </TeamLeadChrome>
   )

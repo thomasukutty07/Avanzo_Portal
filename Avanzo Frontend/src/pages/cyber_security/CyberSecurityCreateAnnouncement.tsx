@@ -50,8 +50,8 @@ export default function CyberSecurityCreateAnnouncementPage() {
           <ArrowLeft className="size-3 group-hover:-translate-x-1 transition-transform" />
           Back to broadcasts
         </Link>
-        <h1 className="mt-6 text-2xl font-black text-slate-900 tracking-tight leading-none">Initialize broadcast</h1>
-        <p className="text-slate-500 mt-3 text-xs font-medium">Draft and transmit official cybersecurity intelligence to the operational unit.</p>
+        <h1 className="mt-6 text-2xl font-bold text-slate-900 tracking-tight leading-none">New broadcast</h1>
+        <p className="text-slate-500 mt-3 text-xs font-normal text-slate-400">Draft and transmit official cybersecurity intelligence to the unit.</p>
       </div>
 
       <form
@@ -60,8 +60,8 @@ export default function CyberSecurityCreateAnnouncementPage() {
       >
         <div className="space-y-6">
           <div className="space-y-3">
-            <label htmlFor="title" className="block text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">
-              Intel Headline
+            <label htmlFor="title" className="block text-[11px] font-semibold text-slate-400 uppercase tracking-widest">
+              Broadcast Headline
             </label>
             <input
               id="title"
@@ -75,7 +75,7 @@ export default function CyberSecurityCreateAnnouncementPage() {
           </div>
 
           <div className="space-y-3">
-            <label htmlFor="message" className="block text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">
+            <label htmlFor="message" className="block text-[11px] font-semibold text-slate-400 uppercase tracking-widest">
               Intelligence Briefing
             </label>
             <textarea
@@ -101,7 +101,7 @@ export default function CyberSecurityCreateAnnouncementPage() {
             ) : (
               <Send className="size-3.5 mr-3" />
             )}
-            {submitting ? "TRANSMITTING..." : "TRANSMIT INTEL"}
+            {submitting ? "SENDING..." : "SEND BROADCAST"}
           </Button>
           <Button
             type="button"
@@ -110,7 +110,7 @@ export default function CyberSecurityCreateAnnouncementPage() {
             className="h-12 px-8 border-slate-100 bg-white text-[10px] font-black tracking-[0.2em] text-slate-500 hover:bg-slate-50 rounded-2xl"
             onClick={() => navigate("/security/announcements")}
           >
-            ABORT BROADCAST
+            CANCEL
           </Button>
         </div>
       </form>

@@ -76,19 +76,22 @@ export default function HRAttendanceOverview() {
 
         const mapped = data.employees?.map((e: any) => {
           let statusText = "UNKNOWN"
-          let color = "bg-slate-500"
+          let color = "bg-slate-500 text-white"
           
           if (e.status === 'clocked_in' || e.status === 'clocked_out') {
              if (e.is_late) {
                 statusText = "Late Arrival"
-                color = "bg-amber-500 shadow-amber-500/10"
+                color = "bg-amber-100/50 text-amber-600 border border-amber-200"
+             } else if (e.is_early_exit) {
+                statusText = "Early Exit"
+                color = "bg-orange-100/50 text-orange-600 border border-orange-200"
              } else {
                 statusText = "Verified"
-                color = "bg-emerald-500 shadow-emerald-500/10"
+                color = "bg-emerald-100/50 text-emerald-600 border border-emerald-200"
              }
           } else {
              statusText = "Missing"
-             color = "bg-red-500 shadow-red-500/10"
+             color = "bg-red-50 text-red-600 border border-red-100"
           }
 
           return {
@@ -100,11 +103,19 @@ export default function HRAttendanceOverview() {
             checkout: e.clock_out_time ? new Date(e.clock_out_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "--:--",
             status: statusText,
             color: color,
+            isMissing: statusText === "Missing",
             initial: e.employee_name ? e.employee_name.substring(0, 2).toUpperCase() : "??"
           }
         }) || []
+
+        // Sort: Marked attendance first, Missing last
+        const sorted = [...mapped].sort((a, b) => {
+          if (a.isMissing && !b.isMissing) return 1;
+          if (!a.isMissing && b.isMissing) return -1;
+          return 0;
+        });
         
-        setLogs(mapped)
+        setLogs(sorted)
       } catch (e) {
         console.error(e)
       }
@@ -118,9 +129,14 @@ export default function HRAttendanceOverview() {
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
             <div className="font-headline">
-                <p className="text-[10px] font-black tracking-[0.2em] text-violet-600 mb-1">
-                    Workforce Analytics
-                </p>
+                <div className="flex items-center gap-3 mb-1">
+                    <p className="text-[10px] font-black tracking-[0.2em] text-violet-600 uppercase">
+                        Workforce Analytics
+                    </p>
+                    <Badge className="bg-slate-100 text-slate-500 border-none rounded-lg text-[9px] font-black tracking-widest px-2 py-0.5">
+                        SHIFT: 09:30 AM - 05:30 PM
+                    </Badge>
+                </div>
                 <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">
                     Attendance Registry
                 </h1>
@@ -141,14 +157,14 @@ export default function HRAttendanceOverview() {
           {STATS.map((stat, i) => (
              <div key={i} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 hover:shadow-md transition-all group font-headline">
                 <div className="flex items-center justify-between mb-4">
-                    <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">{stat.label}</p>
+                    <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">{stat.label}</p>
                     <div className={`size-8 rounded-xl ${stat.color.replace('text-', 'bg-').replace('-500', '-50').replace('text-violet-600', 'bg-violet-50 text-violet-600')} flex items-center justify-center`}>
                        <stat.icon className="size-4" />
                     </div>
                 </div>
                 <p className={`text-4xl font-black tracking-tight ${stat.color.includes('violet') ? 'text-slate-900' : stat.color}`}>{stat.value}</p>
                 <div className="mt-4 flex items-center justify-between">
-                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-tighter italic">{stat.sub}</span>
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-tighter italic">{stat.sub}</span>
                     <Badge className={`${stat.trend === 'Stable' ? 'bg-slate-50 text-slate-400' : stat.trend.startsWith('+') ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'} border-none rounded-lg text-[9px] font-black tracking-widest`}>
                         {stat.trend}
                     </Badge>
@@ -173,7 +189,7 @@ export default function HRAttendanceOverview() {
                 </div>
                 <div className="flex-1 min-h-0 flex items-center justify-center bg-slate-50/50 border border-slate-100 rounded-2xl">
                     <div className="text-center">
-                       <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Total Workforce Present</p>
+                       <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">Total Workforce Present</p>
                        <p className="text-7xl font-black text-slate-900 tracking-tight">{stats.clockedIn} / {Math.max(stats.total, 1)}</p>
                     </div>
                 </div>
@@ -184,7 +200,7 @@ export default function HRAttendanceOverview() {
 
                 
                 <div className="bg-white rounded-2xl border border-slate-100 p-8 shadow-sm">
-                   <h5 className="text-[10px] font-black text-slate-400 tracking-widest mb-6 leading-none">Reliability Metrics</h5>
+                   <h5 className="text-[10px] font-black text-slate-500 tracking-widest mb-6 leading-none uppercase">Reliability Metrics</h5>
                    <div className="space-y-6">
                       {[
                         { label: "On-time Arrival", val: 88, color: "bg-emerald-500" },
@@ -193,7 +209,7 @@ export default function HRAttendanceOverview() {
                       ].map((m, i) => (
                         <div key={i} className="space-y-2">
                             <div className="flex justify-between items-center text-[9px] font-black tracking-widest">
-                                <span className="text-slate-400">{m.label}</span>
+                                <span className="text-slate-600 font-bold">{m.label}</span>
                                 <span className="text-slate-900">{m.val}%</span>
                             </div>
                             <div className="h-1.5 w-full bg-slate-50 rounded-full overflow-hidden">
@@ -217,7 +233,7 @@ export default function HRAttendanceOverview() {
            
            <div className="overflow-x-auto">
               <table className="w-full text-left">
-                <thead className="bg-slate-50/50 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-50">
+                <thead className="bg-slate-50/50 text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] border-b border-slate-50">
                   <tr>
                     <th className="px-8 py-6">Staff Internal Profile</th>
                     <th className="px-8 py-6">Vertical Unit</th>
@@ -233,19 +249,19 @@ export default function HRAttendanceOverview() {
                     <tr key={i} className="group hover:bg-slate-50 transition-colors">
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-3">
-                          <div className="size-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-black text-sm group-hover:bg-violet-600 group-hover:text-white transition-all shadow-sm">
+                          <div className="size-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 font-black text-sm group-hover:bg-violet-600 group-hover:text-white transition-all shadow-sm">
                             {log.initial}
                           </div>
                           <div>
                             <p className="text-[14px] font-black text-slate-900 uppercase tracking-tight font-headline group-hover:text-violet-700 transition-colors">{log.name}</p>
-                            <p className="text-[10px] font-bold text-slate-400 mt-1 leading-none tabular-nums">{log.email}</p>
+                            <p className="text-[10px] font-bold text-slate-500 mt-1 leading-none tabular-nums lowercase">{log.email}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-8 py-6">
-                        <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">{log.dept}</span>
+                        <span className="text-[11px] font-black text-slate-600 uppercase tracking-widest">{log.dept}</span>
                       </td>
-                      <td className="px-8 py-6 text-[11px] font-black text-slate-400 tabular-nums">{log.date}</td>
+                      <td className="px-8 py-6 text-[11px] font-black text-slate-500 tabular-nums">{log.date}</td>
                       <td className="px-8 py-6 text-sm font-black text-slate-900 tabular-nums">{log.checkin}</td>
                       <td className="px-8 py-6 text-sm font-black text-slate-900 tabular-nums">{log.checkout}</td>
                       <td className="px-8 py-6">
@@ -256,12 +272,12 @@ export default function HRAttendanceOverview() {
                       <td className="px-8 py-6 text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <button className="p-3 text-slate-200 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all outline-none">
+                            <button className="p-3 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all outline-none">
                               <MoreVertical className="size-4" />
                             </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-56 font-display rounded-2xl p-1.5 shadow-2xl border-slate-200 z-[100]">
-                            <DropdownMenuLabel className="px-3.5 py-2.5 text-[9px] font-black uppercase tracking-[0.18em] text-slate-300 italic">Contextual Intelligence</DropdownMenuLabel>
+                            <DropdownMenuLabel className="px-3.5 py-2.5 text-[9px] font-black uppercase tracking-[0.18em] text-slate-500 italic">Contextual Intelligence</DropdownMenuLabel>
                             <DropdownMenuItem onClick={() => toast.info(`Initializing full telemetry for ${log.name}`)} className="rounded-xl px-3 py-2.5 cursor-pointer group">
                                 <div className="size-8 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center mr-3 group-hover:bg-violet-600 group-hover:text-white transition-colors">
                                   <Eye className="size-3.5" />
@@ -298,17 +314,17 @@ export default function HRAttendanceOverview() {
            
            {/* Pagination */}
            <div className="p-4 bg-slate-50/50 border-t border-slate-50 flex items-center justify-between px-8">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Page 01 of 50</p>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Page 01 of 50</p>
               <div className="flex gap-2">
-                 <button className="size-9 rounded-xl border border-slate-100 flex items-center justify-center text-slate-300 opacity-50 cursor-not-allowed bg-white">
+                 <button className="size-9 rounded-xl border border-slate-100 flex items-center justify-center text-slate-400 opacity-50 cursor-not-allowed bg-white">
                     <ChevronLeft className="size-4" />
                  </button>
                  {[1, 2, 3].map(p => (
-                   <button key={p} className={`size-9 rounded-xl text-[11px] font-black transition-all ${p === 1 ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/20' : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-100'}`}>
+                   <button key={p} className={`size-9 rounded-xl text-[11px] font-black transition-all ${p === 1 ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/20' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-100'}`}>
                       {p.toString().padStart(2, '0')}
                    </button>
                  ))}
-                 <button className="size-9 rounded-xl border border-slate-100 bg-white flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-all">
+                 <button className="size-9 rounded-xl border border-slate-100 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 transition-all">
                     <ChevronRight className="size-4" />
                  </button>
               </div>

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { api } from "@/lib/axios"
 import { ORGANIZATION_ADMIN_NAV } from "./organizationAdminNavConfig"
+import { UserAvatar } from "@/components/shared/UserAvatar"
 
 export function OrganizationAdminChrome({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth()
@@ -125,8 +126,6 @@ export function OrganizationAdminChrome({ children }: { children: React.ReactNod
                 type="text"
               />
             </div>
-            <div className="h-10 w-px bg-slate-100 hidden md:block mx-2" />
-            <h2 className="text-[10px] font-black text-slate-400 tracking-[0.2em] hidden md:block whitespace-nowrap">{pageTitle}</h2>
           </div>
 
           <div className="flex items-center gap-6">
@@ -139,19 +138,13 @@ export function OrganizationAdminChrome({ children }: { children: React.ReactNod
 
             <div 
               onClick={() => navigate("/settings")}
-              className="flex items-center gap-4 pl-2 cursor-pointer group"
+              className="flex items-center gap-3 px-2 py-1 group transition-opacity hover:opacity-80 cursor-pointer ml-1"
             >
               <div className="text-right hidden sm:block font-display text-slate-900">
-                <p className="text-sm font-black leading-tight uppercase tracking-tight group-hover:text-violet-600 transition-colors">{fullName}</p>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{userRole}</p>
+                <p className="text-sm font-bold leading-none italic">{fullName}</p>
+                <p className="text-[11px] font-medium text-slate-400 mt-1 italic">{userRole}</p>
               </div>
-              <div className="h-12 w-12 rounded-2xl bg-orange-100 p-0.5 border-2 border-white shadow-sm overflow-hidden group-hover:scale-105 group-hover:ring-2 group-hover:ring-violet-600/10 transition-all">
-                <img 
-                  src={`https://api.dicebear.com/7.x/notionists/svg?seed=${fullName}&backgroundColor=ffedd5`} 
-                  alt={fullName}
-                  className="h-full w-full object-cover rounded-xl"
-                />
-              </div>
+              <UserAvatar firstName={user?.first_name} lastName={user?.last_name} gender={user?.gender} size={40} />
             </div>
           </div>
         </header>

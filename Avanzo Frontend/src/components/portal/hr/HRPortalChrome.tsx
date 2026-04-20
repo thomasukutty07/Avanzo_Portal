@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import { purplePortalPalette } from "@/components/design/portalPalettes"
 import { HR_PORTAL_NAV } from "./hrPortalNavConfig"
 import { AttendanceClockWidget } from "@/components/shared/AttendanceClockWidget"
+import { UserAvatar } from "@/components/shared/UserAvatar"
 
 export function HRPortalChrome({ children }: { children: React.ReactNode }) {
   const { logout, user } = useAuth()
@@ -153,18 +154,16 @@ export function HRPortalChrome({ children }: { children: React.ReactNode }) {
             
             <div className="h-8 w-px bg-slate-100 hidden sm:block" />
 
-            <div className="flex items-center gap-3 h-full">
+            <div className="flex items-center gap-3 px-2 py-1 group transition-opacity hover:opacity-80 cursor-pointer" onClick={() => navigate("/settings")}>
               <div className="hidden sm:block text-right">
-                <p className="text-sm font-bold leading-none text-slate-900 uppercase">
+                <p className="text-sm font-bold leading-none text-slate-900 italic">
                   {user?.first_name} {user?.last_name}
                 </p>
-                <p className="text-[10px] font-black text-slate-400 mt-1.5 uppercase tracking-widest leading-none">
+                <p className="text-[11px] font-medium text-slate-400 mt-1 italic">
                   {user?.designation_name || user?.role || "HR Admin"}
                 </p>
               </div>
-              <div className="size-10 rounded-full bg-slate-50 border-2 border-white flex items-center justify-center text-slate-400 font-black overflow-hidden shadow-sm uppercase shrink-0 ring-1 ring-slate-100">
-                {user?.first_name?.[0]}{user?.last_name?.[0]}
-              </div>
+              <UserAvatar firstName={user?.first_name} lastName={user?.last_name} gender={user?.gender} size={40} />
             </div>
           </div>
         </header>

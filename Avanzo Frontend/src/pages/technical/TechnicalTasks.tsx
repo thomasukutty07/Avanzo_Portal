@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { Plus, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { projectsService } from "@/services/projects";
+import { TaskDetailModal } from "@/components/portal/technical/TaskDetailModal";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
@@ -31,6 +32,8 @@ export default function TechnicalTasksPage() {
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [totalCount, setTotalCount] = useState(0);
+  const [selectedTask, setSelectedTask] = useState<any | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const initData = async () => {
@@ -81,7 +84,7 @@ export default function TechnicalTasksPage() {
                 id: t.id,
                 title: t.title,
                 taskId: `TK-${t.id.substring(0, 5).toUpperCase()}`,
-                project: t.project_title || "Unassigned",
+                project: t.project_name || "Unassigned",
                 status,
                 priority,
                 dueDate: t.due_date ? new Date(t.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : "No Date",
@@ -98,22 +101,13 @@ export default function TechnicalTasksPage() {
   // Project filtering decommissioned per UX standards
 
   const handleTaskClick = async (task: Task) => {
-    if (task.status === "Closed" || task.status === "Review") {
-        toast.info("Task is currently waiting for review or is closed.");
-        return;
-    }
-    
     try {
-        if (task.status === "To Do") {
-            await projectsService.updateTaskProgress(task.id, 10);
-            toast.success("Task started (In Progress).");
-        } else if (task.status === "In Progress" || task.status === "Rework") {
-            await projectsService.updateTaskProgress(task.id, 100);
-            toast.success("Task marked as ready for review.");
-        }
-        fetchTasks();
+      const fullTask = await projectsService.getTask(task.id);
+      setSelectedTask(fullTask);
+      setIsModalOpen(true);
     } catch (err) {
-        toast.error("Failed to update task.");
+      console.error("Failed to fetch task details:", err);
+      toast.error("Failed to access unit intelligence.");
     }
   };
 
@@ -122,7 +116,7 @@ export default function TechnicalTasksPage() {
         <div className="flex h-[80vh] items-center justify-center bg-[#fcfcfc]">
             <div className="flex flex-col items-center gap-4">
                 <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
-                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Compiling Task Registry...</p>
+                <p className="text-sm font-bold text-slate-500 tracking-widest">Compiling task registry...</p>
             </div>
         </div>
     );
@@ -133,11 +127,11 @@ export default function TechnicalTasksPage() {
       {/* Header */}
       <div className="sticky top-0 z-30 -mx-4 md:-mx-8 px-4 md:px-8 py-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-8 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-transparent transition-all">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-600 mb-1">
-            TECHNICAL MANAGEMENT
+          <p className="text-[10px] font-black tracking-[0.2em] text-violet-600 mb-1">
+            Technical management
           </p>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight font-headline">
-            My Tasks
+            My tasks
           </h1>
           <p className="text-slate-500 mt-2 text-sm font-medium">Track and manage your assigned sprint deliverables.</p>
         </div>
@@ -153,11 +147,11 @@ export default function TechnicalTasksPage() {
             <table className="w-full text-left whitespace-nowrap">
                 <thead>
                     <tr className="border-b border-slate-100">
-                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Task Description</th>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Project</th>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Status</th>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Priority</th>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Due</th>
+                        <th className="px-6 py-4 text-[10px] font-black tracking-[0.15em] text-slate-400">Task description</th>
+                        <th className="px-6 py-4 text-[10px] font-black tracking-[0.15em] text-slate-400">Project</th>
+                        <th className="px-6 py-4 text-[10px] font-black tracking-[0.15em] text-slate-400">Status</th>
+                        <th className="px-6 py-4 text-[10px] font-black tracking-[0.15em] text-slate-400">Priority</th>
+                        <th className="px-6 py-4 text-[10px] font-black tracking-[0.15em] text-slate-400">Due</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -195,21 +189,21 @@ export default function TechnicalTasksPage() {
                                         ) : task.status === "Closed" ? (
                                             <>
                                                 <div className="size-3 rounded-full bg-emerald-500"></div>
-                                                <span className="text-[11px] font-bold text-emerald-600">{task.status}</span>
+                                                <span className="text-[11px] font-bold text-emerald-600">Closed</span>
                                             </>
                                         ) : (
                                             <>
                                                 <div className="size-3 flex items-center justify-center text-violet-500">
                                                     <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2.5C4.5 2.5 1.5 5 0.5 8C1.5 11 4.5 13.5 8 13.5C11.5 13.5 14.5 11 15.5 8C14.5 5 11.5 2.5 8 2.5ZM8 11.5C6.1 11.5 4.5 9.9 4.5 8C4.5 6.1 6.1 4.5 8 4.5C9.9 4.5 11.5 6.1 11.5 8C11.5 9.9 9.9 11.5 8 11.5ZM8 6C6.9 6 6 6.9 6 8C6 9.1 6.9 10 8 10C9.1 10 10 9.1 10 8C10 6.9 9.1 6 8 6Z"/></svg>
                                                 </div>
-                                                <span className="text-[11px] font-bold text-violet-600">{task.status}</span>
+                                                <span className="text-[11px] font-bold text-violet-600">Review</span>
                                             </>
                                         )}
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest ${PRIORITY_STYLES[task.priority]}`}>
-                                        {task.priority}
+                                    <span className={`px-2 py-0.5 rounded text-[9px] font-black tracking-widest ${PRIORITY_STYLES[task.priority]}`}>
+                                        {task.priority.charAt(0).toUpperCase() + task.priority.slice(1).toLowerCase()}
                                     </span>
                                 </td>
                                 <td className="px-6 py-4">
@@ -221,7 +215,7 @@ export default function TechnicalTasksPage() {
                         ))
                     ) : (
                         <tr>
-                            <td colSpan={5} className="px-6 py-12 text-center text-slate-400 font-bold uppercase tracking-widest text-[11px]">
+                            <td colSpan={5} className="px-6 py-12 text-center text-slate-400 font-bold tracking-widest text-[11px]">
                                 No tasks found in registry.
                             </td>
                         </tr>
@@ -254,7 +248,13 @@ export default function TechnicalTasksPage() {
           </div>
       </div>
 
-      {/* Cards Removed */}
+      {/* Task Detail Modal */}
+      <TaskDetailModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        task={selectedTask}
+        onSuccess={fetchTasks}
+      />
     </div>
   )
 }

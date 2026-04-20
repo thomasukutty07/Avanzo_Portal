@@ -46,8 +46,8 @@ export function TechnicalPortalSidebar({
             alt="Avanzo" 
             className="w-32 h-auto object-contain"
           />
-          <p className="text-[9px] font-black uppercase tracking-[0.2em] leading-none text-violet-600/90 whitespace-nowrap italic">
-            Technical: Engineering Hub
+          <p className="text-[9px] font-black tracking-[0.2em] leading-none text-violet-600/90 whitespace-nowrap italic">
+            Technical: engineering hub
           </p>
         </div>
       </div>

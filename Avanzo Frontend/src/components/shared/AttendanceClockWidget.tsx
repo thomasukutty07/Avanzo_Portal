@@ -64,6 +64,8 @@ export const AttendanceClockWidget: React.FC<AttendanceClockWidgetProps> = ({ on
       });
       toast.success("Check-in successful. Have a great day!");
       await fetchCurrentStatus();
+      setIsOpen(false);
+      onToggleSidebar?.(true);
     } catch (err: any) {
       toast.error(err.response?.data?.detail || "Request failed.");
     } finally {
@@ -87,6 +89,8 @@ export const AttendanceClockWidget: React.FC<AttendanceClockWidgetProps> = ({ on
       });
       toast.success("Check-out successful. Workday logged.");
       await fetchCurrentStatus();
+      setIsOpen(false);
+      onToggleSidebar?.(true);
     } catch (err: any) {
       toast.error(err.response?.data?.detail || "Request failed.");
     } finally {

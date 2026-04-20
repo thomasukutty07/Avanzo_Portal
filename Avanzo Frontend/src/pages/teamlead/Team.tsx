@@ -3,7 +3,7 @@ import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
 import { useNavigate } from "react-router-dom"
 import { accountsService } from "@/services/accounts"
 import { useState, useEffect } from "react"
-import { NewTaskModal } from "@/components/portal/teamlead/TeamLeadActionForms"
+import { useAuth } from "@/context/AuthContext"
 import { toast } from "sonner"
 import { 
   Plus, 
@@ -23,10 +23,15 @@ import {
   UserCog,
   MessageSquare,
   BadgeInfo,
-  FileSearch
+  FileSearch,
+  ClipboardList,
+  AlertCircle,
+  CheckCircle,
+  Circle
 } from "lucide-react"
 import { api } from "@/lib/axios"
 import { extractResults } from "@/lib/apiResults"
+import { Badge } from "@/components/ui/badge"
 
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -45,13 +50,16 @@ import {
 export default function TeamPage() {
   useDesignPortalLightTheme()
   const navigate = useNavigate()
+  const { user: currentUser } = useAuth()
   const [members, setMembers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [talentTags, setTalentTags] = useState<any[]>([])
   const [isEvalOpen, setIsEvalOpen] = useState(false)
-  const [isNewTaskOpen, setIsNewTaskOpen] = useState(false)
+  const [isWorkOpen, setIsWorkOpen] = useState(false)
   const [selectedMember, setSelectedMember] = useState<any>(null)
+  const [memberTasks, setMemberTasks] = useState<any[]>([])
+  const [taskLoading, setTaskLoading] = useState(false)
   const [updating, setUpdating] = useState(false)
   const [customTagName, setCustomTagName] = useState("")
 
@@ -103,19 +111,36 @@ export default function TeamPage() {
     }
   }
 
-  const filteredMembers = members.filter(m => 
-    m.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  // Backend already scopes the list to the team lead's department
+  const filteredMembers = members.filter(m =>
+    m.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     m.role?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     m.email?.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   const activeUnits = members.filter(m => m.is_active !== false).length
 
+  const openWorkDialog = async (member: any) => {
+    setSelectedMember(member)
+    setIsWorkOpen(true)
+    setTaskLoading(true)
+    try {
+      const res = await api.get(`/api/projects/tasks/?assignee=${member.id}`)
+      const data = res.data
+      setMemberTasks(Array.isArray(data) ? data : (data.results || []))
+    } catch (e) {
+      console.error(e)
+      setMemberTasks([])
+    } finally {
+      setTaskLoading(false)
+    }
+  }
+
   return (
     <TeamLeadChrome>
-      <div className="p-4 md:p-8 space-y-10 animate-in fade-in duration-700 font-sans">
+      <div className="p-4 space-y-10 animate-in fade-in duration-700 font-sans">
         {/* Header */}
-        <div className="sticky top-0 z-30 -mx-4 md:-mx-8 px-4 md:px-8 py-6 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-transparent transition-all">
+        <div className="sticky top-[80px] z-30 -mx-4 md:-mx-8 px-4 md:px-8 py-6 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-slate-100 transition-all">
           <header>
             <h2 className="text-2xl font-black tracking-tight text-slate-900 font-headline leading-none">Team Members</h2>
             <p className="text-xs font-bold text-slate-400 mt-2 font-headline leading-none opacity-60">Manage your team and their skill sets</p>
@@ -172,21 +197,19 @@ export default function TeamPage() {
                     <DropdownMenuContent align="end" className="w-56 rounded-2xl border border-slate-100 shadow-2xl font-sans p-2">
                        <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-3 py-2.5">Unit Operations</DropdownMenuLabel>
                        <DropdownMenuItem 
-                        onClick={() => {
-                          setSelectedMember(member);
-                          setIsNewTaskOpen(true);
-                        }} 
-                        className="text-xs font-bold gap-3 px-3 py-3 cursor-pointer rounded-xl hover:bg-violet-50 hover:text-violet-600 transition-colors"
-                       >
-                          <PlusCircle className="size-4 text-violet-600" />
-                          Assign Tactical Task
-                       </DropdownMenuItem>
-                       <DropdownMenuItem 
                         onClick={() => navigate(`/tasks`)} 
                         className="text-xs font-bold gap-3 px-3 py-3 cursor-pointer rounded-xl hover:bg-violet-50 hover:text-violet-600 transition-colors"
                        >
                           <FileSearch className="size-4 text-emerald-500" />
                           View Active Tasks
+                       </DropdownMenuItem>
+
+                       <DropdownMenuItem 
+                        onClick={() => openWorkDialog(member)} 
+                        className="text-xs font-bold gap-3 px-3 py-3 cursor-pointer rounded-xl hover:bg-violet-50 hover:text-violet-600 transition-colors"
+                       >
+                          <ClipboardList className="size-4 text-violet-500" />
+                          View Assigned Work
                        </DropdownMenuItem>
                        
                        <DropdownMenuSeparator className="bg-slate-50 my-1" />
@@ -232,15 +255,12 @@ export default function TeamPage() {
               </div>
 
 
-              <button 
-                onClick={() => {
-                   setSelectedMember(member);
-                   setIsEvalOpen(true);
-                }}
-                className="w-full py-3.5 bg-white border border-slate-100 text-slate-900 text-[10px] font-bold rounded-[1.2rem] hover:bg-slate-50 transition-all flex items-center justify-center gap-2.5 active:scale-95 group shadow-sm hover:shadow-lg"
+              <button
+                onClick={() => navigate(`/team/${member.id}`)}
+                className="w-full py-3.5 bg-violet-600 text-white text-[10px] font-bold rounded-[1.2rem] hover:bg-violet-700 transition-all flex items-center justify-center gap-2.5 active:scale-95 group shadow-lg shadow-violet-600/20"
               >
-                View Skills & Rating
-                <ChevronRight className="size-3.5 text-violet-600 group-hover:translate-x-1 transition-transform" />
+                View Full Profile
+                <ChevronRight className="size-3.5 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
           ))}
@@ -359,14 +379,85 @@ export default function TeamPage() {
         </DialogContent>
       </Dialog>
       
-      <NewTaskModal 
-        open={isNewTaskOpen} 
-        onOpenChange={setIsNewTaskOpen} 
-        onSuccess={() => {
-          toast.success("Tactical task successfully assigned.")
-          setIsNewTaskOpen(false)
-        }}
-      />
+      {/* Member Assigned Work Dialog */}
+      <Dialog open={isWorkOpen} onOpenChange={setIsWorkOpen}>
+        <DialogContent className="sm:max-w-[680px] rounded-[2rem] p-0 overflow-hidden border-none shadow-2xl font-sans bg-white">
+          <div className="bg-slate-50/50 p-8 pb-6 flex items-center gap-5 border-b border-slate-100/50">
+            <div className="size-12 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center">
+              <ClipboardList className="size-6" />
+            </div>
+            <div>
+              <DialogTitle className="text-xl font-black text-slate-900 tracking-tight leading-none">
+                Assigned Work
+              </DialogTitle>
+              <DialogDescription className="text-xs font-medium text-slate-400 mt-1">
+                Tasks currently assigned to <span className="text-slate-900 font-bold">{selectedMember?.full_name}</span>
+              </DialogDescription>
+            </div>
+          </div>
+
+          <div className="p-8 max-h-[500px] overflow-y-auto">
+            {taskLoading ? (
+              <div className="py-16 flex flex-col items-center gap-4">
+                <Loader2 className="size-6 animate-spin text-violet-500" />
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Loading tasks...</p>
+              </div>
+            ) : memberTasks.length === 0 ? (
+              <div className="py-16 flex flex-col items-center gap-3">
+                <ClipboardList className="size-10 text-slate-200" />
+                <p className="text-sm font-bold text-slate-400">No tasks assigned</p>
+                <p className="text-xs text-slate-300">{selectedMember?.full_name} has no current work assignments.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {memberTasks.map((task: any) => (
+                  <div key={task.id} className="bg-white border border-slate-100 rounded-2xl p-5 flex items-start gap-4 hover:shadow-sm transition-all">
+                    <div className={`size-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
+                      task.status === 'completed' ? 'bg-emerald-50 text-emerald-500' :
+                      task.status === 'in_progress' ? 'bg-blue-50 text-blue-500' :
+                      'bg-orange-50 text-orange-400'
+                    }`}>
+                      {task.status === 'completed' ? <CheckCircle className="size-4" /> :
+                       task.status === 'in_progress' ? <Circle className="size-4 fill-blue-100" /> :
+                       <AlertCircle className="size-4" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-slate-900">{task.title}</p>
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        {task.project_name && (
+                          <span className="text-[10px] font-bold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">{task.project_name}</span>
+                        )}
+                        <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg border ${
+                          task.priority === 'urgent' || task.priority === 'high' ? 'bg-red-50 text-red-500 border-red-100' :
+                          task.priority === 'medium' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                          'bg-slate-50 text-slate-500 border-slate-100'
+                        }`}>{task.priority || 'normal'}</span>
+                        <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg border ${
+                          task.status === 'completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                          task.status === 'in_progress' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                          'bg-orange-50 text-orange-600 border-orange-100'
+                        }`}>{(task.status || 'pending').replace('_', ' ')}</span>
+                      </div>
+                      {task.due_date && (
+                        <p className="text-[10px] text-slate-400 font-bold mt-2 uppercase tracking-widest">
+                          Due: {new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}
+                        </p>
+                      )}
+                    </div>
+                    <Badge className={`shrink-0 text-[9px] font-black rounded-lg border ${
+                      task.status === 'completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                      task.status === 'in_progress' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                      'bg-orange-50 text-orange-600 border-orange-100'
+                    }`}>
+                      {(task.status || 'pending').replace('_', ' ')}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </TeamLeadChrome>
   )
 }

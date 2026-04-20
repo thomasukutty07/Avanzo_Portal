@@ -1,26 +1,26 @@
 import TeamLeadChrome from "@/components/portal/teamlead/TeamLeadChrome";
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme";
-import { NewTaskModal, ReviewTaskModal } from "@/components/portal/teamlead/TeamLeadActionForms";
+import { ReviewTaskModal, CreateTaskModal } from "@/components/portal/teamlead/TeamLeadActionForms";
 import { projectsService } from "@/services/projects";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { 
-  Plus, 
   Search, 
   Filter, 
   Calendar,
   MoreHorizontal,
   Zap,
-  Loader2
+  Loader2,
+  Plus,
 } from "lucide-react";
 
 export default function LeadTasksPage() {
   useDesignPortalLightTheme();
-  const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   const [reviewTask, setReviewTask] = useState<any>(null);
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     fetchTasks();
@@ -39,7 +39,15 @@ export default function LeadTasksPage() {
     }
   };
 
-  const filteredTasks = tasks.filter(t => 
+  const uniqueTasks = Array.from(
+    tasks.reduce((map, task: any) => {
+      const key = `${task.title}-${task.project_id || task.project_name}`;
+      if (!map.has(key)) map.set(key, task);
+      return map;
+    }, new Map<string, any>()).values()
+  );
+
+  const filteredTasks = uniqueTasks.filter((t: any) => 
     t.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
     t.project_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -48,17 +56,17 @@ export default function LeadTasksPage() {
     <TeamLeadChrome>
       <div className="p-4 md:p-8 space-y-10 animate-in fade-in duration-700 font-sans">
         {/* Header */}
-        <div className="sticky top-0 z-30 -mx-4 md:-mx-8 px-4 md:px-8 py-6 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-transparent transition-all">
+        <div className="sticky top-[80px] z-30 -mx-4 md:-mx-8 px-4 md:px-8 py-6 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-slate-100 transition-all">
           <header>
             <h2 className="text-3xl font-black tracking-tight text-slate-900 font-headline leading-none">Task List</h2>
             <p className="text-sm font-bold text-slate-400 mt-2 font-headline leading-none opacity-60">Manage team tasks and progress</p>
           </header>
           <button 
-            onClick={() => setIsNewTaskOpen(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 hover:shadow-xl hover:shadow-violet-600/20 transition-all text-xs active:scale-95 shadow-md shadow-violet-600/10"
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2.5 px-6 py-4 bg-violet-600 border border-violet-500 text-white font-bold rounded-2xl hover:bg-violet-700 transition-all text-xs shadow-lg active:scale-95"
           >
-            <Plus className="size-4 stroke-[3px]" />
-            Assign task
+            <Plus className="size-4" />
+            Assign New Task
           </button>
         </div>
 
@@ -108,8 +116,8 @@ export default function LeadTasksPage() {
                         No tasks found
                      </td>
                    </tr>
-                ) : filteredTasks.map((task, i) => (
-                  <tr key={i} className="group hover:bg-slate-50/30 transition-all cursor-pointer" onClick={() => task.status === 'review' ? setReviewTask(task) : toast.info(`Syncing unit metadata: ${task.title}`)}>
+                ) : filteredTasks.map((task: any, i) => (
+                  <tr key={i} className="group hover:bg-slate-50/30 transition-all cursor-pointer" onClick={() => { if (task.status === 'review') setReviewTask(task); }}>
                     <td className="px-8 py-7">
                        <div className="flex flex-col gap-1 min-w-[240px]">
                          <span className="font-bold text-base text-slate-900 group-hover:text-violet-600 transition-colors capitalize leading-none">{task.title}</span>
@@ -161,11 +169,6 @@ export default function LeadTasksPage() {
         </div>
       </div>
 
-      <NewTaskModal 
-        open={isNewTaskOpen} 
-        onOpenChange={setIsNewTaskOpen} 
-        onSuccess={fetchTasks}
-      />
       {reviewTask && (
         <ReviewTaskModal 
           open={!!reviewTask} 
@@ -174,6 +177,11 @@ export default function LeadTasksPage() {
           onSuccess={fetchTasks}
         />
       )}
+      <CreateTaskModal 
+        open={showCreateModal}
+        onOpenChange={setShowCreateModal}
+        onSuccess={fetchTasks}
+      />
     </TeamLeadChrome>
   );
 }

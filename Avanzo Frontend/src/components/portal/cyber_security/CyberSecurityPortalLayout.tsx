@@ -12,7 +12,7 @@ export function CyberSecurityPortalLayout({ children }: { children?: React.React
   const location = useLocation()
 
   return (
-    <div className="design-portal design-portal-light flex min-h-screen w-full bg-slate-50 text-slate-800 overflow-x-hidden font-headline">
+    <div className="design-portal design-portal-light flex min-h-screen w-full bg-slate-50 text-slate-800 font-headline">
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div
@@ -22,7 +22,7 @@ export function CyberSecurityPortalLayout({ children }: { children?: React.React
       )}
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 transition-transform duration-300 md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div className={`fixed inset-y-0 left-0 z-50 transition-transform duration-300 md:translate-x-0 md:sticky md:top-0 md:h-screen ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full hidden'}`}>
         <CyberSecurityPortalSidebar onNavClick={() => window.innerWidth < 1024 && setIsSidebarOpen(false)} />
         <button
           onClick={() => setIsSidebarOpen(false)}
@@ -33,11 +33,11 @@ export function CyberSecurityPortalLayout({ children }: { children?: React.React
       </div>
 
       {/* Main column */}
-      <div className={`flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden transition-all duration-300 ${isSidebarOpen ? 'md:pl-72' : ''}`}>
+      <div className={`flex min-h-screen min-w-0 flex-1 flex-col transition-all duration-300 ${isSidebarOpen ? 'md:pl-72' : ''}`}>
         {/* Shared sticky header */}
         <CyberSecurityPortalHeader onMenuClick={() => setIsSidebarOpen(true)} onToggleSidebar={setIsSidebarOpen} />
 
-        <div key={location.pathname} className="min-h-0 flex-1 overflow-y-auto p-6 md:p-10 lg:p-12 animate-in fade-in slide-in-from-bottom-2 duration-700 ease-out">
+        <div key={location.pathname} className="flex-1 p-6 md:p-10 lg:p-12 animate-in fade-in slide-in-from-bottom-2 duration-700 ease-out">
           {children || <Outlet />}
         </div>
       </div>

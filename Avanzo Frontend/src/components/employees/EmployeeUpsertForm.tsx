@@ -2,7 +2,7 @@ import { useState, useEffect, type FormEvent } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { api } from "@/lib/axios"
 import { extractResults } from "@/lib/apiResults"
-import { Loader2 } from "lucide-react"
+import { Loader2, User, Building2, Briefcase, Phone, Mail, Lock, Calendar, Shield, CreditCard } from "lucide-react"
 import { toast } from "sonner"
 import type { Department, Designation, Role, UserRole } from "@/types"
 
@@ -33,7 +33,7 @@ type Props = {
 export function EmployeeUpsertForm({
   onSuccess,
   onCancel,
-  submitLabel = "Create employee",
+  submitLabel = "Create Employee",
   initialData,
 }: Props) {
   const { user } = useAuth()
@@ -42,7 +42,6 @@ export function EmployeeUpsertForm({
   const [roles, setRoles] = useState<Role[]>([])
   const [departments, setDepartments] = useState<Department[]>([])
   const [designations, setDesignations] = useState<Designation[]>([])
-  const [teamLeadOptions, setTeamLeadOptions] = useState<any[]>([])
   const [loadingMeta, setLoadingMeta] = useState(true)
   const [submitting, setSubmitting] = useState(false)
 
@@ -131,8 +130,6 @@ export function EmployeeUpsertForm({
         date_of_joining: dateOfJoining || null,
       }
 
-      // Only include access_role on create — PATCH never changes role
-      // (backend validate_access_role rejects non-admin/HR callers)
       if (!isEdit) {
         payload.access_role = accessRoleId
         payload.email = email.trim()
@@ -142,7 +139,6 @@ export function EmployeeUpsertForm({
       if (password) payload.password = password
 
       if (isEdit) {
-        console.log("[EmployeeUpsertForm] PATCH payload:", payload)
         await api.patch(`/api/auth/employees/${initialData.id}/`, payload)
         toast.success(`Updated ${firstName} ${lastName}`)
       } else {
@@ -153,7 +149,6 @@ export function EmployeeUpsertForm({
 
     } catch (err: unknown) {
       const data = (err as any)?.response?.data
-      console.error("[EmployeeUpsertForm] 400 error response:", data)
       const msg = data ? JSON.stringify(data) : "Could not save employee"
       toast.error(msg)
     } finally {
@@ -163,171 +158,77 @@ export function EmployeeUpsertForm({
 
   if (loadingMeta) {
     return (
-      <div className="flex h-32 items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div className="flex h-40 items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-6 w-6 animate-spin text-slate-300" />
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-300">Loading Registry...</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 animate-in fade-in duration-500">
-      <div className="grid gap-6 sm:grid-cols-2">
-        <EliteFormField 
-           label="Email address" 
-           type="email" 
-           placeholder="john@example.com"
-           value={email}
-           onChange={setEmail}
-        />
-        <EliteFormField 
-           label={`Password ${initialData ? "(leave blank to keep current)" : ""}`} 
-           type="password" 
-           placeholder="••••••••"
-           value={password}
-           onChange={setPassword}
-        />
+    <form onSubmit={handleSubmit} className="animate-in fade-in duration-500">
+      {/* Form Header */}
+      <div className="mb-8">
+        <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+          {initialData ? "Edit Personnel Record" : "Register New Employee"}
+        </h2>
+        <p className="text-xs text-slate-400 mt-1">
+          {initialData ? "Update the employee's details below." : "Fill in the details to onboard a new team member."}
+        </p>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2">
-        <div className="space-y-2 text-left">
-           <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">Gender</label>
-           <select
-             className="w-full h-12 bg-slate-50 border-none rounded-2xl px-5 text-sm font-medium text-slate-900 focus:ring-2 focus:ring-violet-600/10 focus:bg-white transition-all outline-none appearance-none cursor-pointer"
-             value={gender}
-             onChange={(e) => setGender(e.target.value)}
-           >
-             <option value="">Select Gender</option>
-             <option value="male">Male</option>
-             <option value="female">Female</option>
-             <option value="other">Other</option>
-             <option value="prefer_not_to_say">Prefer not to say</option>
-           </select>
-        </div>
-        <EliteFormField 
-           label="Date of Birth" 
-           type="date" 
-           value={dateOfBirth}
-           onChange={setDateOfBirth}
-        />
-      </div>
-
-      <div className="grid gap-6 sm:grid-cols-2">
-        <EliteFormField 
-           label="Employee ID (optional)" 
-           placeholder="EMP-0000"
-           value={employeeId}
-           onChange={setEmployeeId}
-        />
-        <EliteFormField 
-           label="Phone number" 
-           placeholder="+91 00000 00000"
-           value={phone}
-           onChange={setPhone}
-        />
-      </div>
-
-      <div className="space-y-2 text-left">
-        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">Access Role</label>
-        <div className="relative">
-          <select
-            className="w-full h-12 bg-slate-50 border-none rounded-2xl px-5 text-sm font-medium text-slate-900 focus:ring-2 focus:ring-violet-600/10 focus:bg-white transition-all outline-none appearance-none cursor-pointer"
-            value={accessRoleId}
-            onChange={(e) => setAccessRoleId(e.target.value)}
-          >
-            <option value="">Select a role</option>
-            {roleChoices.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name}
-              </option>
-            ))}
-          </select>
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="size-4"><path d="m6 9 6 6 6-6"/></svg>
+      <div className="space-y-6">
+        {/* ── All fields in a dense 3-column layout ── */}
+        <Section label="Personal Information" icon={User}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Field icon={User} label="First Name" placeholder="John" value={firstName} onChange={setFirstName} />
+            <Field icon={User} label="Last Name" placeholder="Doe" value={lastName} onChange={setLastName} />
+            <Field icon={Mail} label="Work Email" type="email" placeholder="john@company.com" value={email} onChange={setEmail} disabled={!!initialData} />
+            <Field icon={Lock} label={initialData ? "New Password (optional)" : "Password"} type="password" placeholder="••••••••" value={password} onChange={setPassword} />
           </div>
-        </div>
-      </div>
+        </Section>
 
-      <div className="grid gap-6 sm:grid-cols-2">
-        <div className="space-y-2 text-left">
-          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">Department</label>
-          <div className="relative">
-            <select
-              className="w-full h-12 bg-slate-50 border-none rounded-2xl px-5 text-sm font-medium text-slate-900 focus:ring-2 focus:ring-violet-600/10 focus:bg-white transition-all outline-none appearance-none cursor-pointer"
-              value={departmentId}
-              onChange={(e) => setDepartmentId(e.target.value)}
-            >
-              <option value="">Select department</option>
-              {departments.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name}
-                </option>
-              ))}
-            </select>
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="size-4"><path d="m6 9 6 6 6-6"/></svg>
-            </div>
+        <Section label="Organizational Details" icon={Building2}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <SelectField icon={Building2} label="Department" value={departmentId} onChange={setDepartmentId} options={departments.map(d => ({ value: d.id, label: d.name }))} placeholder="Select department" />
+            <SelectField icon={Briefcase} label="Designation" value={designationId} onChange={setDesignationId} options={designations.map(d => ({ value: d.id, label: d.name }))} placeholder="Select designation" />
+            <SelectField icon={Shield} label="Access Role" value={accessRoleId} onChange={setAccessRoleId} options={roleChoices.map(r => ({ value: r.id, label: r.name }))} placeholder="Select role" />
+            <Field icon={CreditCard} label="Employee ID" placeholder="AVZ-001" value={employeeId} onChange={setEmployeeId} />
           </div>
-        </div>
-        <div className="space-y-2 text-left">
-          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">Designation</label>
-          <div className="relative">
-            <select
-              className="w-full h-12 bg-slate-50 border-none rounded-2xl px-5 text-sm font-medium text-slate-900 focus:ring-2 focus:ring-violet-600/10 focus:bg-white transition-all outline-none appearance-none cursor-pointer"
-              value={designationId}
-              onChange={(e) => setDesignationId(e.target.value)}
-            >
-              <option value="">Select designation</option>
-              {designations.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name}
-                </option>
-              ))}
-            </select>
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="size-4"><path d="m6 9 6 6 6-6"/></svg>
-            </div>
+        </Section>
+
+        <Section label="Personal Details" icon={Calendar}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <SelectField icon={User} label="Gender" value={gender} onChange={setGender} options={[
+              { value: 'male', label: 'Male' },
+              { value: 'female', label: 'Female' },
+              { value: 'other', label: 'Other' },
+              { value: 'prefer_not_to_say', label: 'Prefer not to say' },
+            ]} placeholder="Select gender" />
+            <Field icon={Phone} label="Mobile Number" placeholder="+91 00000 00000" value={phone} onChange={setPhone} />
+            <Field icon={Calendar} label="Date of Birth" type="date" value={dateOfBirth} onChange={setDateOfBirth} />
+            <Field icon={Calendar} label="Joining Date" type="date" value={dateOfJoining} onChange={setDateOfJoining} />
           </div>
-        </div>
+        </Section>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2">
-        <EliteFormField 
-           label="First name" 
-           placeholder="e.g. John"
-           value={firstName}
-           onChange={setFirstName}
-        />
-        <EliteFormField 
-           label="Last name" 
-           placeholder="e.g. Doe"
-           value={lastName}
-           onChange={setLastName}
-        />
-      </div>
-
-      <div className="grid gap-6 sm:grid-cols-2">
-        <EliteFormField 
-           label="Date of joining" 
-           type="date" 
-           value={dateOfJoining}
-           onChange={setDateOfJoining}
-        />
-      </div>
-
-      <div className="flex flex-wrap gap-3 pt-6">
-        <button 
-          type="submit" 
+      {/* Actions */}
+      <div className="flex items-center gap-4 pt-6 border-t border-slate-100 mt-6">
+        <button
+          type="submit"
           disabled={submitting}
-          className="h-12 px-10 bg-violet-600 hover:bg-violet-700 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-violet-900/10 transition-all active:scale-95 disabled:opacity-70 flex items-center gap-3"
+          className="inline-flex items-center gap-2 px-8 py-3 bg-slate-900 text-white text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-slate-800 transition-all disabled:opacity-60 shadow-lg shadow-slate-900/10"
         >
-          {submitting && <Loader2 className="h-4 w-4 animate-spin stroke-[3px]" />}
+          {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
           {submitLabel}
         </button>
         {onCancel && (
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={onCancel}
-            className="h-12 px-10 bg-white border border-slate-100 text-slate-500 text-[11px] font-black uppercase tracking-widest rounded-2xl hover:bg-slate-50 transition-all active:scale-95"
+            className="inline-flex items-center px-8 py-3 bg-white border border-slate-200 text-slate-500 text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-slate-50 transition-all"
           >
             Cancel
           </button>
@@ -337,17 +238,78 @@ export function EmployeeUpsertForm({
   )
 }
 
-function EliteFormField({ label, placeholder, type = "text", value, onChange }: { label: string, placeholder?: string, type?: string, value: string, onChange: (val: string) => void }) {
+/* ── Sub-components ──────────────────────────────────────── */
+
+function Section({ label, icon: Icon, children }: { label: string, icon: any, children: React.ReactNode }) {
   return (
-    <div className="space-y-2 text-left animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">{label}</label>
-      <input 
-        type={type}
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full h-12 bg-slate-50 border-none rounded-2xl px-5 text-sm font-medium text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-violet-600/10 focus:bg-white transition-all outline-none shadow-sm shadow-slate-900/5 group-hover:scale-[1.01]"
-      />
+    <div className="space-y-5">
+      <div className="flex items-center gap-3">
+        <div className="size-8 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center">
+          <Icon size={14} className="text-slate-400" />
+        </div>
+        <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.2em]">{label}</h3>
+        <div className="flex-1 h-px bg-slate-100" />
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function Field({ label, placeholder, type = "text", value, onChange, icon: Icon, disabled }: {
+  label: string, placeholder?: string, type?: string, value: string,
+  onChange: (val: string) => void, icon?: any, disabled?: boolean
+}) {
+  return (
+    <div className="space-y-2">
+      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</label>
+      <div className="relative">
+        {Icon && (
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none">
+            <Icon size={14} />
+          </div>
+        )}
+        <input
+          type={type}
+          placeholder={placeholder}
+          value={value}
+          disabled={disabled}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl pl-10 pr-4 text-sm font-semibold text-slate-900 placeholder:text-slate-300 focus:bg-white focus:border-slate-300 focus:outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        />
+      </div>
+    </div>
+  )
+}
+
+function SelectField({ label, value, onChange, options, placeholder, icon: Icon }: {
+  label: string, value: string, onChange: (val: string) => void,
+  options: { value: string, label: string }[], placeholder: string, icon?: any
+}) {
+  return (
+    <div className="space-y-2">
+      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</label>
+      <div className="relative">
+        {Icon && (
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none">
+            <Icon size={14} />
+          </div>
+        )}
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl pl-10 pr-10 text-sm font-semibold text-slate-900 focus:bg-white focus:border-slate-300 focus:outline-none transition-all appearance-none cursor-pointer"
+        >
+          <option value="">{placeholder}</option>
+          {options.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="size-4">
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </div>
+      </div>
     </div>
   )
 }

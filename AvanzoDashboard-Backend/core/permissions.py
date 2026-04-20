@@ -12,14 +12,14 @@ class IsAdmin(BasePermission):
     """Admin-only access (Settings page, system config)."""
 
     def has_permission(self, request, view):
-        return _has_role(request.user, RoleNames.ADMIN, RoleNames.ORGANIZATION)
+        return _has_role(request.user, RoleNames.ADMIN)
 
 
 class IsAdminOrHR(BasePermission):
     """Admin or HR access (User management)."""
 
     def has_permission(self, request, view):
-        return _has_role(request.user, RoleNames.ADMIN, RoleNames.ORGANIZATION, RoleNames.HR)
+        return _has_role(request.user, RoleNames.ADMIN, RoleNames.HR)
 
 
 class IsAdminOrHRReadOnly(BasePermission):
@@ -29,7 +29,7 @@ class IsAdminOrHRReadOnly(BasePermission):
         if not request.user.is_authenticated:
             return False
 
-        if request.user.role_name in [RoleNames.ADMIN, RoleNames.ORGANIZATION]:
+        if request.user.role_name == RoleNames.ADMIN:
             return True
 
         # Allow HR and Team Leads to VIEW (GET/HEAD/OPTIONS)
