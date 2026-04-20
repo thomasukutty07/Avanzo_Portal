@@ -30,6 +30,7 @@ class TenantOrchestrator:
             password=admin_data["password"],
             first_name=admin_data.get("first_name", ""),
             last_name=admin_data.get("last_name", ""),
+            tenant=tenant,
         )
 
         # Assign the "Admin" AccessRole so RBAC permissions work.

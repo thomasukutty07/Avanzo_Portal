@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from core.permissions import IsTeamLeadOrAbove
+from core.viewsets import TenantAwareViewSetMixin
 from notifications.services import NotificationService
 
 from .models import ExternalClient, Project, Service, Task
@@ -18,20 +19,20 @@ from .serializers import (
 )
 
 
-class ExternalClientViewSet(viewsets.ModelViewSet):
+class ExternalClientViewSet(TenantAwareViewSetMixin, viewsets.ModelViewSet):
     queryset = ExternalClient.objects.filter(is_active=True)
     serializer_class = ExternalClientSerializer
     permission_classes = [IsAuthenticated]
 
 
-class ServiceViewSet(viewsets.ModelViewSet):
+class ServiceViewSet(TenantAwareViewSetMixin, viewsets.ModelViewSet):
     queryset = Service.objects.all()
     serializer_class = ServiceSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        qs = Service.objects.filter(is_active=True)
+        qs = super().get_queryset().filter(is_active=True)
         if user.is_admin or user.is_hr:
             return qs
         if user.is_team_lead and user.department:
@@ -39,7 +40,7 @@ class ServiceViewSet(viewsets.ModelViewSet):
         return qs
 
 
-class ProjectViewSet(viewsets.ModelViewSet):
+class ProjectViewSet(TenantAwareViewSetMixin, viewsets.ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated]
@@ -55,7 +56,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Row-Level Security for Projects"""
         user = self.request.user
-        qs = Project.objects.select_related(
+        qs = super().get_queryset().select_related(
             "owning_department", "manager", "client", "service"
         ).prefetch_related("team")
         if user.is_admin or user.is_hr:
@@ -65,7 +66,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return qs.filter(team=user)
 
     def perform_create(self, serializer):
-        project = serializer.save(manager=self.request.user)
+        project = serializer.save(manager=self.request.user, tenant=self.request.user.tenant)
         project.team.add(self.request.user)
 
         # Auto-create one initial setup task for the manager/lead
@@ -124,7 +125,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class TaskViewSet(viewsets.ModelViewSet):
+class TaskViewSet(TenantAwareViewSetMixin, viewsets.ModelViewSet):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
@@ -133,6 +134,12 @@ class TaskViewSet(viewsets.ModelViewSet):
         """Row-Level Security for Tasks"""
         user = self.request.user
         qs = Task.objects.select_related("project", "assignee")
+
+        # Global tenant filter (mandatory)
+        if user.is_authenticated and user.tenant:
+            qs = qs.filter(project__tenant=user.tenant)
+        elif not user.is_staff: # Staff can sometimes see all in debug, but tenants can't
+            return qs.none()
 
         # Row-level security scoping
         if not user.is_admin:

@@ -1,11 +1,11 @@
 from django.db import models
 
 from accounts.models import Employee
-from core.models import TimeStampedModel
+from core.models import TenantAwareModel, TimeStampedModel
 from organization.models import Department
 
 
-class Notification(TimeStampedModel):
+class Notification(TenantAwareModel):
     """
     Centralized model for all system-generated alerts.
     """
@@ -37,7 +37,7 @@ class Notification(TimeStampedModel):
         return f"[{self.notification_type.upper()}] To {self.recipient.email}: {self.title}"
 
 
-class Broadcast(TimeStampedModel):
+class Broadcast(TenantAwareModel):
     """
     Company-wide or department-wide announcement.
     Created by HR or Admin.

@@ -18,6 +18,12 @@ class TenantRegistrationSerializer(serializers.Serializer):
     admin_first_name = serializers.CharField(max_length=50, required=False, allow_blank=True)
     admin_last_name = serializers.CharField(max_length=50, required=False, allow_blank=True)
 
+    def validate_admin_email(self, value):
+        from .models import Employee
+        if Employee.objects.filter(email=value).exists():
+            raise serializers.ValidationError("An administrator with this email already exists.")
+        return value
+
     def validate_subdomain(self, value):
         """Ensure subdomain is URL-safe and unique."""
         from clients.models import Domain

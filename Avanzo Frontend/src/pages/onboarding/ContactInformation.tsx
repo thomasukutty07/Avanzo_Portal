@@ -1,20 +1,11 @@
 import { useState } from "react"
 import type { FormEvent } from "react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
-import { Loader2 } from "lucide-react"
+import { Loader2, Eye, EyeOff } from "lucide-react"
 import { RegisterOrgWizardLayout } from "@/components/onboarding/RegisterOrgWizardLayout"
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
 import { accountsService } from "@/services/accounts"
 
-const departments = [
-  "Select Department",
-  "Information Technology",
-  "Cybersecurity Operations",
-  "Executive Leadership",
-  "Legal & Compliance",
-  "Human Resources",
-  "Finance & Procurement",
-] as const
 
 const inputClass =
   "w-full border-t-0 border-l-0 border-r-0 border-b border-[#cbc3d9]/50 bg-transparent py-3 text-[#191c1d] outline-none transition-all placeholder:text-[#7a7488]/50 focus:border-[#4800b2] focus:ring-0"
@@ -28,6 +19,7 @@ export default function ContactInformationPage() {
   const navigate = useNavigate();
   const { state } = useLocation();
 
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,6 +34,12 @@ export default function ContactInformationPage() {
 
     const email = formData.get("professionalEmail") as string;
     const password = formData.get("password") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -56,8 +54,13 @@ export default function ContactInformationPage() {
         admin_last_name: lastName,
       });
       navigate("/register-org/status");
-    } catch (err) {
-      setError("Registration failed, please check your network or subdomain and try again.");
+    } catch (err: any) {
+      console.error("Registration error:", err);
+      const backendError = err.response?.data?.detail || 
+                           err.response?.data?.message || 
+                           (err.response?.data ? Object.values(err.response.data).flat().join(", ") : null) ||
+                           "Registration failed. Please check your network or try a different subdomain.";
+      setError(backendError);
       setLoading(false);
     }
   }
@@ -72,7 +75,7 @@ export default function ContactInformationPage() {
           Who should we reach out to for account management and verification?
         </p>
       </header>
-      <form className="space-y-8" onSubmit={onSubmit}>
+      <form id="contact-form" className="space-y-8" onSubmit={onSubmit}>
         <div className="space-y-6">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
             <div>
@@ -82,6 +85,7 @@ export default function ContactInformationPage() {
                 placeholder="e.g., Alexander Sterling"
                 type="text"
                 name="legalName"
+                defaultValue={state?.legalName || ""}
                 required
               />
             </div>
@@ -92,65 +96,58 @@ export default function ContactInformationPage() {
                 placeholder="e.g., alexander@organization.com"
                 type="email"
                 name="professionalEmail"
+                defaultValue={state?.professionalEmail || ""}
                 required
               />
             </div>
           </div>
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-            <div>
-              <label className={labelClass}>Department</label>
-              <select
-                className={inputClass}
-                name="department"
-                defaultValue=""
-              >
-                {departments.map((d) => (
-                  <option key={d} value={d === "Select Department" ? "" : d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className={labelClass}>Direct Line</label>
-              <input
-                className={inputClass}
-                placeholder="e.g., +1 (555) 000-0000"
-                type="tel"
-                name="phone"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-            <div>
-              <label className={labelClass}>Job Title / Designation</label>
-              <input
-                className={inputClass}
-                placeholder="e.g., Chief Information Security Officer"
-                type="text"
-                name="title"
-              />
-            </div>
-            <div>
+            <div className="relative">
               <label className={labelClass}>Admin Password</label>
+              <div className="relative">
+                <input
+                  className={inputClass}
+                  placeholder="••••••••"
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  defaultValue={state?.password || ""}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 p-2 text-[#7a7488]/50 hover:text-[#4800b2] transition-colors"
+                >
+                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className={labelClass}>Confirm Password</label>
               <input
                 className={inputClass}
                 placeholder="••••••••"
-                type="password"
-                name="password"
+                type={showPassword ? "text" : "password"}
+                name="confirmPassword"
+                defaultValue={state?.confirmPassword || ""}
                 required
               />
             </div>
           </div>
         </div>
         <div className="flex items-center justify-between gap-4 pt-8">
-          <Link
-            to="/register-org"
+          <button
+            type="button"
+            onClick={() => {
+              const form = document.getElementById('contact-form') as HTMLFormElement;
+              const currentData = form ? Object.fromEntries(new FormData(form).entries()) : {};
+              navigate("/register-org", { state: { ...state, ...currentData } });
+            }}
             className="flex items-center gap-2 px-6 py-3.5 font-semibold text-[#494456] transition-colors hover:text-[#4800b2]"
           >
             <span className="material-symbols-outlined text-lg">arrow_back</span>
             Back
-          </Link>
+          </button>
           <div className="flex flex-col items-end gap-2">
             {error && <span className="text-red-500 text-sm font-medium">{error}</span>}
             <button

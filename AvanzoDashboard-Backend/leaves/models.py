@@ -1,10 +1,10 @@
 from django.db import models
 
 from accounts.models import Employee
-from core.models import TimeStampedModel
+from core.models import TenantAwareModel, TimeStampedModel
 
 
-class LeaveRequest(TimeStampedModel):
+class LeaveRequest(TenantAwareModel):
     class LeaveType(models.TextChoices):
         SICK = "sick", "Sick Leave"
         CASUAL = "casual", "Casual Leave"

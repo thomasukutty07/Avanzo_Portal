@@ -2,17 +2,17 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from accounts.models import Employee
-from core.models import TimeStampedModel
+from core.models import TenantAwareModel, TimeStampedModel
 from organization.models import Department
 
 
-class ExternalClient(TimeStampedModel):
+class ExternalClient(TenantAwareModel):
     """
     An external customer/organization that Avanzo provides services to.
     Renamed from 'Client' to avoid collision with clients.Client (tenant model).
     """
 
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255)
     contact_email = models.EmailField(blank=True, null=True)
     industry = models.CharField(max_length=100, blank=True)
     is_active = models.BooleanField(default=True)
@@ -20,26 +20,30 @@ class ExternalClient(TimeStampedModel):
     class Meta:
         db_table = "projects_client"  # keep the same table name for backward compat
         verbose_name = "External Client"
+        unique_together = ("name", "tenant")
 
     def __str__(self):
         return self.name
 
 
-class Service(TimeStampedModel):
+class Service(TenantAwareModel):
     """e.g., 'VPT Audit', 'Incident Response', 'Web App Development'"""
 
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     department = models.ForeignKey(
         Department, on_delete=models.CASCADE, null=True, blank=True, related_name="services"
     )
     is_active = models.BooleanField(default=True)
 
+    class Meta:
+        unique_together = ("name", "tenant")
+
     def __str__(self):
         return self.name
 
 
-class Project(TimeStampedModel):
+class Project(TenantAwareModel):
     class Status(models.TextChoices):
         DRAFT = "draft", "Draft"
         ACTIVE = "active", "Active"
@@ -62,7 +66,7 @@ class Project(TimeStampedModel):
 
     # Ownership & Access
     owning_department = models.ForeignKey(
-        Department, on_delete=models.PROTECT, related_name="projects"
+        Department, on_delete=models.CASCADE, related_name="projects"
     )
     manager = models.ForeignKey(Employee, on_delete=models.PROTECT, related_name="managed_projects")
     team = models.ManyToManyField(Employee, blank=True, related_name="assigned_projects")

@@ -29,6 +29,9 @@ export default function DepartmentsPage() {
   const [newDeptName, setNewDeptName] = useState("")
   const [selectedDept, setSelectedDept] = useState<any>(null)
   const [deptProjects, setDeptProjects] = useState<any[]>([])
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [deptToDelete, setDeptToDelete] = useState<{id: string, name: string} | null>(null)
+  const [isDecommissioning, setIsDecommissioning] = useState(false)
 
   const refreshDepts = async () => {
     try {
@@ -54,7 +57,6 @@ export default function DepartmentsPage() {
            employees: d.employee_count ?? 0,
            projects: d.project_count ?? 0,
            utilization: 0,
-           image: images[idx % images.length],
            color: colors[idx % colors.length]
          }
       })
@@ -109,15 +111,25 @@ export default function DepartmentsPage() {
     }
   }
 
-  const handleDeleteDept = async (id: string, name: string) => {
-    if (!window.confirm(`Are you sure you want to decommission the "${name}" department? This action is permanent.`)) return;
+  const handleDeleteDept = (id: string, name: string) => {
+    setDeptToDelete({ id, name });
+    setIsDeleteDialogOpen(true);
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!deptToDelete) return;
     
     try {
-      await api.delete(`/api/organization/departments/${id}/`);
-      toast.success(`Department "${name}" decommissioned successfully.`);
+      setIsDecommissioning(true)
+      await api.delete(`/api/organization/departments/${deptToDelete.id}/`);
+      toast.success(`Department "${deptToDelete.name}" decommissioned successfully.`);
+      setIsDeleteDialogOpen(false);
+      setDeptToDelete(null);
       refreshDepts();
-    } catch (e) {
-      toast.error("Failed to decommission department. Ensure it has no active dependencies.");
+    } catch (e: any) {
+      toast.error(e?.response?.data?.detail || "Failed to decommission department. Ensure it has no active dependencies.");
+    } finally {
+      setIsDecommissioning(false);
     }
   }
 
@@ -177,9 +189,8 @@ export default function DepartmentsPage() {
                 className="group bg-white rounded-[40px] border border-slate-50 shadow-sm overflow-hidden flex flex-col hover:shadow-2xl hover:shadow-violet-900/10 transition-all hover:border-violet-100 cursor-pointer"
                 onClick={() => setSelectedDept(dept)}
               >
-                <div className="relative h-48 overflow-hidden">
-                    <img src={dept.image} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" alt={dept.name} />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
+                <div className={`h-32 ${dept.color} relative flex items-center justify-center`}>
+                    <Building2 className="size-12 text-white/20 absolute" />
                     <span className="absolute top-6 left-6 px-4 py-1.5 bg-white/10 backdrop-blur-md rounded-full text-[9px] font-black text-white border border-white/20">
                       {dept.badge}
                     </span>
@@ -194,17 +205,13 @@ export default function DepartmentsPage() {
                                 <MoreVertical className="h-5 w-5 stroke-[2.5px]" />
                             </button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48 rounded-2xl p-2 shadow-2xl border-slate-100 font-display">
-                            <DropdownMenuItem onClick={() => setSelectedDept(dept)} className="rounded-xl px-3 py-2 cursor-pointer group flex items-center gap-2">
-                                <ChevronRight className="size-3.5 text-slate-400 group-hover:text-violet-600" />
-                                <span className="text-xs font-bold text-slate-700">View Node Details</span>
-                            </DropdownMenuItem>
+                          <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2 shadow-2xl border-slate-100 font-display">
                             <DropdownMenuItem 
                                 onClick={(e) => { e.stopPropagation(); handleDeleteDept(dept.id, dept.name); }}
-                                className="rounded-xl px-3 py-2 cursor-pointer group flex items-center gap-2 text-red-600 hover:bg-red-50 focus:bg-red-50"
+                                className="rounded-xl px-3 py-3 cursor-pointer group flex items-center gap-2 text-red-600 hover:bg-red-50 focus:bg-red-50"
                             >
-                                <Trash2 className="size-3.5" />
-                                <span className="text-xs font-bold">Decommission Department</span>
+                                <Trash2 className="size-4" />
+                                <span className="text-[11px] font-black uppercase tracking-wider">Decommission Department</span>
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                       </DropdownMenu>
@@ -342,7 +349,6 @@ export default function DepartmentsPage() {
 
       </div>
 
-        {/* New Department Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="sm:max-w-[425px] rounded-[32px] border-none p-10 bg-white font-display">
             <DialogHeader className="space-y-3">
@@ -361,13 +367,40 @@ export default function DepartmentsPage() {
                 className="h-14 rounded-2xl bg-slate-50 border-transparent focus:bg-white focus:border-violet-100 transition-all font-bold text-slate-900"
               />
             </div>
-            <DialogFooter>
+            <DialogFooter className="bg-transparent border-none p-0 flex items-center justify-center pt-2">
               <button 
                 onClick={handleAddDept}
                 disabled={adding}
                 className="w-full h-14 bg-violet-600 text-white rounded-2xl text-[11px] font-black shadow-xl shadow-violet-900/20 hover:scale-[1.02] transition-all active:scale-95 disabled:opacity-50"
               >
                 {adding ? "Initializing..." : "Confirm Initialization"}
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent className="sm:max-w-[425px] rounded-[32px] border-none p-10 bg-white font-display text-center">
+            <DialogHeader className="space-y-3">
+              <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight">Delete Department</DialogTitle>
+              <DialogDescription className="text-sm font-medium text-slate-500">
+                Are you sure you want to delete <span className="text-slate-900 font-bold">"{deptToDelete?.name}"</span>? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex flex-col gap-3 sm:flex-col mt-8 -mx-10 -mb-10 p-10 bg-slate-50/50 rounded-b-[32px] border-t border-slate-100">
+              <button 
+                onClick={handleConfirmDelete}
+                disabled={isDecommissioning}
+                className="w-full h-14 bg-red-600 text-white rounded-2xl text-xs font-black shadow-xl shadow-red-900/20 hover:scale-[1.02] transition-all active:scale-95 disabled:opacity-50"
+              >
+                {isDecommissioning ? "Deleting..." : "Delete Department"}
+              </button>
+              <button 
+                onClick={() => setIsDeleteDialogOpen(false)}
+                disabled={isDecommissioning}
+                className="w-full h-14 bg-white text-slate-500 hover:text-slate-900 border border-slate-100 rounded-2xl text-xs font-black transition-all disabled:opacity-50"
+              >
+                Cancel
               </button>
             </DialogFooter>
           </DialogContent>

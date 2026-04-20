@@ -12,6 +12,7 @@ from rest_framework_simplejwt.tokens import BlacklistedToken, OutstandingToken, 
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from core.permissions import IsAdminOrHR
+from core.viewsets import TenantAwareViewSetMixin
 
 from .models import AccessRole, Employee, LoginAttempt, TalentTag
 from .serializers import (
@@ -159,7 +160,7 @@ class MeView(APIView):
         return Response(serializer.data)
 
 
-class EmployeeViewSet(viewsets.ModelViewSet):
+class EmployeeViewSet(TenantAwareViewSetMixin, viewsets.ModelViewSet):
     """
     ViewSet for viewing and editing employee instances.
     Restricted to Admin and HR via custom permissions.
@@ -173,10 +174,10 @@ class EmployeeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        base_qs = Employee.objects.select_related(
+        base_qs = super().get_queryset().select_related(
             "department", "designation", "access_role", "team_lead"
         )
-        # Team Leads only see employees in their own department
+        # Team Leads only see employees in their own department (within their tenant)
         if user.is_team_lead and user.department:
             return base_qs.filter(department=user.department)
         return base_qs
@@ -222,7 +223,7 @@ class AccessRoleViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
 
 
-class TalentTagViewSet(viewsets.ModelViewSet):
+class TalentTagViewSet(TenantAwareViewSetMixin, viewsets.ModelViewSet):
     """
     CRUD for talent/skill tags. Readable by all authenticated users.
     Creation allowed for Team Leads and above.

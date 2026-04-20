@@ -1,5 +1,5 @@
 import type { FormEvent } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useLocation } from "react-router-dom"
 import { RegisterOrgWizardLayout } from "@/components/onboarding/RegisterOrgWizardLayout"
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
 
@@ -30,13 +30,14 @@ const labelClass =
 export default function OrganizationRegistrationPage() {
   useDesignPortalLightTheme()
 
+  const { state } = useLocation()
   const navigate = useNavigate()
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
     const formData = new FormData(e.target as HTMLFormElement)
     navigate("/register-org/contact", {
-      state: Object.fromEntries(formData.entries()),
+      state: { ...state, ...Object.fromEntries(formData.entries()) },
     })
   }
 
@@ -49,7 +50,7 @@ export default function OrganizationRegistrationPage() {
           Register your organization
         </h2>
         <p className="mt-0.5 text-xs text-[#494456]">
-          Company profile: name, business email, website, industry, size, location.
+          Company profile: name, business email, industry, size, location.
         </p>
       </header>
       <div className="mb-3">
@@ -80,41 +81,20 @@ export default function OrganizationRegistrationPage() {
               placeholder="e.g. Acme Corp"
               type="text"
               name="name"
+              defaultValue={state?.name || ""}
               required
             />
           </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <label className={labelClass}>Subdomain</label>
-              <div className="flex items-center">
-                <input
-                  className={inputClass}
-                  placeholder="e.g. acme"
-                  type="text"
-                  name="subdomain"
-                  required
-                />
-                <span className="ml-2 text-sm text-[#7a7488]">.avanzo.com</span>
-              </div>
-            </div>
-            <div>
-              <label className={labelClass}>Business Email</label>
+          <div>
+            <label className={labelClass}>Subdomain</label>
+            <div className="flex items-center">
               <input
                 className={inputClass}
-                placeholder="name@company.com"
-                type="email"
-                name="email"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <label className={labelClass}>Website</label>
-              <input
-                className={inputClass}
-                placeholder="https://..."
-                type="url"
-                name="website"
+                placeholder="e.g. acme"
+                type="text"
+                name="subdomain"
+                defaultValue={state?.subdomain || ""}
+                required
               />
             </div>
           </div>
@@ -124,7 +104,7 @@ export default function OrganizationRegistrationPage() {
               <select
                 className={inputClass}
                 name="industry"
-                defaultValue=""
+                defaultValue={state?.industry || ""}
               >
                 {industries.map((opt) => (
                   <option key={opt} value={opt === "Select Industry" ? "" : opt}>
@@ -138,7 +118,7 @@ export default function OrganizationRegistrationPage() {
               <select
                 className={inputClass}
                 name="size"
-                defaultValue=""
+                defaultValue={state?.size || ""}
               >
                 {sizes.map((opt) => (
                   <option key={opt} value={opt === "Select Range" ? "" : opt}>
@@ -159,6 +139,7 @@ export default function OrganizationRegistrationPage() {
                 placeholder="City, Country"
                 type="text"
                 name="location"
+                defaultValue={state?.location || ""}
               />
             </div>
           </div>

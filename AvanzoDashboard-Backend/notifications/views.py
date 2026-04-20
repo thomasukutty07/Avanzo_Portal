@@ -10,23 +10,23 @@ from .serializers import (
     NotificationSerializer,
 )
 from core.permissions import IsAdminOrHR
+from core.viewsets import TenantAwareViewSetMixin
 
 
-class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
+class NotificationViewSet(TenantAwareViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """
     Allows users to view their notifications and mark them as read.
     """
 
     permission_classes = [IsAuthenticated]
     serializer_class = NotificationSerializer
+    queryset = Notification.objects.all()
 
     def get_queryset(self):
         # SECURITY: Strictly isolate to the logged-in user.
-        # We only want to return unread notifications to keep the payload light,
-        # but you can remove the filter if the frontend wants a "History" tab.
         if getattr(self, "swagger_fake_view", False):
             return Notification.objects.none()
-        return Notification.objects.filter(recipient=self.request.user, is_read=False)
+        return super().get_queryset().filter(recipient=self.request.user, is_read=False)
 
     @action(detail=True, methods=["patch"], url_path="read")
     def mark_as_read(self, request, pk=None):
@@ -47,7 +47,7 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
         )
 
 
-class BroadcastViewSet(viewsets.ModelViewSet):
+class BroadcastViewSet(TenantAwareViewSetMixin, viewsets.ModelViewSet):
     """
     Handles company-wide announcements.
     - HR/Admins create broadcasts.
@@ -67,10 +67,10 @@ class BroadcastViewSet(viewsets.ModelViewSet):
             return Broadcast.objects.none()
 
         user = self.request.user
-        qs = Broadcast.objects.filter(is_active=True)
+        qs = super().get_queryset().filter(is_active=True)
 
         if user.is_admin or user.is_hr:
-            # HR/Admin can see all active broadcasts to manage them
+            # HR/Admin can see all active broadcasts (within their tenant) to manage them
             return qs
 
         # Employees only see org-wide or their department's broadcasts
@@ -82,7 +82,7 @@ class BroadcastViewSet(viewsets.ModelViewSet):
         return qs.filter(employee_filter)
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        serializer.save(created_by=self.request.user, tenant=self.request.user.tenant)
 
     @action(detail=True, methods=["post"], url_path="acknowledge")
     def acknowledge(self, request, pk=None):

@@ -50,6 +50,14 @@ class Employee(AbstractUser):
     # Remove username, use email
     username = None
     email = models.EmailField("work email", unique=True, db_index=True)
+    tenant = models.ForeignKey(
+        "clients.Client",
+        on_delete=models.CASCADE,
+        related_name="employees",
+        null=True,
+        blank=True,
+        help_text="The organization this employee belongs to.",
+    )
 
     # Profile fields
     phone = models.CharField(max_length=20, blank=True, null=True)

@@ -4,10 +4,10 @@ from django.db import models
 from django.utils import timezone
 
 from accounts.models import Employee
-from core.models import TimeStampedModel
+from core.models import TenantAwareModel, TimeStampedModel
 
 
-class DailyLog(TimeStampedModel):
+class DailyLog(TenantAwareModel):
     """
     The daily attendance record for one employee on one date.
 
