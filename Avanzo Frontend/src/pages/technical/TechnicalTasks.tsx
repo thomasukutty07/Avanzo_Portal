@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Plus, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { projectsService } from "@/services/projects";
 import { TaskDetailModal } from "@/components/portal/technical/TaskDetailModal";
 import { useAuth } from "@/context/AuthContext";

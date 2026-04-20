@@ -1,6 +1,6 @@
 import { useState } from "react"
 import type { FormEvent } from "react"
-import { Link, useNavigate, useLocation } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import { Loader2, Eye, EyeOff } from "lucide-react"
 import { RegisterOrgWizardLayout } from "@/components/onboarding/RegisterOrgWizardLayout"
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"

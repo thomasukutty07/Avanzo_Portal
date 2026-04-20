@@ -3,7 +3,6 @@ import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
 import { useNavigate } from "react-router-dom"
 import { accountsService } from "@/services/accounts"
 import { useState, useEffect } from "react"
-import { useAuth } from "@/context/AuthContext"
 import { toast } from "sonner"
 import { 
   Plus, 
@@ -17,12 +16,7 @@ import {
   Users,
   Award,
   CheckCircle2,
-  PlusCircle,
-  BarChart3,
   Calendar,
-  UserCog,
-  MessageSquare,
-  BadgeInfo,
   FileSearch,
   ClipboardList,
   AlertCircle,
@@ -50,7 +44,6 @@ import {
 export default function TeamPage() {
   useDesignPortalLightTheme()
   const navigate = useNavigate()
-  const { user: currentUser } = useAuth()
   const [members, setMembers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")

@@ -38,12 +38,6 @@ export default function DepartmentsPage() {
       const res = await api.get("/api/organization/departments/");
       const apiDepts = extractResults(res.data);
       const mapped = apiDepts.map((d: any, idx: number) => {
-         const images = [
-           "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=400",
-           "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=400",
-           "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=400",
-           "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80&w=400"
-         ];
          const colors = [
            "bg-indigo-600",
            "bg-blue-600",

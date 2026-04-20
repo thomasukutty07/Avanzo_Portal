@@ -6,6 +6,7 @@ export type UserRole =
   | "HR"
   | "Team Lead"
   | "Employee"
+  | "Organization"
 export type UserStatus = "active" | "on_leave" | "offboarding"
 export type LeaveType = "full_day" | "half_day"
 export type LeaveStatus = "pending" | "tl_approved" | "approved" | "rejected"

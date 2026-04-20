@@ -17,16 +17,9 @@ import {
   Layout,
   Users,
   Trash2,
-  X,
-  Mail,
   Edit2,
 } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog"
 
 export default function LeadProjectsPage() {
   useDesignPortalLightTheme()
