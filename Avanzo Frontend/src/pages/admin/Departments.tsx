@@ -93,7 +93,7 @@ export default function DepartmentsPage() {
     try {
       setAdding(true)
       await api.post("/api/organization/departments/", { name: newDeptName });
-      toast.success(`Department "${newDeptName}" initialized successfully.`);
+      toast.success(`Department "${newDeptName}" created successfully.`);
       setNewDeptName("");
       setAdding(false);
       setIsDialogOpen(false);
@@ -116,7 +116,7 @@ export default function DepartmentsPage() {
     try {
       setIsDecommissioning(true)
       await api.delete(`/api/organization/departments/${deptToDelete.id}/`);
-      toast.success(`Department "${deptToDelete.name}" decommissioned successfully.`);
+      toast.success(`Department "${deptToDelete.name}" deleted successfully.`);
       setIsDeleteDialogOpen(false);
       setDeptToDelete(null);
       refreshDepts();
@@ -137,7 +137,7 @@ export default function DepartmentsPage() {
               Departments
             </h1>
             <p className="text-slate-500 mt-2 text-sm font-medium">
-               Manage and monitor your organizational infrastructure departments.
+               Manage and view your company departments.
             </p>
           </div>
           <button 
@@ -205,7 +205,7 @@ export default function DepartmentsPage() {
                                 className="rounded-xl px-3 py-3 cursor-pointer group flex items-center gap-2 text-red-600 hover:bg-red-50 focus:bg-red-50"
                             >
                                 <Trash2 className="size-4" />
-                                <span className="text-[11px] font-black uppercase tracking-wider">Decommission Department</span>
+                                <span className="text-[11px] font-black uppercase tracking-wider">Delete Department</span>
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                       </DropdownMenu>
@@ -348,7 +348,7 @@ export default function DepartmentsPage() {
             <DialogHeader className="space-y-3">
               <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight">Create New Department</DialogTitle>
               <DialogDescription className="text-sm font-medium text-slate-500">
-                Initialize a new organizational infrastructure department.
+                Set up a new company department.
               </DialogDescription>
             </DialogHeader>
             <div className="py-6 space-y-2">
@@ -367,7 +367,7 @@ export default function DepartmentsPage() {
                 disabled={adding}
                 className="w-full h-14 bg-violet-600 text-white rounded-2xl text-[11px] font-black shadow-xl shadow-violet-900/20 hover:scale-[1.02] transition-all active:scale-95 disabled:opacity-50"
               >
-                {adding ? "Initializing..." : "Confirm Initialization"}
+                {adding ? "Creating..." : "Create Department"}
               </button>
             </DialogFooter>
           </DialogContent>

@@ -33,9 +33,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const response = await api.get("/api/auth/me/");
         setUser(response.data);
-      } catch {
+      } catch (error: any) {
+        console.warn("Session hydration failed. Clearing invalid session data.");
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
+        setUser(null);
       } finally {
         setIsLoading(false);
       }

@@ -26,8 +26,15 @@ class TenantAwareViewSetMixin:
         return queryset
 
     def perform_create(self, serializer):
-        if self.request.user.is_authenticated and self.request.user.tenant:
-            serializer.save(tenant=self.request.user.tenant)
+        from rest_framework.exceptions import ValidationError
+        
+        if self.request.user.is_authenticated:
+            if self.request.user.tenant:
+                serializer.save(tenant=self.request.user.tenant)
+            else:
+                raise ValidationError({
+                    "detail": "Data isolation error: Your account is not associated with any Organization. Please contact support or run the initialization script."
+                })
         else:
             # For public registration views, we allow null tenant if the serializer handles it
             serializer.save()

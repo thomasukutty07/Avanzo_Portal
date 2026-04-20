@@ -16,21 +16,31 @@ export function OrganizationAdminChrome({ children }: { children: React.ReactNod
   const [announcementCount, setAnnouncementCount] = useState(0)
 
   useEffect(() => {
+    let isMounted = true
+    
     const fetchStats = async () => {
+      if (!user) return
       try {
         const res = await api.get("/api/notifications/broadcasts/")
+        if (!isMounted) return
         const data = res.data
         const items = Array.isArray(data) ? data : (data.results || [])
         setAnnouncementCount(items.length)
-      } catch (e) {
-        console.error(e)
+      } catch (e: any) {
+        // Only log non-auth errors to avoid cluttering console during session expiry
+        if (e.response?.status !== 401 && isMounted) {
+          console.error("Failed to fetch notification stats:", e.message)
+        }
       }
     }
+    
     fetchStats()
-    // Optional: Refresh periodically?
     const interval = setInterval(fetchStats, 60000)
-    return () => clearInterval(interval)
-  }, [])
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+    }
+  }, [user])
 
   const currentNav = ORGANIZATION_ADMIN_NAV.find(item => 
     item.to === "/" ? location.pathname === "/" : location.pathname.startsWith(item.to)
