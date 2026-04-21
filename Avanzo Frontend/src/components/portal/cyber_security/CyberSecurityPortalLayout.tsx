@@ -33,7 +33,7 @@ export function CyberSecurityPortalLayout({ children }: { children?: React.React
       </div>
 
       {/* Main column */}
-      <div className={`flex min-h-screen min-w-0 flex-1 flex-col transition-all duration-300 ${isSidebarOpen ? 'md:pl-72' : ''}`}>
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col transition-all duration-300">
         {/* Shared sticky header */}
         <CyberSecurityPortalHeader onMenuClick={() => setIsSidebarOpen(true)} onToggleSidebar={setIsSidebarOpen} />
 

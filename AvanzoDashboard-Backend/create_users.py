@@ -91,6 +91,7 @@ if tenant:
     # 3. Employee - Cybersecurity
     create_user("cybersecurity@avanzo.com", pwd, "Employee", dept_name="Cybersecurity", desig_name="Security Analyst", first_name="Cyber", last_name="Sec")
     create_user("tech@avanzo.com", pwd, "Employee", dept_name="Engineering", desig_name="Technical Lead", first_name="Tech", last_name="Support")
+    create_user("technical@avanzo.com", pwd, "Employee", dept_name="Engineering", desig_name="Technical Lead", first_name="Technical", last_name="Member")
 
     # 4. SERVICES (New)
     create_service("Web Application Audit", "Cybersecurity")

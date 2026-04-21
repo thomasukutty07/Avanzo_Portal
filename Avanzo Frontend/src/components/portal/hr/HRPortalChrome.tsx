@@ -168,7 +168,7 @@ export function HRPortalChrome({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main key={location.pathname} className="min-h-0 flex-1 overflow-y-auto relative">
+        <main key={location.pathname} className="flex-1 relative">
           <div className="p-6 md:p-10 lg:p-12 animate-in fade-in duration-700 ease-out">
             {children}
           </div>

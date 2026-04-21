@@ -85,6 +85,13 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
     def hr_approve(self, request, pk=None):
         """Tier 2 Approval: HR gives final system approval."""
         leave = self.get_object()
+        
+        # Enable "Force Approve" — if HR approves a pending request, they bypass TL level
+        if leave.status == LeaveRequest.Status.PENDING:
+            leave.tl_reviewer = request.user
+            leave.tl_comment = "Bypassed by HR (Force Approved)"
+            leave.status = LeaveRequest.Status.TL_APPROVED
+
         if leave.status != LeaveRequest.Status.TL_APPROVED:
             return Response({"detail": "Requires Team Lead approval first."}, status=400)
 
