@@ -18,8 +18,9 @@ from .serializers import (
 LATE_THRESHOLD_HOUR = 9
 LATE_THRESHOLD_MINUTE = 30
 
+from core.viewsets import TenantAwareViewSetMixin
 
-class AttendanceViewSet(viewsets.ReadOnlyModelViewSet):
+class AttendanceViewSet(TenantAwareViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """
     Attendance Triad API.
 
@@ -41,9 +42,11 @@ class AttendanceViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = DailyLogSerializer
 
     def get_queryset(self):
+        # super().get_queryset() provides tenant isolation via mixin
+        qs = super().get_queryset()
         if getattr(self, "swagger_fake_view", False):
-            return DailyLog.objects.none()
-        return DailyLog.objects.filter(employee=self.request.user).prefetch_related(
+            return qs.none()
+        return qs.filter(employee=self.request.user).prefetch_related(
             "entries", "entries__project"
         )
 
@@ -61,7 +64,11 @@ class AttendanceViewSet(viewsets.ReadOnlyModelViewSet):
         frontend can render the clock-in form.
         """
         today = timezone.localdate()
-        log, _created = DailyLog.objects.get_or_create(employee=request.user, date=today)
+        log, _created = DailyLog.objects.get_or_create(
+            employee=request.user, 
+            date=today,
+            defaults={'tenant': request.user.tenant}
+        )
         serializer = DailyLogSerializer(log, context={"request": request})
         return Response(serializer.data)
 
@@ -90,7 +97,11 @@ class AttendanceViewSet(viewsets.ReadOnlyModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         # 2. Get or create today's record
-        log, _created = DailyLog.objects.get_or_create(employee=request.user, date=today)
+        log, _created = DailyLog.objects.get_or_create(
+            employee=request.user, 
+            date=today,
+            defaults={'tenant': request.user.tenant}
+        )
 
         # 3. Prevent double clock-ins
         if log.has_clocked_in:
@@ -172,7 +183,11 @@ class AttendanceViewSet(viewsets.ReadOnlyModelViewSet):
 
         # 1. Find today's record
         try:
-            log = DailyLog.objects.get(employee=request.user, date=today)
+            log = DailyLog.objects.get(
+                employee=request.user, 
+                date=today, 
+                tenant=request.user.tenant
+            )
         except DailyLog.DoesNotExist:
             return Response(
                 {"detail": "You must clock in before you can clock out."},
@@ -268,13 +283,21 @@ class AttendanceViewSet(viewsets.ReadOnlyModelViewSet):
         """
         today = timezone.localdate()
 
-        # Find all direct reports
-        direct_reports = request.user.direct_reports.filter(is_active=True, status="active")
+        # Find all direct reports within the same tenant
+        direct_reports = request.user.direct_reports.filter(
+            is_active=True, 
+            status="active",
+            tenant=request.user.tenant
+        )
 
         feed = []
         for employee in direct_reports:
             log = (
-                DailyLog.objects.filter(employee=employee, date=today)
+                DailyLog.objects.filter(
+                    employee=employee, 
+                    date=today,
+                    tenant=request.user.tenant
+                )
                 .prefetch_related("entries", "entries__project")
                 .first()
             )
@@ -349,7 +372,11 @@ class AttendanceViewSet(viewsets.ReadOnlyModelViewSet):
 
         from accounts.models import Employee
 
-        employees = Employee.objects.filter(is_active=True, status="active")
+        employees = Employee.objects.filter(
+            is_active=True, 
+            status="active",
+            tenant=request.user.tenant
+        )
 
         # Optional department filter
         department_id = request.query_params.get("department_id")
@@ -362,6 +389,7 @@ class AttendanceViewSet(viewsets.ReadOnlyModelViewSet):
             for log in DailyLog.objects.filter(
                 date=today,
                 employee__in=employees,
+                tenant=request.user.tenant
             ).prefetch_related("entries", "entries__project")
         }
 
