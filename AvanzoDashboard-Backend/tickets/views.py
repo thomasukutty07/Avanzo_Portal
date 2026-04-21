@@ -48,10 +48,7 @@ class TicketViewSet(viewsets.ModelViewSet):
 
         user = self.request.user
 
-        if user.is_admin:
-            return Ticket.objects.all()
-
-        # Everyone else sees tickets they created OR are assigned to
+        # Only creator or assignee can see the ticket
         return Ticket.objects.filter(
             models.Q(created_by=user) | models.Q(assigned_to=user)
         )
