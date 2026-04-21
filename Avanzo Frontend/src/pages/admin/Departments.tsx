@@ -9,7 +9,8 @@ import {
   TrendingUp, 
   MoreVertical,
   ChevronRight,
-  Trash2
+  Trash2,
+  Edit2
 } from "lucide-react"
 import { OrganizationAdminChrome } from "@/components/portal/organizationadmin/OrganizationAdminChrome"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
@@ -32,6 +33,11 @@ export default function DepartmentsPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [deptToDelete, setDeptToDelete] = useState<{id: string, name: string} | null>(null)
   const [isDecommissioning, setIsDecommissioning] = useState(false)
+
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [deptToEdit, setDeptToEdit] = useState<{id: string, name: string} | null>(null)
+  const [editName, setEditName] = useState("")
+  const [updating, setUpdating] = useState(false)
 
   const refreshDepts = async () => {
     try {
@@ -108,6 +114,27 @@ export default function DepartmentsPage() {
   const handleDeleteDept = (id: string, name: string) => {
     setDeptToDelete({ id, name });
     setIsDeleteDialogOpen(true);
+  }
+
+  const handleEditDept = (id: string, name: string) => {
+    setDeptToEdit({ id, name });
+    setEditName(name);
+    setIsEditDialogOpen(true);
+  }
+
+  const handleConfirmUpdate = async () => {
+    if (!deptToEdit || !editName.trim()) return;
+    try {
+      setUpdating(true)
+      await api.patch(`/api/organization/departments/${deptToEdit.id}/`, { name: editName });
+      toast.success(`Department updated to "${editName}".`);
+      setIsEditDialogOpen(false);
+      refreshDepts();
+    } catch (e: any) {
+      toast.error(e?.response?.data?.name?.[0] || "Failed to recalibrate department.");
+    } finally {
+      setUpdating(false);
+    }
   }
 
   const handleConfirmDelete = async () => {
@@ -200,6 +227,13 @@ export default function DepartmentsPage() {
                             </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2 shadow-2xl border-slate-100 font-display">
+                            <DropdownMenuItem 
+                                onClick={(e) => { e.stopPropagation(); handleEditDept(dept.id, dept.name); }}
+                                className="rounded-xl px-3 py-3 cursor-pointer group flex items-center gap-2 text-slate-700 hover:bg-slate-50 focus:bg-slate-50"
+                            >
+                                <Edit2 className="size-4 text-violet-600" />
+                                <span className="text-[11px] font-black uppercase tracking-wider">Edit Department</span>
+                            </DropdownMenuItem>
                             <DropdownMenuItem 
                                 onClick={(e) => { e.stopPropagation(); handleDeleteDept(dept.id, dept.name); }}
                                 className="rounded-xl px-3 py-3 cursor-pointer group flex items-center gap-2 text-red-600 hover:bg-red-50 focus:bg-red-50"
@@ -393,6 +427,42 @@ export default function DepartmentsPage() {
                 onClick={() => setIsDeleteDialogOpen(false)}
                 disabled={isDecommissioning}
                 className="w-full h-14 bg-white text-slate-500 hover:text-slate-900 border border-slate-100 rounded-2xl text-xs font-black transition-all disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-[425px] rounded-[32px] border-none p-10 bg-white font-display">
+            <DialogHeader className="space-y-3">
+              <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight">Edit Department</DialogTitle>
+              <DialogDescription className="text-sm font-medium text-slate-500">
+                Update the department parameters.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-6 space-y-2">
+              <Label htmlFor="edit-name" className="text-[10px] font-black text-slate-400 ml-1">Department Name</Label>
+              <Input 
+                id="edit-name" 
+                placeholder="e.g. Research & Development"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="h-14 rounded-2xl bg-slate-50 border-transparent focus:bg-white focus:border-violet-100 transition-all font-bold text-slate-900"
+              />
+            </div>
+            <DialogFooter className="bg-transparent border-none p-0 flex flex-col gap-3 pt-2">
+              <button 
+                onClick={handleConfirmUpdate}
+                disabled={updating}
+                className="w-full h-14 bg-slate-900 text-white rounded-2xl text-[11px] font-black shadow-xl shadow-slate-900/20 hover:scale-[1.02] transition-all active:scale-95 disabled:opacity-50"
+              >
+                {updating ? "Saving..." : "Save Changes"}
+              </button>
+              <button 
+                onClick={() => setIsEditDialogOpen(false)}
+                className="w-full h-14 bg-white text-slate-400 font-black text-[10px] uppercase tracking-widest"
               >
                 Cancel
               </button>

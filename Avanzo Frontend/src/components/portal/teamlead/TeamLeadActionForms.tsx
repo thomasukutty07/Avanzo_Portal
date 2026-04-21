@@ -366,7 +366,7 @@ export function CreateProjectModal({ open, onOpenChange, onSuccess }: { open: bo
         title: formData.title,
         description: formData.description,
         is_internal: formData.is_internal,
-        owning_department: formData.owning_department || null,
+        owning_department: formData.owning_department || undefined,
         start_date: formData.start_date || null,
         target_end_date: formData.target_end_date || null,
         team: formData.team,
@@ -415,6 +415,18 @@ export function CreateProjectModal({ open, onOpenChange, onSuccess }: { open: bo
 
         <div className="overflow-y-auto">
           <form onSubmit={handleSubmit} className="px-5 sm:px-8 py-6 space-y-4 bg-white">
+            {/* Title - Moved to top for visibility */}
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-slate-700 tracking-tight">Project Title</Label>
+              <input
+                required
+                placeholder="e.g. Project Aurora: API Core Refresh"
+                value={formData.title}
+                onChange={e => setFormData({ ...formData, title: e.target.value })}
+                className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium text-slate-900 placeholder:text-slate-300 focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-500/10 outline-none transition-all"
+              />
+            </div>
+
             {/* Department selection — admin: picker, team lead: read-only badge */}
             {user?.role === 'Admin' ? (
               <div className="space-y-2">
@@ -440,18 +452,6 @@ export function CreateProjectModal({ open, onOpenChange, onSuccess }: { open: bo
                 </div>
               </div>
             )}
-
-            {/* Title */}
-            <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-700 tracking-tight">Project Title</Label>
-              <input
-                required
-                placeholder="e.g. Project Aurora: API Core Refresh"
-                value={formData.title}
-                onChange={e => setFormData({ ...formData, title: e.target.value })}
-                className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium text-slate-900 placeholder:text-slate-300 focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-500/10 outline-none transition-all"
-              />
-            </div>
 
             {/* Description */}
             <div className="space-y-2">

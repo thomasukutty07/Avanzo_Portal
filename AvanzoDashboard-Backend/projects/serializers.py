@@ -4,6 +4,7 @@ from leaves.models import LeaveRequest
 
 from .models import ExternalClient, Project, Service, Task
 from accounts.models import Employee
+from organization.models import Department
 
 
 class ProjectMemberSerializer(serializers.ModelSerializer):
@@ -31,6 +32,9 @@ class ServiceSerializer(serializers.ModelSerializer):
 class ProjectSerializer(serializers.ModelSerializer):
     client_name = serializers.CharField(source="client.name", read_only=True, default=None)
     service_name = serializers.CharField(source="service.name", read_only=True, default=None)
+    owning_department = serializers.PrimaryKeyRelatedField(
+        queryset=Department.objects.all(), required=False, allow_null=True
+    )
     department_name = serializers.CharField(source="owning_department.name", read_only=True)
     manager = ProjectMemberSerializer(read_only=True)
     manager_name = serializers.SerializerMethodField()

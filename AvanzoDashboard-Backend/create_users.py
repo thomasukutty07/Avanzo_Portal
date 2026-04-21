@@ -9,6 +9,7 @@ django.setup()
 from django.contrib.auth import get_user_model
 from accounts.models import AccessRole
 from organization.models import Department, Designation
+from projects.models import Service # Added Service model
 from clients.models import Client
 
 User = get_user_model()
@@ -18,7 +19,7 @@ tenant = Client.objects.first()
 if not tenant:
     print("WARNING: No Tenant/Organization found. Please register an organization via the UI first.")
 else:
-    print(f"Assigning users to Organization: {tenant.name}")
+    print(f"Assigning users and services to Organization: {tenant.name}")
 
 def create_role(name):
     role, _ = AccessRole.objects.get_or_create(name=name)
@@ -31,6 +32,16 @@ def create_dept(name):
 def create_desig(name):
     desig, _ = Designation.objects.get_or_create(name=name, tenant=tenant)
     return desig
+
+def create_service(name, dept_name): # Added Create Service helper
+    dept = create_dept(dept_name)
+    service, _ = Service.objects.get_or_create(
+        name=name, 
+        tenant=tenant, 
+        department=dept,
+        defaults={'description': f'Standard {name} engagement module.'}
+    )
+    return service
 
 def create_user(email, password, role_name, dept_name=None, desig_name=None, first_name='', last_name=''):
     role = create_role(role_name)
@@ -73,15 +84,22 @@ if tenant:
     # 1. HR
     create_user("hr@avanzo.com", pwd, "HR", first_name="HR", last_name="Manager")
 
-    # 2. Team Lead
-    create_user("teamlead@avanzo.com", pwd, "Team Lead", first_name="Team", last_name="Lead")
+    # 2. Team Leads
+    create_user("teamlead@avanzo.com", pwd, "Team Lead", dept_name="Engineering", first_name="Team", last_name="Lead")
+    create_user("cyberlead@avanzo.com", pwd, "Team Lead", dept_name="Cybersecurity", first_name="Cyber", last_name="Lead")
 
     # 3. Employee - Cybersecurity
     create_user("cybersecurity@avanzo.com", pwd, "Employee", dept_name="Cybersecurity", desig_name="Security Analyst", first_name="Cyber", last_name="Sec")
     create_user("tech@avanzo.com", pwd, "Employee", dept_name="Engineering", desig_name="Technical Lead", first_name="Tech", last_name="Support")
 
+    # 4. SERVICES (New)
+    create_service("Web Application Audit", "Cybersecurity")
+    create_service("Network VAPT", "Cybersecurity")
+    create_service("Fullstack Dashboard Build", "Engineering")
+    create_service("API Security Review", "Cybersecurity")
+    
     # 5. Admin (Organization Level)
     create_user("admin@avanzo.com", pwd, "Admin", first_name="Avanzo", last_name="Admin")
-    print("All test users created successfully for organization: " + tenant.name)
+    print("All test data (users + services) created successfully for organization: " + tenant.name)
 else:
-    print("Action aborted: No organization available to link users to.")
+    print("Action aborted: No organization available to link users and data to.")
