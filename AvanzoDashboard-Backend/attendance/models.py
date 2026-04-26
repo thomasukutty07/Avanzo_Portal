@@ -4,10 +4,10 @@ from django.db import models
 from django.utils import timezone
 
 from accounts.models import Employee
-from core.models import TenantAwareModel, TimeStampedModel
+from core.models import TimeStampedModel
 
 
-class DailyLog(TenantAwareModel):
+class DailyLog(TimeStampedModel):
     """
     The daily attendance record for one employee on one date.
 
@@ -27,6 +27,9 @@ class DailyLog(TenantAwareModel):
         MISSING = "missing", "Missing"  # End of day, never showed up
 
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="daily_logs")
+    tenant = models.ForeignKey(
+        "clients.Client", on_delete=models.CASCADE, related_name="daily_logs", null=True
+    )
     date = models.DateField(default=timezone.now, db_index=True)
 
     # Clock times
@@ -43,6 +46,10 @@ class DailyLog(TenantAwareModel):
     is_late = models.BooleanField(
         default=False,
         help_text="Auto-set to True if clock-in is after the org's threshold.",
+    )
+    is_early_exit = models.BooleanField(
+        default=False,
+        help_text="Set to True if clock-out is before the office end time (5:30 PM).",
     )
     total_hours = models.DecimalField(
         max_digits=5,
@@ -132,6 +139,9 @@ class DailyLogEntry(TimeStampedModel):
         on_delete=models.CASCADE,
         related_name="entries",
     )
+    tenant = models.ForeignKey(
+        "clients.Client", on_delete=models.CASCADE, related_name="daily_log_entries", null=True
+    )
 
     # Which project is this about?
     # Nullable — allows entries for "general work" not tied to any project
@@ -142,6 +152,15 @@ class DailyLogEntry(TimeStampedModel):
         blank=True,
         related_name="daily_log_entries",
         help_text="The project this work item is about. Leave blank for general/misc work.",
+    )
+
+    task = models.ForeignKey(
+        "projects.Task",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="work_log_entries",
+        help_text="The specific task this entry belongs to.",
     )
 
     # Custom label when no project is selected (e.g., "Team Meetings", "Training")
@@ -155,6 +174,11 @@ class DailyLogEntry(TimeStampedModel):
     # ── Morning: What do you PLAN to do? ──
     intent_text = models.TextField(
         help_text="What the employee plans to accomplish on this project today.",
+    )
+    morning_confidence = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        help_text="Confidence level 1-5 regarding completing this intent.",
     )
 
     # ── Evening: What did you ACTUALLY do? ──
@@ -170,6 +194,32 @@ class DailyLogEntry(TimeStampedModel):
         blank=True,
         default="",
         help_text="How did this work item end up? Set during clock-out.",
+    )
+
+    class OutcomeReason(models.TextChoices):
+        BLOCKED_DEPENDENCY = "dependency", "Blocked by dependency"
+        BLOCKED_REQUIREMENTS = "requirements", "Requirement unclear"
+        ESTIMATION_OFF = "underestimated", "Task larger than estimated"
+        PRIORITY_SHIFT = "priority_shift", "Shifted to higher priority"
+        PERSONAL = "personal", "Personal reasons/fatigue"
+
+    outcome_reason = models.CharField(
+        max_length=50,
+        choices=OutcomeReason.choices,
+        blank=True,
+        default="",
+        help_text="Why the outcome was partial or blocked. Set during clock-out.",
+    )
+
+    distributed_hours = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=(
+            "Auto-calculated: total_hours × (task_complexity / total_complexity). "
+            "Not manually entered."
+        ),
     )
 
     # Display ordering (so the employee can prioritize their list)

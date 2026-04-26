@@ -1,26 +1,35 @@
+from django.db import transaction
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from core.permissions import IsAdminOrHR, IsTeamLead
+from core.mixins import TenantFilterMixin
+from core.permissions import IsAdmin, IsAdminOrHR, IsTeamLead
 
 from .models import DailyLog, DailyLogEntry
 from .serializers import (
     ClockInSerializer,
     ClockOutSerializer,
     DailyLogSerializer,
+    PulseResponseSerializer,
+    TeamFeedResponseSerializer,
 )
+from .services import AttendanceService
 
 # Late threshold — hardcoded for now.
 # TODO: Pull from tenant/org config when per-tenant settings are built.
+TIME_ZONE = "Asia/Kolkata"
 LATE_THRESHOLD_HOUR = 9
 LATE_THRESHOLD_MINUTE = 30
 
-from core.viewsets import TenantAwareViewSetMixin
+EXIT_THRESHOLD_HOUR = 17
+EXIT_THRESHOLD_MINUTE = 30
 
-class AttendanceViewSet(TenantAwareViewSetMixin, viewsets.ReadOnlyModelViewSet):
+
+class AttendanceViewSet(TenantFilterMixin, viewsets.ReadOnlyModelViewSet):
     """
     Attendance Triad API.
 
@@ -42,10 +51,12 @@ class AttendanceViewSet(TenantAwareViewSetMixin, viewsets.ReadOnlyModelViewSet):
     serializer_class = DailyLogSerializer
 
     def get_queryset(self):
-        # super().get_queryset() provides tenant isolation via mixin
-        qs = super().get_queryset()
         if getattr(self, "swagger_fake_view", False):
-            return qs.none()
+            return DailyLog.objects.none()
+            
+        # First apply tenant isolation from super()
+        qs = super().get_queryset()
+        
         return qs.filter(employee=self.request.user).prefetch_related(
             "entries", "entries__project"
         )
@@ -59,20 +70,31 @@ class AttendanceViewSet(TenantAwareViewSetMixin, viewsets.ReadOnlyModelViewSet):
         """
         GET /api/attendance/today/
 
-        Returns today's attendance record with all entries.
-        If no record exists yet, returns a fresh empty one so the
-        frontend can render the clock-in form.
+        Returns today's attendance record. 
+        If no record exists, returns a virtual 'pending' response.
+        We do NOT use get_or_create here to avoid cluttering the DB with empty rows.
         """
         today = timezone.localdate()
-        log, _created = DailyLog.objects.get_or_create(
-            employee=request.user, 
-            date=today,
-            defaults={'tenant': request.user.tenant}
-        )
-        serializer = DailyLogSerializer(log, context={"request": request})
-        return Response(serializer.data)
+        log = DailyLog.objects.filter(employee=request.user, date=today).first()
+        
+        if log:
+            serializer = DailyLogSerializer(log, context={"request": request})
+            return Response(serializer.data)
+            
+        # Return a virtual pending state
+        return Response({
+            "id": None,
+            "date": str(today),
+            "status": DailyLog.Status.PENDING,
+            "status_display": "Pending",
+            "has_clocked_in": False,
+            "has_clocked_out": False,
+            "entries": [],
+            "general_notes": ""
+        })
 
     @action(detail=False, methods=["post"], url_path="clock-in")
+    @transaction.atomic
     def clock_in(self, request):
         """
         POST /api/attendance/clock-in/
@@ -96,14 +118,21 @@ class AttendanceViewSet(TenantAwareViewSetMixin, viewsets.ReadOnlyModelViewSet):
         serializer = ClockInSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # 2. Get or create today's record
+        # 2. Cleanup: If they forgot to clock out YESTERDAY, mark it as MISSING
+        DailyLog.objects.filter(
+            employee=request.user, 
+            date__lt=today, 
+            status=DailyLog.Status.CLOCKED_IN
+        ).update(status=DailyLog.Status.MISSING)
+
+        # 3. Get or create today's record
         log, _created = DailyLog.objects.get_or_create(
             employee=request.user, 
             date=today,
-            defaults={'tenant': request.user.tenant}
+            defaults={"tenant": request.user.tenant}
         )
 
-        # 3. Prevent double clock-ins
+        # 4. Prevent double clock-ins
         if log.has_clocked_in:
             return Response(
                 {"detail": "You have already clocked in today."},
@@ -135,17 +164,24 @@ class AttendanceViewSet(TenantAwareViewSetMixin, viewsets.ReadOnlyModelViewSet):
             entry_texts.append(f"• {label}: {entry_data['intent_text']}")
         log.morning_intent = "\n".join(entry_texts)
 
+        # Explicitly assign tenant before saving if it was somehow missing
+        if not log.tenant:
+            log.tenant = request.user.tenant
         log.save()
 
         # 5. Create structured DailyLogEntry rows
         for entry_data in serializer.validated_data["entries"]:
             project_id = entry_data.get("project")
+            task_id = entry_data.get("task")
 
             DailyLogEntry.objects.create(
                 daily_log=log,
+                tenant=request.user.tenant,
                 project_id=project_id,
+                task_id=task_id,
                 custom_label=entry_data.get("custom_label", ""),
                 intent_text=entry_data["intent_text"],
+                morning_confidence=entry_data.get("morning_confidence"),
                 priority_order=entry_data.get("priority_order", 0),
             )
 
@@ -155,6 +191,7 @@ class AttendanceViewSet(TenantAwareViewSetMixin, viewsets.ReadOnlyModelViewSet):
         )
 
     @action(detail=False, methods=["patch"], url_path="clock-out")
+    @transaction.atomic
     def clock_out(self, request):
         """
         PATCH /api/attendance/clock-out/
@@ -183,11 +220,7 @@ class AttendanceViewSet(TenantAwareViewSetMixin, viewsets.ReadOnlyModelViewSet):
 
         # 1. Find today's record
         try:
-            log = DailyLog.objects.get(
-                employee=request.user, 
-                date=today, 
-                tenant=request.user.tenant
-            )
+            log = DailyLog.objects.get(employee=request.user, date=today)
         except DailyLog.DoesNotExist:
             return Response(
                 {"detail": "You must clock in before you can clock out."},
@@ -228,13 +261,32 @@ class AttendanceViewSet(TenantAwareViewSetMixin, viewsets.ReadOnlyModelViewSet):
 
             entry.output_text = entry_data["output_text"]
             entry.outcome = entry_data["outcome"]
+            entry.outcome_reason = entry_data.get("outcome_reason", "")
             updated_entries.append(entry)
 
         # Bulk update for efficiency
-        DailyLogEntry.objects.bulk_update(updated_entries, ["output_text", "outcome"])
+        DailyLogEntry.objects.bulk_update(
+            updated_entries, ["output_text", "outcome", "outcome_reason"]
+        )
 
         # 6. Update the daily log
         now = timezone.now()
+        local_time = timezone.localtime(now)
+        
+        # Office Hour Restriction: Cannot clock out before 5:30 PM
+        exit_threshold = local_time.replace(
+            hour=EXIT_THRESHOLD_HOUR,
+            minute=EXIT_THRESHOLD_MINUTE,
+            second=0,
+            microsecond=0,
+        )
+        
+        if local_time < exit_threshold:
+            return Response(
+                {"detail": "You cannot clock out before office hours end (5:30 PM). Please stay productive!"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         log.clock_out_time = now
         log.status = DailyLog.Status.CLOCKED_OUT
         log.compute_total_hours()
@@ -258,6 +310,9 @@ class AttendanceViewSet(TenantAwareViewSetMixin, viewsets.ReadOnlyModelViewSet):
 
         log.save()
 
+        # Distribute the logged hours across entries based on complexity
+        AttendanceService.distribute_hours_to_entries(log)
+
         return Response(
             DailyLogSerializer(log, context={"request": request}).data,
             status=status.HTTP_200_OK,
@@ -267,6 +322,7 @@ class AttendanceViewSet(TenantAwareViewSetMixin, viewsets.ReadOnlyModelViewSet):
     # TEAM LEAD ACTIONS
     # ─────────────────────────────────────────────────────────
 
+    @extend_schema(responses=TeamFeedResponseSerializer)
     @action(
         detail=False,
         methods=["get"],
@@ -283,21 +339,13 @@ class AttendanceViewSet(TenantAwareViewSetMixin, viewsets.ReadOnlyModelViewSet):
         """
         today = timezone.localdate()
 
-        # Find all direct reports within the same tenant
-        direct_reports = request.user.direct_reports.filter(
-            is_active=True, 
-            status="active",
-            tenant=request.user.tenant
-        )
+        # Find all direct reports
+        direct_reports = request.user.direct_reports.filter(is_active=True, status="active")
 
         feed = []
         for employee in direct_reports:
             log = (
-                DailyLog.objects.filter(
-                    employee=employee, 
-                    date=today,
-                    tenant=request.user.tenant
-                )
+                DailyLog.objects.filter(employee=employee, date=today)
                 .prefetch_related("entries", "entries__project")
                 .first()
             )
@@ -355,6 +403,7 @@ class AttendanceViewSet(TenantAwareViewSetMixin, viewsets.ReadOnlyModelViewSet):
     # ADMIN / CEO ACTIONS
     # ─────────────────────────────────────────────────────────
 
+    @extend_schema(responses=PulseResponseSerializer)
     @action(
         detail=False,
         methods=["get"],
@@ -365,31 +414,51 @@ class AttendanceViewSet(TenantAwareViewSetMixin, viewsets.ReadOnlyModelViewSet):
         """
         GET /api/attendance/pulse/?department_id=uuid
 
-        The CEO's morning view — org-wide attendance status at a glance.
-        Color-coded: green (on-time), yellow (late), red (missing).
+        The CEO's / HR's morning view — org-wide attendance status at a glance.
+        Strictly tenant-isolated: ONLY employees belonging to the same
+        organisation as the requesting user are returned.
         """
+        # ── Guard: requesting user must have a tenant ─────────
+        if not request.user.tenant:
+            return Response(
+                {
+                    "total": 0,
+                    "clocked_in": 0,
+                    "missing": 0,
+                    "late": 0,
+                    "employees": [],
+                },
+                status=status.HTTP_200_OK,
+            )
+
         today = timezone.localdate()
+        tenant = request.user.tenant  # resolved once, used everywhere
 
         from accounts.models import Employee
 
+        # ── Strict tenant isolation ───────────────────────────
+        # tenant__isnull=False ensures we NEVER include employees whose
+        # tenant field is NULL (system accounts / cross-org test users).
+        # Exclude Admin-role users — they manage the org, they don't clock in.
         employees = Employee.objects.filter(
-            is_active=True, 
+            tenant=tenant,
+            tenant__isnull=False,
+            is_active=True,
             status="active",
-            tenant=request.user.tenant
-        )
+        ).exclude(access_role__name="Admin")
 
         # Optional department filter
         department_id = request.query_params.get("department_id")
         if department_id:
             employees = employees.filter(department_id=department_id)
 
-        # Pre-fetch today's logs
+        # Pre-fetch today's logs — also scoped to THIS tenant
         logs_map = {
             log.employee_id: log
             for log in DailyLog.objects.filter(
+                tenant=tenant,
                 date=today,
                 employee__in=employees,
-                tenant=request.user.tenant
             ).prefetch_related("entries", "entries__project")
         }
 
@@ -439,12 +508,11 @@ class AttendanceViewSet(TenantAwareViewSetMixin, viewsets.ReadOnlyModelViewSet):
         pulse_data.sort(
             key=lambda x: (
                 status_order.get(x["status"], 99),
-                not x["is_late"],  # late people first within clocked_in
+                not x["is_late"],
                 x["employee_name"],
             )
         )
 
-        # Summary counts
         total = len(pulse_data)
         clocked_in = sum(1 for p in pulse_data if p["status"] in ("clocked_in", "clocked_out"))
         missing = total - clocked_in
@@ -452,16 +520,48 @@ class AttendanceViewSet(TenantAwareViewSetMixin, viewsets.ReadOnlyModelViewSet):
 
         return Response(
             {
-                "date": str(today),
-                "total_employees": total,
+                "total": total,
                 "clocked_in": clocked_in,
                 "missing": missing,
                 "late": late,
-                "on_time": clocked_in - late,
-                # Frontend expectations
-                "total_workforce": total,
-                "present_now": clocked_in,
-                "attendance_rate": (clocked_in / total * 100) if total > 0 else 0,
                 "employees": pulse_data,
             }
         )
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="admin-clock-out",
+        permission_classes=[IsAuthenticated, IsAdmin],
+    )
+    @transaction.atomic
+    def admin_clock_out(self, request, pk=None):
+        """
+        POST /api/attendance/{id}/admin-clock-out/
+        
+        Allows an Admin to manually clock out an employee who forgot.
+        Automatically sets the clock-out time to 5:30 PM (End of day).
+        """
+        log = self.get_object()
+        
+        if log.status != DailyLog.Status.CLOCKED_IN:
+            return Response(
+                {"detail": "This record is not in a 'Clocked In' state."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Set to official end of day (5:30 PM)
+        exit_time = timezone.localtime(log.clock_in_time).replace(
+            hour=EXIT_THRESHOLD_HOUR,
+            minute=EXIT_THRESHOLD_MINUTE,
+            second=0,
+            microsecond=0,
+        )
+        
+        log.clock_out_time = exit_time
+        log.status = DailyLog.Status.CLOCKED_OUT
+        log.compute_total_hours()
+        log.general_notes += f"\n\n--- Admin Action ---\nManually clocked out by {request.user.get_full_name()}."
+        log.save()
+        
+        return Response({"status": f"Successfully clocked out {log.employee.get_full_name()}."})

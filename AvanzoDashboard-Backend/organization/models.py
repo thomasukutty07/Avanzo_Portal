@@ -1,33 +1,37 @@
 from django.db import models
 
-from core.models import TenantAwareModel, TimeStampedModel
+from core.models import TimeStampedModel
 
 
-class Department(TenantAwareModel):
+class Department(TimeStampedModel):
     """From admin-settings.tsx: Engineering, Cybersecurity, Design, Marketing."""
 
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
+    tenant = models.ForeignKey(
+        "clients.Client", on_delete=models.CASCADE, related_name="departments", null=True
+    )
     is_active = models.BooleanField(default=True)
 
     class Meta:
         db_table = "departments"
         ordering = ["name"]
-        unique_together = ("name", "tenant")
 
     def __str__(self):
         return self.name
 
 
-class Designation(TenantAwareModel):
+class Designation(TimeStampedModel):
     """From admin-settings.tsx: Software Engineer, SecOps Lead, UX Researcher, etc."""
 
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
+    tenant = models.ForeignKey(
+        "clients.Client", on_delete=models.CASCADE, related_name="designations", null=True
+    )
     is_active = models.BooleanField(default=True)
 
     class Meta:
         db_table = "designations"
         ordering = ["name"]
-        unique_together = ("name", "tenant")
 
     def __str__(self):
         return self.name

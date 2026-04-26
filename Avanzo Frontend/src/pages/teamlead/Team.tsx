@@ -41,8 +41,11 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 
+import { useAuth } from "@/context/AuthContext"
+
 export default function TeamPage() {
   useDesignPortalLightTheme()
+  const { user } = useAuth()
   const navigate = useNavigate()
   const [members, setMembers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -63,7 +66,7 @@ export default function TeamPage() {
 
   const fetchTalentTags = async () => {
     try {
-      const res = await api.get("/api/auth/talent-tags/");
+      const res = await api.get("/api/skills/catalog/");
       setTalentTags(extractResults(res.data));
     } catch (e) {
       console.error(e);
@@ -91,7 +94,7 @@ export default function TeamPage() {
   const handleAddCustomTag = async () => {
     if (!customTagName.trim()) return;
     try {
-      const res = await api.post("/api/auth/talent-tags/", { name: customTagName, category: "Custom" });
+      const res = await api.post("/api/skills/catalog/", { name: customTagName, category: "Custom" });
       const newTag = { ...res.data, is_custom: true };
       setTalentTags(prev => [...prev, newTag]);
       // Auto-select for current member
@@ -105,13 +108,16 @@ export default function TeamPage() {
   }
 
   // Backend already scopes the list to the team lead's department
-  const filteredMembers = members.filter(m =>
-    m.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    m.role?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    m.email?.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredMembers = members.filter(m => {
+    // Exclude the currently logged in Team Lead
+    if (user && m.id === user.id) return false;
+    
+    return m.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+           m.role?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+           m.email?.toLowerCase().includes(searchQuery.toLowerCase());
+  })
 
-  const activeUnits = members.filter(m => m.is_active !== false).length
+  const activeUnits = members.filter(m => m.is_active !== false && (!user || m.id !== user.id)).length
 
   const openWorkDialog = async (member: any) => {
     setSelectedMember(member)
@@ -161,7 +167,7 @@ export default function TeamPage() {
               </div>
               <div className="bg-violet-50 px-5 py-1.5 rounded-xl border border-violet-100 flex items-center gap-2.5">
                  <Zap className="size-3.5 text-violet-600 shadow-sm" />
-                 <span className="text-[10px] font-bold text-violet-600 tabular-nums">{members.length} Total</span>
+                 <span className="text-[10px] font-bold text-violet-600 tabular-nums">{members.filter(m => !user || m.id !== user.id).length} Total</span>
               </div>
            </div>
         </div>

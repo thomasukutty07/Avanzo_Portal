@@ -154,6 +154,103 @@ export interface Ticket {
   created_at: string
 }
 
+// ─── Activity ─────────────────────────────────────────────
+export type ActivityEventType =
+  | "clock_in"
+  | "clock_out"
+  | "task_created"
+  | "task_completed"
+  | "leave_requested"
+  | "leave_approved"
+  | "leave_rejected"
+  | "ticket_created"
+  | "ticket_resolved"
+  | "project_created"
+  | "project_completed"
+  | "employee_joined"
+  | "broadcast_sent"
+
+export interface ActivityEvent {
+  id: string
+  event_type: ActivityEventType
+  event_type_display: string
+  actor: string
+  actor_name: string
+  timestamp: string
+  title: string
+  detail?: string
+  department?: string | null
+  department_name?: string | null
+  icon: string
+  metadata?: Record<string, any>
+}
+
+// ─── Performance ──────────────────────────────────────────
+export interface PerformanceSnapshot {
+  id: string
+  employee: string
+  employee_name: string
+  department_name?: string | null
+  period_type: "weekly" | "monthly"
+  period_start: string
+  period_end: string
+  attendance_score: number
+  delivery_score: number
+  quality_score: number
+  reliability_score: number
+  overall_score: number
+  rank?: number
+  total_ranked?: number
+  weights_used: Record<string, number>
+}
+
+export interface LiveScore {
+  attendance_score: number
+  delivery_score: number
+  quality_score: number
+  reliability_score: number
+  overall_score: number
+  weights_used: Record<string, number>
+}
+
+// ─── Analytics ────────────────────────────────────────────
+export interface AdminDashboardSummary {
+  attendance: {
+    total_expected: number
+    clocked_in: number
+    late: number
+    absent: number
+  }
+  projects: {
+    active_count: number
+    overall_progress_pct: number
+  }
+  pending_leaves: number
+  open_tickets: number
+  activity_feed: ActivityEvent[]
+  leaderboard: Partial<PerformanceSnapshot>[]
+}
+
+// ─── Skills ───────────────────────────────────────────────
+export interface Skill {
+  id: string
+  name: string
+  category: string
+  description?: string
+  is_active: boolean
+}
+
+export interface EmployeeSkill {
+  id: string
+  employee: string
+  employee_name: string
+  skill: string
+  skill_name: string
+  proficiency: number
+  verified_by_name?: string
+  tasks_completed_with_skill: number
+}
+
 // ─── Pagination (all list endpoints return this) ─────────
 export interface PaginatedResponse<T> {
   count: number

@@ -1,7 +1,6 @@
 import { useAuth } from "@/context/AuthContext"
 import { useNavigate } from "react-router-dom"
 import { 
-  Building2, 
   Camera, 
   LogOut, 
   User, 
@@ -41,7 +40,7 @@ export default function SettingsLegacyPage() {
     user?.role === "Team Lead"
 
   const [talentTags, setTalentTags] = useState<any[]>([])
-  const [declaredTalents, setDeclaredTalents] = useState<number[]>(user?.self_declared_talents || [])
+  const [declaredTalents, setDeclaredTalents] = useState<number[]>(user?.evaluated_talents || [])
   const [savingSkills, setSavingSkills] = useState(false)
 
   useEffect(() => {
@@ -50,7 +49,7 @@ export default function SettingsLegacyPage() {
 
   const fetchTalentTags = async () => {
     try {
-      const res = await api.get("/api/auth/talent-tags/");
+      const res = await api.get("/api/skills/catalog/");
       setTalentTags(extractResults(res.data));
     } catch (e) {
       console.error(e);
@@ -58,9 +57,10 @@ export default function SettingsLegacyPage() {
   }
 
   const handleSaveSkills = async () => {
+    if (!user?.id) return;
     try {
       setSavingSkills(true);
-      await api.patch("/api/auth/me/", { self_declared_talents: declaredTalents });
+      await api.post(`/api/auth/employees/${user.id}/update-skills/`, { talent_ids: declaredTalents });
       toast.success("Skills updated.");
     } catch (e) {
       toast.error("Failed to sync skills.");

@@ -1,10 +1,10 @@
-from django.db.models import Count
 from django.utils import timezone
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from core.mixins import TenantFilterMixin
 from core.permissions import IsAdminOrHR, IsHR, IsTeamLead
 
 from .models import LeaveRequest
@@ -12,7 +12,7 @@ from .serializers import LeaveApplySerializer, LeaveRequestSerializer
 from .services import LeaveNotificationService
 
 
-class LeaveRequestViewSet(viewsets.ModelViewSet):
+class LeaveRequestViewSet(TenantFilterMixin, viewsets.ModelViewSet):
     queryset = LeaveRequest.objects.all()
     serializer_class = LeaveRequestSerializer
     permission_classes = [IsAuthenticated]
@@ -31,22 +31,26 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
         Admins/HR see TL_APPROVED by default (their actionable queue).
         Team Leads see their reports.
         Employees see only their own.
+        Now with Tenant isolation.
         """
         user = self.request.user
-        qs = LeaveRequest.objects.select_related("employee", "tl_reviewer", "hr_reviewer")
+        
+        # ── Step 1: Tenant Isolation ──────────────────────────
+        qs = super().get_queryset()
+        
+        qs = qs.select_related("employee", "tl_reviewer", "hr_reviewer")
 
+        # ── Step 2: Role-Based Filtering ──────────────────────
         if user.is_hr:
-            return qs  # HR sees everything (The Overseer)
+            return qs  # HR sees everything within tenant
         if user.is_team_lead:
-            return qs.filter(employee__team_lead=user)  # TL see their own reports (The Gatekeeper)
-        return qs.filter(employee=user)  # Everyone else (including Admin) sees only their own
+            return qs.filter(employee__team_lead=user)  # TL see their own reports
+        return qs.filter(employee=user)  # Everyone else sees only their own
 
     @action(detail=False, methods=["get"], permission_classes=[IsAdminOrHR])
     def history(self, request):
-        """HR/Admin endpoint to view the full history of all leave requests."""
-        requests = LeaveRequest.objects.select_related(
-            "employee", "tl_reviewer", "hr_reviewer"
-        ).all()
+        """HR/Admin endpoint to view the full history of all leave requests within the tenant."""
+        requests = self.get_queryset() # uses tenant filtering
         page = self.paginate_queryset(requests)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
@@ -57,7 +61,10 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Initial application: Sets status to PENDING and notifies Team Lead."""
-        leave = serializer.save(employee=self.request.user)
+        leave = serializer.save(
+            employee=self.request.user,
+            tenant=self.request.user.tenant
+        )
         LeaveNotificationService.notify_tl_new_request(leave)
 
     @action(detail=True, methods=["patch"], permission_classes=[IsTeamLead | IsHR])
@@ -85,13 +92,6 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
     def hr_approve(self, request, pk=None):
         """Tier 2 Approval: HR gives final system approval."""
         leave = self.get_object()
-        
-        # Enable "Force Approve" — if HR approves a pending request, they bypass TL level
-        if leave.status == LeaveRequest.Status.PENDING:
-            leave.tl_reviewer = request.user
-            leave.tl_comment = "Bypassed by HR (Force Approved)"
-            leave.status = LeaveRequest.Status.TL_APPROVED
-
         if leave.status != LeaveRequest.Status.TL_APPROVED:
             return Response({"detail": "Requires Team Lead approval first."}, status=400)
 
@@ -135,47 +135,50 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
         LeaveNotificationService.notify_employee_status_update(leave)
         return Response({"status": "Rejected"})
 
-    @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=["get"], url_path="stats")
     def stats(self, request):
+        """
+        GET /api/leaves/requests/stats/
+
+        Returns leave counts broken down by status, scoped to what
+        the current user can see (own only, team, or all for HR/Admin).
+        """
         qs = self.get_queryset()
-        today = timezone.localdate()
-        
-        tl_approved_count = qs.filter(status=LeaveRequest.Status.TL_APPROVED).count()
-        total_pending_count = qs.filter(status=LeaveRequest.Status.PENDING).count()
-        
-        out_today_count = qs.filter(
-            status=LeaveRequest.Status.APPROVED,
-            start_date__lte=today,
-            end_date__gte=today
-        ).count()
+        statuses = [s[0] for s in LeaveRequest.Status.choices]
+        counts = {s: qs.filter(status=s).count() for s in statuses}
+        counts["total"] = qs.count()
+        return Response(counts)
 
-        type_dist = qs.values('leave_type').annotate(count=Count('id')).order_by('-count')
-
-        return Response({
-            "tl_approved": tl_approved_count,
-            "total_pending": total_pending_count,
-            "out_today": out_today_count,
-            "type_distribution": type_dist
-        })
-
-    @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=["get"], url_path="who_is_out")
     def who_is_out(self, request):
-        qs = self.get_queryset()
+        """
+        GET /api/leaves/requests/who_is_out/
+
+        Returns employees currently on approved leave today.
+        Scoped by tenant — visible to anyone authenticated.
+        """
         today = timezone.localdate()
-        
-        out_today = qs.filter(
-            status=LeaveRequest.Status.APPROVED,
-            start_date__lte=today,
-            end_date__gte=today
-        ).select_related('employee')
-        
-        results = [
+        on_leave = (
+            self.get_queryset()
+            .filter(
+                status=LeaveRequest.Status.APPROVED,
+                start_date__lte=today,
+                end_date__gte=today,
+            )
+            .select_related("employee", "employee__department")
+        )
+
+        data = [
             {
-                "employee_name": p.employee.get_full_name(),
-                "leave_type": p.get_leave_type_display() if hasattr(p, 'get_leave_type_display') else p.leave_type,
-                "end_date": str(p.end_date)
+                "employee_id": str(req.employee.id),
+                "employee_name": req.employee.get_full_name(),
+                "department": req.employee.department.name if req.employee.department else None,
+                "start_date": str(req.start_date),
+                "end_date": str(req.end_date),
+                "leave_type": req.leave_type,
+                "days": req.total_days,
             }
-            for p in out_today
+            for req in on_leave
         ]
-        
-        return Response(results)
+
+        return Response({"date": str(today), "count": len(data), "employees": data})

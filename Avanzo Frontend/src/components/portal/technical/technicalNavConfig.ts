@@ -1,10 +1,13 @@
+// src/components/portal/technical/technicalNavConfig.ts - Updated with Goals and Skills
 import type { LucideIcon } from "lucide-react"
 import {
   LayoutDashboard,
   ListTodo,
   Megaphone,
   Umbrella,
-  User
+  User,
+  Award,
+  TrendingUp
 } from "lucide-react"
 
 export type TechnicalNavItem = {
@@ -20,5 +23,6 @@ export const TECHNICAL_NAV_ITEMS: TechnicalNavItem[] = [
   { to: "/technical/tasks", label: "Technical tasks", icon: ListTodo },
   { to: "/technical/leave", label: "Leave requests", icon: Umbrella },
   { to: "/technical/announcements", label: "Announcements", icon: Megaphone },
+  { to: "/performance", label: "My Performance", icon: TrendingUp },
   { to: "/technical/profile", label: "My profile", icon: User },
 ]

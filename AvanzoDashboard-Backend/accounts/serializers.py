@@ -1,11 +1,14 @@
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import (
+    connection,  # gives us connection.tenant (set by django-tenants middleware)
+)
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from core.constants import RoleNames
 
-from .models import AccessRole, Employee, TalentTag
+from .models import AccessRole, Employee
 
 
 class TenantRegistrationSerializer(serializers.Serializer):
@@ -17,12 +20,6 @@ class TenantRegistrationSerializer(serializers.Serializer):
     admin_password = serializers.CharField(write_only=True)
     admin_first_name = serializers.CharField(max_length=50, required=False, allow_blank=True)
     admin_last_name = serializers.CharField(max_length=50, required=False, allow_blank=True)
-
-    def validate_admin_email(self, value):
-        from .models import Employee
-        if Employee.objects.filter(email=value).exists():
-            raise serializers.ValidationError("An administrator with this email already exists.")
-        return value
 
     def validate_subdomain(self, value):
         """Ensure subdomain is URL-safe and unique."""
@@ -45,24 +42,40 @@ class TenantRegistrationSerializer(serializers.Serializer):
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """
-    Embeds user identity into the JWT payload so the frontend can hydrate
-    RoleContext immediately after login without a second API call.
+    Embeds user identity and tenant context into the JWT payload so:
+      1. The frontend can hydrate RoleContext immediately after login (no second API call).
+      2. TenantAwareJWTAuthentication can verify this token is only used against
+         the tenant schema it was issued for — preventing cross-tenant token reuse.
 
     Claims added to the JWT payload:
-      - email     : User's email address (for frontend display).
-      - full_name : User's full name (for frontend display).
-      - role      : User's RBAC role name (for frontend permission checks).
+      - tenant_schema : PostgreSQL schema name (e.g. "company_avanzo")
+                        ← This is what TenantAwareJWTAuthentication validates.
+      - email         : User's email address (for frontend display).
+      - full_name     : User's full name (for frontend display).
+      - role          : User's RBAC role name (for frontend permission checks).
     """
 
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
 
+        # ── Tenant Boundary Claim (Single-Tenant Default) ───────────────────────
+        token["tenant_schema"] = "public"
+        token["domain"] = "localhost"
+
+        # ── User Identity Claims (Frontend Convenience) ───────────────────────
         token["email"] = user.email
         token["full_name"] = user.get_full_name()
         token["role"] = user.role_name
 
         return token
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        
+        # Include domain in the response body (Default for Single-Tenant)
+        data["domain"] = "localhost"
+        return data
 
 
 class MeSerializer(serializers.ModelSerializer):
@@ -70,10 +83,12 @@ class MeSerializer(serializers.ModelSerializer):
     user's full profile including role, department, and designation."""
 
     role = serializers.CharField(source="role_name", read_only=True)
-    department_name = serializers.SerializerMethodField()
-    designation_name = serializers.SerializerMethodField()
+    department_name = serializers.CharField(source="department.name", read_only=True, default=None)
+    designation_name = serializers.CharField(
+        source="designation.name", read_only=True, default=None
+    )
     team_lead_name = serializers.SerializerMethodField()
-    assigned_projects = serializers.SerializerMethodField()
+    evaluated_talents = serializers.SerializerMethodField()
 
     class Meta:
         model = Employee
@@ -86,15 +101,12 @@ class MeSerializer(serializers.ModelSerializer):
             "avatar",
             "employee_id",
             "role",
-            "department",
             "department_name",
-            "designation",
             "designation_name",
-            "team_lead",
             "team_lead_name",
-            "assigned_projects",
             "status",
             "date_of_joining",
+            "evaluated_talents",
         ]
         read_only_fields = [
             "id",
@@ -102,28 +114,19 @@ class MeSerializer(serializers.ModelSerializer):
             "avatar",
             "employee_id",
             "role",
-            "department",
             "department_name",
-            "designation",
             "designation_name",
-            "team_lead",
             "team_lead_name",
-            "assigned_projects",
             "status",
             "date_of_joining",
+            "evaluated_talents",
         ]
 
     def get_team_lead_name(self, obj) -> str | None:
         return obj.team_lead.get_full_name() if obj.team_lead else None
 
-    def get_department_name(self, obj):
-        return obj.department.name if obj.department else None
-
-    def get_designation_name(self, obj):
-        return obj.designation.name if obj.designation else None
-
-    def get_assigned_projects(self, obj):
-        return [p.title for p in obj.assigned_projects.all()]
+    def get_evaluated_talents(self, obj):
+        return list(obj.skills.values_list("skill_id", flat=True))
 
 
 class AccessRoleSerializer(serializers.ModelSerializer):
@@ -134,22 +137,13 @@ class AccessRoleSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "description"]
 
 
-class TalentTagSerializer(serializers.ModelSerializer):
-    """Serializer for talent/skill tags."""
-
-    class Meta:
-        model = TalentTag
-        fields = ["id", "name", "category"]
-
-
 class EmployeeSerializer(serializers.ModelSerializer):
     """Used by Admin and HR for managing users."""
 
     password = serializers.CharField(write_only=True, required=False)
-    department_name = serializers.SerializerMethodField()
-    designation_name = serializers.SerializerMethodField()
-    access_role_name = serializers.SerializerMethodField()
-    assigned_projects = serializers.SerializerMethodField()
+    access_role_name = serializers.CharField(source="access_role.name", read_only=True, default=None)
+    department_name = serializers.CharField(source="department.name", read_only=True, default=None)
+    designation_name = serializers.CharField(source="designation.name", read_only=True, default=None)
 
     class Meta:
         model = Employee
@@ -167,25 +161,16 @@ class EmployeeSerializer(serializers.ModelSerializer):
             "department_name",
             "designation",
             "designation_name",
-            "gender",
-            "date_of_birth",
             "team_lead",
-            "assigned_projects",
             "status",
             "date_of_joining",
+            "evaluated_talents",
         ]
 
-    def get_department_name(self, obj):
-        return obj.department.name if obj.department else None
+    evaluated_talents = serializers.SerializerMethodField()
 
-    def get_designation_name(self, obj):
-        return obj.designation.name if obj.designation else None
-
-    def get_access_role_name(self, obj):
-        return obj.access_role.name if obj.access_role else None
-
-    def get_assigned_projects(self, obj):
-        return [p.title for p in obj.assigned_projects.all()]
+    def get_evaluated_talents(self, obj):
+        return list(obj.skills.values_list("skill_id", flat=True))
 
     def validate_access_role(self, value):
         request = self.context.get("request")

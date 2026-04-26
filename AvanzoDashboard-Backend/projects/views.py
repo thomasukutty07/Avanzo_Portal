@@ -1,11 +1,12 @@
+from django.db import transaction
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from core.mixins import TenantFilterMixin
 from core.permissions import IsTeamLeadOrAbove
-from core.viewsets import TenantAwareViewSetMixin
 from notifications.services import NotificationService
 
 from .models import ExternalClient, Project, Service, Task
@@ -17,30 +18,22 @@ from .serializers import (
     TaskProgressSerializer,
     TaskSerializer,
 )
+from .services import EstimationService
 
 
-class ExternalClientViewSet(TenantAwareViewSetMixin, viewsets.ModelViewSet):
+class ExternalClientViewSet(TenantFilterMixin, viewsets.ModelViewSet):
     queryset = ExternalClient.objects.filter(is_active=True)
     serializer_class = ExternalClientSerializer
     permission_classes = [IsAuthenticated]
 
 
-class ServiceViewSet(TenantAwareViewSetMixin, viewsets.ModelViewSet):
-    queryset = Service.objects.all()
+class ServiceViewSet(TenantFilterMixin, viewsets.ModelViewSet):
+    queryset = Service.objects.filter(is_active=True)
     serializer_class = ServiceSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        user = self.request.user
-        qs = super().get_queryset().filter(is_active=True)
-        if user.is_admin or user.is_hr:
-            return qs
-        if user.is_team_lead and user.department:
-            return qs.filter(department=user.department)
-        return qs
 
-
-class ProjectViewSet(TenantAwareViewSetMixin, viewsets.ModelViewSet):
+class ProjectViewSet(TenantFilterMixin, viewsets.ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated]
@@ -54,32 +47,45 @@ class ProjectViewSet(TenantAwareViewSetMixin, viewsets.ModelViewSet):
         return super().get_permissions()
 
     def get_queryset(self):
-        """Row-Level Security for Projects"""
+        """
+        Row-Level Security for Projects + optional query filters.
+        Now with Tenant isolation.
+        """
         user = self.request.user
-        qs = super().get_queryset().select_related(
+        
+        # ── Step 1: Tenant Isolation ──────────────────────────
+        qs = super().get_queryset() # Applies TenantFilterMixin filter
+        
+        qs = qs.select_related(
             "owning_department", "manager", "client", "service"
         ).prefetch_related("team")
+
+        # ── Step 2: Role-Based Filtering ──────────────────────
         if user.is_admin or user.is_hr:
-            return qs
-        if user.is_team_lead:
-            return qs.filter(owning_department=user.department)
-        return qs.filter(team=user)
+            pass  # Admin/HR see all within tenant
+        elif user.is_team_lead:
+            qs = qs.filter(owning_department=user.department)
+        else:
+            qs = qs.filter(team=user)
 
+        # ── Optional query filters ────────────────────────────
+        status_filter = self.request.query_params.get("status")
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+
+        employee_id = self.request.query_params.get("employee_id")
+        if employee_id:
+            qs = qs.filter(team__id=employee_id)
+
+        return qs.distinct()
+
+    @transaction.atomic
     def perform_create(self, serializer):
-        project = serializer.save(manager=self.request.user, tenant=self.request.user.tenant)
-        project.team.add(self.request.user)
-
-        # Auto-create one initial setup task for the manager/lead
-        Task.objects.create(
-            project=project,
-            title=f"{project.title} - Global Launch",
-            description="Initial project initialization. Review parameters and assign specialized sub-tasks.",
-            assignee=project.manager,
-            priority="medium",
-            status="progress",
-            start_date=project.start_date,
-            due_date=project.target_end_date,
+        project = serializer.save(
+            manager=self.request.user,
+            tenant=self.request.user.tenant
         )
+        project.team.add(self.request.user)
 
     # ── A-14: Project Progress Summary ────────────────────────
     @action(
@@ -125,41 +131,47 @@ class ProjectViewSet(TenantAwareViewSetMixin, viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class TaskViewSet(TenantAwareViewSetMixin, viewsets.ModelViewSet):
+class TaskViewSet(TenantFilterMixin, viewsets.ModelViewSet):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        """Row-Level Security for Tasks"""
+        """
+        Row-Level Security for Tasks + optional query filters.
+        Now with Tenant isolation.
+        """
         user = self.request.user
-        qs = Task.objects.select_related("project", "assignee")
+        
+        # ── Step 1: Tenant Isolation ──────────────────────────
+        qs = super().get_queryset() # Applies TenantFilterMixin filter
+        
+        qs = qs.select_related("project", "assignee")
 
-        # Global tenant filter (mandatory)
-        if user.is_authenticated and user.tenant:
-            qs = qs.filter(project__tenant=user.tenant)
-        elif not user.is_staff: # Staff can sometimes see all in debug, but tenants can't
-            return qs.none()
+        # ── Step 2: Role-Based Filtering ──────────────────────
+        if user.is_admin:
+            pass  # Admin sees all within tenant
+        elif user.is_team_lead:
+            qs = qs.filter(project__owning_department=user.department)
+        else:
+            qs = qs.filter(assignee=user)
 
-        # Row-level security scoping
-        if not user.is_admin:
-            if user.is_team_lead:
-                from django.db.models import Q
-                qs = qs.filter(
-                    Q(project__owning_department=user.department) |
-                    Q(assignee__department=user.department)
-                ).distinct()
-            else:
-                qs = qs.filter(assignee=user)
+        # ── Optional query filters ────────────────────────────
+        project_id = self.request.query_params.get("project")
+        if project_id:
+            qs = qs.filter(project_id=project_id)
 
-        # Optional filter: ?assignee=<employee_id> — works for all roles
         assignee_id = self.request.query_params.get("assignee")
         if assignee_id:
-            qs = qs.filter(assignee__id=assignee_id)
+            qs = qs.filter(assignee_id=assignee_id)
 
-        print(f"[DEBUG TaskViewSet] user={user.email} role={user.role_name} admin={user.is_admin} tl={user.is_team_lead} assignee_id={assignee_id} qs_count={qs.count()}")
+        status_filter = self.request.query_params.get("status")
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+
         return qs
 
+    @transaction.atomic
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
 
@@ -167,10 +179,6 @@ class TaskViewSet(TenantAwareViewSetMixin, viewsets.ModelViewSet):
             return Response(serializer.errors, status=status.HTTP_409_CONFLICT)
 
         task = serializer.save()
-
-        # AUTO-ONBOARD: Add assignee to project team if not already there
-        if not task.project.team.filter(id=task.assignee.id).exists():
-            task.project.team.add(task.assignee)
 
         # Audit Trail & Notifications
         if not serializer.validated_data.get("force_assign"):
@@ -241,3 +249,28 @@ class TaskViewSet(TenantAwareViewSetMixin, viewsets.ModelViewSet):
             TaskSerializer(task).data,
             status=status.HTTP_200_OK,
         )
+
+    @action(detail=False, methods=["get"], url_path="estimate-suggestion")
+    def estimate_suggestion(self, request):
+        """
+        GET /api/projects/tasks/estimate-suggestion/?service_id=uuid&complexity=7
+        Returns an estimation suggestion based on historical data.
+        """
+        service_id = request.query_params.get("service_id")
+        complexity_str = request.query_params.get("complexity")
+
+        if not service_id or not complexity_str:
+            return Response(
+                {"error": "service_id and complexity are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            complexity = int(complexity_str)
+        except ValueError:
+            return Response(
+                {"error": "complexity must be an integer."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        suggestion = EstimationService.get_suggestion(service_id, complexity)
+        return Response(suggestion, status=status.HTTP_200_OK)

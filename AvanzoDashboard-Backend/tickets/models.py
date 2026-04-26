@@ -32,6 +32,9 @@ class Ticket(TimeStampedModel):
         related_name="created_tickets",
         help_text="The employee who raised this ticket.",
     )
+    tenant = models.ForeignKey(
+        "clients.Client", on_delete=models.CASCADE, related_name="tickets", null=True
+    )
 
     # Who should handle it (auto-assigned based on ticket_type rules)
     assigned_to = models.ForeignKey(

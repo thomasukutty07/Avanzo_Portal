@@ -119,7 +119,7 @@ export default function AdminDashboard() {
     <OrganizationAdminChrome>
       <div className="p-6 md:p-10 space-y-10 animate-in fade-in duration-700 min-h-screen font-display bg-[#fcfcfc] text-slate-900">
         {/* Page Header */}
-        <div className="sticky top-0 z-30 -mx-6 md:-mx-10 px-6 md:px-10 py-6 mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-transparent transition-all">
+        <div className="-mx-6 md:-mx-10 px-6 md:px-10 py-6 mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100/60">
           <div>
             <h1 className="text-[32px] font-bold text-slate-900 tracking-tight font-headline leading-none">
               Dashboard

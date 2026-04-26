@@ -50,17 +50,9 @@ class Employee(AbstractUser):
     # Remove username, use email
     username = None
     email = models.EmailField("work email", unique=True, db_index=True)
-    tenant = models.ForeignKey(
-        "clients.Client",
-        on_delete=models.CASCADE,
-        related_name="employees",
-        null=True,
-        blank=True,
-        help_text="The organization this employee belongs to.",
-    )
 
     # Profile fields
-    phone = models.CharField(max_length=20, blank=True, null=True)
+    phone = models.CharField(max_length=20, blank=True)
     avatar = models.URLField(blank=True)
     employee_id = models.CharField(
         max_length=20,
@@ -77,20 +69,6 @@ class Employee(AbstractUser):
         related_name="employees",
         null=True,
         help_text="Determines UI permissions: Employee, Team Lead, HR, Admin",
-    )
-
-    # Talent/skills
-    evaluated_talents = models.ManyToManyField(
-        "TalentTag",
-        blank=True,
-        related_name="employees_evaluated",
-        help_text="Talents identified/evaluated by Team Leads.",
-    )
-    self_declared_talents = models.ManyToManyField(
-        "TalentTag",
-        blank=True,
-        related_name="employees_declared",
-        help_text="Skills self-declared by the employee.",
     )
 
     # Organization
@@ -128,20 +106,15 @@ class Employee(AbstractUser):
     )
     date_of_joining = models.DateField(null=True, blank=True)
 
-    # Personal details
-    class GenderChoices(models.TextChoices):
-        MALE = "male", "Male"
-        FEMALE = "female", "Female"
-        OTHER = "other", "Other"
-        PREFER_NOT = "prefer_not_to_say", "Prefer not to say"
-
-    gender = models.CharField(
-        max_length=20,
-        choices=GenderChoices.choices,
-        blank=True,
+    # Tenant link (Required for shared Employee model)
+    tenant = models.ForeignKey(
+        "clients.Client",
+        on_delete=models.CASCADE,
+        related_name="employees",
         null=True,
+        blank=True,
+        help_text="The organization this employee belongs to.",
     )
-    date_of_birth = models.DateField(null=True, blank=True)
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
@@ -178,7 +151,7 @@ class Employee(AbstractUser):
                     try:
                         last_id_number = int(last_employee.employee_id.split("-")[1])
                         next_id_number = last_id_number + 1
-                    except (IndexError, ValueError):
+                    except (IndexError, ValueError):  # noqa: PERF203
                         next_id_number = 1
                 else:
                     next_id_number = 1
@@ -209,34 +182,13 @@ auditlog.register(Employee)
 auditlog.register(AccessRole)
 
 
-class TalentTag(models.Model):
-    """
-    Skill/talent labels that can be assigned to employees.
-    Used by Team Leads (evaluated_talents) and employees themselves (self_declared_talents).
-    """
-
-    name = models.CharField(max_length=50, unique=True)
-    category = models.CharField(
-        max_length=50,
-        blank=True,
-        help_text="e.g. Technical, Creative, Management",
-    )
-
-    class Meta:
-        db_table = "talent_tags"
-        verbose_name = "Talent Tag"
-        verbose_name_plural = "Talent Tags"
-
-    def __str__(self):
-        return self.name
-
-
 class LoginAttempt(models.Model):
     """
     Tracks login failures and successes to implement 15-minute brute-force lockout.
     """
 
     email = models.EmailField(db_index=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True, db_index=True)
     attempted_at = models.DateTimeField(auto_now_add=True)
     was_successful = models.BooleanField(default=False)
 

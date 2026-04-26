@@ -74,8 +74,8 @@ class VelocityView(APIView):
         # Align to Monday
         start_date = start_date - timedelta(days=start_date.weekday())
 
-        # Get departments (optionally filtered) - SCOPED BY TENANT
-        departments = Department.objects.filter(is_active=True, tenant=request.user.tenant)
+        # Get departments (optionally filtered)
+        departments = Department.objects.filter(is_active=True)
         department_id = request.query_params.get("department_id")
         if department_id:
             departments = departments.filter(id=department_id)

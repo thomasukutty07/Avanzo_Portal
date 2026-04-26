@@ -16,9 +16,27 @@ import {
 
 type Step = 'personal' | 'job' | 'security' | 'review'
 
+interface RegistrationFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  gender: string;
+  dob: string;
+  employeeId: string;
+  department: string;
+  designation: string;
+  joiningDate: string;
+  password: string;
+  accessRole: string;
+}
+
 export default function AdminEmployeeRegistrationPage() {
   const navigate = useNavigate()
-  const [step, setStep] = useState<Step>('personal')
+  const [step, setStep] = useState<Step>(() => {
+    const saved = localStorage.getItem("registration_step")
+    return (saved as Step) || 'personal'
+  })
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [departments, setDepartments] = useState<any[]>([])
@@ -44,22 +62,41 @@ export default function AdminEmployeeRegistrationPage() {
     loadData()
   }, [])
 
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "+91 ",
-    gender: "",
-    dob: "",
-    employeeId: "",
-    department: "",
-    designation: "",
-    joiningDate: "",
-    password: "",
-    accessRole: ""
+  const [formData, setFormData] = useState<RegistrationFormData>(() => {
+    const saved = localStorage.getItem("registration_form_data")
+    if (saved) {
+      try {
+        return JSON.parse(saved)
+      } catch (e) {
+        console.error("Failed to parse saved registration data", e)
+      }
+    }
+    return {
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "+91 ",
+      gender: "",
+      dob: "",
+      employeeId: "",
+      department: "",
+      designation: "",
+      joiningDate: "",
+      password: "",
+      accessRole: ""
+    }
   })
 
-  const updateForm = (field: string, value: string) => {
+  // Sync with localStorage
+  useEffect(() => {
+    localStorage.setItem("registration_form_data", JSON.stringify(formData))
+  }, [formData])
+
+  useEffect(() => {
+    localStorage.setItem("registration_step", step)
+  }, [step])
+
+  const updateForm = (field: keyof RegistrationFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     if (errors[field]) {
         setErrors(prev => {
@@ -152,6 +189,8 @@ export default function AdminEmployeeRegistrationPage() {
       toast.success("Employee registered successfully!", {
         description: `${formData.firstName} ${formData.lastName} has been added to the system.`
       })
+      localStorage.removeItem("registration_form_data")
+      localStorage.removeItem("registration_step")
       navigate("/users")
     } catch (e: any) {
       console.error("Registration Error:", e.response?.data || e)

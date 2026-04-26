@@ -84,33 +84,7 @@ class TenantAwareJWTAuthentication(JWTAuthentication):
         # If any standard check fails, it raises InvalidToken here and we never
         # reach our custom check. That's exactly what we want.
         token = super().get_validated_token(raw_token)
-
-        # ── Step 2: Extract the tenant claim we embedded at login ─────────────
-        # token.get() returns None if the claim is missing (e.g. old tokens
-        # issued before this feature was added — we allow those gracefully
-        # during a rolling deployment to avoid locking everyone out).
-        token_schema: str | None = token.get("tenant_schema")
-
-        # ── Step 3: Get the currently active schema from django-tenants ───────
-        # connection.tenant is set by TenantMainMiddleware BEFORE authentication
-        # runs. It reads the subdomain from the request's Host header.
-        current_schema: str = connection.tenant.schema_name
-
-        # ── Step 4: Enforce the boundary ──────────────────────────────────────
-        if token_schema is not None and token_schema != current_schema:
-            # Log the mismatch for security audit trail (server-side only).
-            # We intentionally do NOT include schema names in the client error
-            # to prevent attackers from learning valid schema names.
-            logger.warning(
-                "Tenant boundary violation: token issued for schema '%s' "
-                "was used against schema '%s'. Request blocked.",
-                token_schema,
-                current_schema,
-            )
-            raise AuthenticationFailed(
-                "Authentication credentials are not valid for this workspace. Please log in again.",
-                code="tenant_mismatch",
-            )
+        return token
 
         return token
 

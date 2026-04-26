@@ -5,6 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from core.mixins import TenantFilterMixin
 from core.permissions import IsTeamLeadOrAbove
 
 from .models import Ticket
@@ -16,7 +17,7 @@ from .serializers import (
 from .services import TicketNotificationService, TicketRoutingService
 
 
-class TicketViewSet(viewsets.ModelViewSet):
+class TicketViewSet(TenantFilterMixin, viewsets.ModelViewSet):
     """
     Main ticket API.
 
@@ -25,6 +26,7 @@ class TicketViewSet(viewsets.ModelViewSet):
     - Only the assignee (or Admin) can resolve a ticket
     """
 
+    queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
     permission_classes = [IsAuthenticated]
 
@@ -37,19 +39,26 @@ class TicketViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """
-        Row-level security:
-        - Admin sees all tickets
-        - HR sees COMPLIANCE tickets assigned to them + all tickets they created
-        - TL sees tickets assigned to them + all tickets they created
-        - Employee sees only tickets they created
+        Row-level security with Tenant isolation:
+        - Admin sees all tickets within tenant
+        - HR sees COMPLIANCE tickets assigned to them + all tickets they created within tenant
+        - TL sees tickets assigned to them + all tickets they created within tenant
+        - Employee sees only tickets they created within tenant
         """
         if getattr(self, "swagger_fake_view", False):
             return Ticket.objects.none()
 
         user = self.request.user
+        
+        # ── Step 1: Tenant Isolation ──────────────────────────
+        qs = super().get_queryset()
 
-        # Only creator or assignee can see the ticket
-        return Ticket.objects.filter(
+        # ── Step 2: Role-Based Filtering ──────────────────────
+        if user.is_admin:
+            return qs
+
+        # Everyone else sees tickets they created OR are assigned to
+        return qs.filter(
             models.Q(created_by=user) | models.Q(assigned_to=user)
         )
 
@@ -61,7 +70,10 @@ class TicketViewSet(viewsets.ModelViewSet):
         3. If CAPACITY ticket, capture a snapshot of their current tasks
         4. Send notification to the assignee
         """
-        ticket = serializer.save(created_by=self.request.user)
+        ticket = serializer.save(
+            created_by=self.request.user,
+            tenant=self.request.user.tenant
+        )
 
         # Auto-assign based on routing rules
         TicketRoutingService.assign_ticket(ticket)

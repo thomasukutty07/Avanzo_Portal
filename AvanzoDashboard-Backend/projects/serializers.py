@@ -1,18 +1,9 @@
+from django.utils import timezone
 from rest_framework import serializers
 
 from leaves.models import LeaveRequest
 
 from .models import ExternalClient, Project, Service, Task
-from accounts.models import Employee
-from organization.models import Department
-
-
-class ProjectMemberSerializer(serializers.ModelSerializer):
-    full_name = serializers.CharField(source="get_full_name", read_only=True)
-
-    class Meta:
-        model = Employee
-        fields = ["id", "full_name", "avatar", "email"]
 
 
 class ExternalClientSerializer(serializers.ModelSerializer):
@@ -22,31 +13,29 @@ class ExternalClientSerializer(serializers.ModelSerializer):
 
 
 class ServiceSerializer(serializers.ModelSerializer):
-    department_name = serializers.CharField(source="department.name", read_only=True)
-
     class Meta:
         model = Service
-        fields = ["id", "name", "description", "department", "department_name", "is_active"]
+        fields = "__all__"
 
 
 class ProjectSerializer(serializers.ModelSerializer):
     client_name = serializers.CharField(source="client.name", read_only=True, default=None)
     service_name = serializers.CharField(source="service.name", read_only=True, default=None)
-    owning_department = serializers.PrimaryKeyRelatedField(
-        queryset=Department.objects.all(), required=False, allow_null=True
-    )
     department_name = serializers.CharField(source="owning_department.name", read_only=True)
-    manager = ProjectMemberSerializer(read_only=True)
-    manager_name = serializers.SerializerMethodField()
     progress = serializers.IntegerField(source="weighted_progress", read_only=True)
-    team_members = ProjectMemberSerializer(source="team", many=True, read_only=True)
+
+    # ── Computed fields for admin project detail view ─────────
+    team_count = serializers.SerializerMethodField()
+    team_members = serializers.SerializerMethodField()
+    days_remaining = serializers.SerializerMethodField()
+    is_overdue = serializers.SerializerMethodField()
+    manager_name = serializers.CharField(source="manager.get_full_name", read_only=True)
 
     class Meta:
         model = Project
         fields = [
             "id",
             "title",
-            "description",
             "is_internal",
             "client",
             "client_name",
@@ -57,20 +46,49 @@ class ProjectSerializer(serializers.ModelSerializer):
             "manager",
             "manager_name",
             "team",
+            "team_count",
             "team_members",
             "status",
             "start_date",
             "target_end_date",
+            "days_remaining",
+            "is_overdue",
+            "delay_notes",
             "progress",
             "created_at",
         ]
         read_only_fields = ["manager", "status"]
 
-    def get_manager_name(self, obj) -> str | None:
-        if obj.manager:
-            name = obj.manager.get_full_name().strip()
-            return name if name else obj.manager.email
-        return None
+    def get_team_count(self, obj) -> int:
+        """Number of employees assigned to this project."""
+        return obj.team.count()
+
+    def get_team_members(self, obj) -> list:
+        """List of team member details for the frontend to render."""
+        return [
+            {
+                "id": str(emp.id),
+                "full_name": emp.get_full_name() or emp.email,
+                "email": emp.email,
+                "avatar": emp.avatar.url if emp.avatar else None,
+            }
+            for emp in obj.team.all()
+        ]
+
+    def get_days_remaining(self, obj) -> int | None:
+        """Days until target_end_date. Negative = overdue. None = no date set."""
+        if not obj.target_end_date:
+            return None
+        return (obj.target_end_date - timezone.localdate()).days
+
+    def get_is_overdue(self, obj) -> bool:
+        """True if past the deadline and not yet completed."""
+        if not obj.target_end_date:
+            return False
+        return (
+            obj.target_end_date < timezone.localdate()
+            and obj.status != Project.Status.COMPLETED
+        )
 
     def validate(self, data):
         is_internal = data.get("is_internal", getattr(self.instance, "is_internal", False))
@@ -83,21 +101,27 @@ class ProjectSerializer(serializers.ModelSerializer):
         else:
             provided_dept = data.get("owning_department")
 
-            if not user or user.is_admin:
-                # Admins can assign to any department
-                provided_dept = data.get("owning_department")
-                if not provided_dept:
+            if provided_dept:
+                if user and not user.is_admin and provided_dept != user.department:
                     raise serializers.ValidationError(
-                        {"owning_department": "Please select a department for this project."}
+                        {
+                            "owning_department": (
+                                "Only Admins can create projects for other departments."
+                            )
+                        }
                     )
                 department = provided_dept
             else:
-                # Team Leads always create in their own department — ignore submitted value
-                department = user.department
-                if not department:
-                    raise serializers.ValidationError(
-                        {"owning_department": "Your account has no department assigned. Contact an admin."}
-                    )
+                department = user.department if user else None
+
+            if not department:
+                raise serializers.ValidationError(
+                    {
+                        "owning_department": (
+                            "Must provide a department or belong to one to create a project."
+                        )
+                    }
+                )
 
             data["owning_department"] = department
 
@@ -118,6 +142,8 @@ class ProjectSerializer(serializers.ModelSerializer):
 class TaskSerializer(serializers.ModelSerializer):
     assignee_name = serializers.CharField(source="assignee.get_full_name", read_only=True)
     project_name = serializers.CharField(source="project.title", read_only=True)
+    estimation_accuracy = serializers.FloatField(read_only=True)
+    estimation_status = serializers.CharField(read_only=True)
     force_assign = serializers.BooleanField(write_only=True, default=False)
 
     class Meta:
@@ -138,10 +164,14 @@ class TaskSerializer(serializers.ModelSerializer):
             "completion_pct",
             "start_date",
             "due_date",
+            "estimated_hours",
+            "actual_hours",
+            "estimation_accuracy",
+            "estimation_status",
             "force_assign",
             "created_at",
         ]
-        read_only_fields = ["complexity_locked", "complexity_locked_at"]
+        read_only_fields = ["complexity_locked", "complexity_locked_at", "actual_hours"]
 
     def validate_complexity(self, value):
         """Reject complexity changes once locked."""
@@ -161,6 +191,12 @@ class TaskSerializer(serializers.ModelSerializer):
 
         if start_date and due_date and start_date > due_date:
             raise serializers.ValidationError({"due_date": "Due date cannot be before start date."})
+
+        # SECURE: Employee must explicitly be on the Project Team
+        if project and assignee and not project.team.filter(id=assignee.id).exists():
+            raise serializers.ValidationError(
+                {"assignee": f"{assignee.get_full_name()} is not assigned to this project's team."}
+            )
 
         # OVERLAP ENGINE: Prevent assignment during approved leaves
         if assignee and start_date and due_date and not force_assign:

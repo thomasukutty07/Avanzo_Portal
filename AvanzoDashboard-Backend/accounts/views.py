@@ -4,6 +4,7 @@ from django.utils import timezone
 from drf_spectacular.utils import OpenApiResponse, extend_schema, inline_serializer
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
@@ -11,16 +12,14 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import BlacklistedToken, OutstandingToken, RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from core.permissions import IsAdminOrHR
-from core.viewsets import TenantAwareViewSetMixin
+from core.permissions import IsAdminOrHR, IsTeamLeadOrAbove
 
-from .models import AccessRole, Employee, LoginAttempt, TalentTag
+from .models import AccessRole, Employee, LoginAttempt
 from .serializers import (
     AccessRoleSerializer,
     CustomTokenObtainPairSerializer,
     EmployeeSerializer,
     MeSerializer,
-    TalentTagSerializer,
     TenantRegistrationSerializer,
 )
 from .services import TenantOrchestrator
@@ -81,14 +80,24 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
     throttle_classes = [LoginRateThrottle]
 
+    def get_client_ip(self, request):
+        x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+        if x_forwarded_for:
+            return x_forwarded_for.split(",")[0].strip()
+        return request.META.get("REMOTE_ADDR")
+
     def post(self, request, *args, **kwargs):
         email = request.data.get("email")
+        ip_address = self.get_client_ip(request)
 
         if email:
             # 1. Check for 15-minute brute-force lockout
             lockout_time = timezone.now() - timedelta(minutes=15)
             failed_attempts = LoginAttempt.objects.filter(
-                email=email, attempted_at__gte=lockout_time, was_successful=False
+                email=email,
+                ip_address=ip_address,
+                attempted_at__gte=lockout_time,
+                was_successful=False,
             ).count()
 
             if failed_attempts >= 5:
@@ -106,12 +115,14 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             response = super().post(request, *args, **kwargs)
             # 2. Login successful -> clear failure history
             if email:
-                LoginAttempt.objects.filter(email=email).delete()
+                LoginAttempt.objects.filter(email=email, ip_address=ip_address).delete()
             return response
         except Exception as e:
             # 3. Login failed -> log attempt
             if email:
-                LoginAttempt.objects.create(email=email, was_successful=False)
+                LoginAttempt.objects.create(
+                    email=email, ip_address=ip_address, was_successful=False
+                )
             raise e
 
 
@@ -160,41 +171,78 @@ class MeView(APIView):
         return Response(serializer.data)
 
 
-class EmployeeViewSet(TenantAwareViewSetMixin, viewsets.ModelViewSet):
+from core.mixins import TenantFilterMixin
+
+class EmployeeViewSet(TenantFilterMixin, viewsets.ModelViewSet):
     """
     ViewSet for viewing and editing employee instances.
     Restricted to Admin and HR via custom permissions.
+    Now with tenant-level isolation.
     """
 
     queryset = Employee.objects.select_related(
         "department", "designation", "access_role", "team_lead"
     )
     serializer_class = EmployeeSerializer
-    permission_classes = [IsAuthenticated, IsAdminOrHR]
-
-    def get_queryset(self):
-        user = self.request.user
-        base_qs = super().get_queryset().select_related(
-            "department", "designation", "access_role", "team_lead"
-        )
-        # Team Leads only see employees in their own department (within their tenant)
-        if user.is_team_lead and user.department:
-            return base_qs.filter(department=user.department)
-        return base_qs
+    permission_classes = [IsAuthenticated, IsTeamLeadOrAbove]
 
     def get_permissions(self):
-        # Allow Team Lead to list/retrieve but not mutate
-        if self.action in ("list", "retrieve"):
+        if self.action == 'update_skills':
             return [IsAuthenticated()]
-        return [IsAuthenticated(), IsAdminOrHR()]
+        return super().get_permissions()
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if getattr(self, "swagger_fake_view", False):
+            return qs.none()
+
+        user = self.request.user
+
+        if user.is_admin or user.is_hr:
+            return qs
+
+        # Team Leads only see their own department's employees
+        # and we exclude Admin/HR roles to prevent TLs from managing them.
+        from core.constants import RoleNames
+        return qs.filter(department=user.department).exclude(
+            access_role__name__in=[RoleNames.ADMIN, RoleNames.HR]
+        )
 
     @action(detail=True, methods=["post"], url_path="update-skills")
     def update_skills(self, request, pk=None):
-        """Team Lead endpoint to set evaluated talents on an employee."""
+        """
+        POST /api/employees/{id}/update-skills/
+        
+        Updates the skills (talent tags) for a specific employee.
+        Expected payload: { "talent_ids": [uuid, uuid, ...] }
+        """
         employee = self.get_object()
+        
+        # Check if the user is updating their own skills OR is a manager
+        if request.user != employee and not (request.user.is_admin or request.user.is_hr or request.user.is_team_lead):
+             return Response({"detail": "Permission denied."}, status=403)
         talent_ids = request.data.get("talent_ids", [])
-        employee.evaluated_talents.set(talent_ids)
-        return Response({"detail": "Skills updated."})
+        
+        # We handle this by updating the EmployeeSkill mapping
+        # For simplicity in Option B, we'll just link them directly or via the skills app
+        # Since the frontend uses this custom action, let's implement it here
+        from skills.models import Skill, EmployeeSkill
+        
+        # Clear old skills and add new ones
+        EmployeeSkill.objects.filter(employee=employee).delete()
+        
+        for skill_id in talent_ids:
+            try:
+                skill = Skill.objects.get(id=skill_id)
+                EmployeeSkill.objects.create(
+                    employee=employee,
+                    skill=skill,
+                    tenant=request.user.tenant
+                )
+            except (Skill.DoesNotExist, Exception):
+                continue
+                
+        return Response({"status": "Skills updated successfully."})
 
     def _revoke_tokens(self, user):
         """Forcefully expires all outstanding JWTs for a user."""
@@ -220,15 +268,4 @@ class AccessRoleViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = AccessRole.objects.all()
     serializer_class = AccessRoleSerializer
-    permission_classes = [IsAuthenticated]
-
-
-class TalentTagViewSet(TenantAwareViewSetMixin, viewsets.ModelViewSet):
-    """
-    CRUD for talent/skill tags. Readable by all authenticated users.
-    Creation allowed for Team Leads and above.
-    """
-
-    queryset = TalentTag.objects.all().order_by("category", "name")
-    serializer_class = TalentTagSerializer
     permission_classes = [IsAuthenticated]

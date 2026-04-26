@@ -198,9 +198,9 @@ export default function TeamLeadCreateAnnouncementPage() {
             </div>
 
             <div className="flex items-center gap-6 w-full sm:w-auto">
-              <div className="flex items-center gap-3 bg-white border border-slate-100 rounded-xl px-4 py-2.5 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 shadow-sm">
+              <div className="flex items-center gap-3 bg-white border border-slate-100 rounded-xl px-4 py-2.5 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 shadow-sm" title="This broadcast will only be sent to your department">
                 <Globe className="size-3.5 text-emerald-500 animate-pulse" />
-                Everyone
+                Your Department
               </div>
               <button 
                 disabled={loading}

@@ -1,3 +1,4 @@
+// src/App.tsx - Integrated shared portal routes
 import { Suspense, lazy } from "react"
 import { Routes, Route, Navigate } from "react-router-dom"
 import { useAuth } from "@/context/AuthContext"
@@ -23,6 +24,7 @@ const EmployeeWorkingReportDetail = lazy(() => import("@/pages/admin/EmployeeWor
 const AdminNotificationsPage = lazy(() => import("@/pages/admin/AdminNotifications"))
 const AdminAnnouncementsPage = lazy(() => import("@/pages/admin/AdminAnnouncements"))
 const AdminEmployeeRegistrationPage = lazy(() => import("@/pages/admin/AdminEmployeeRegistration"))
+const AdminInsightsPage = lazy(() => import("@/pages/admin/AdminInsights"))
 const SettingsPage = lazy(() => import("@/pages/shared/Settings"))
 const EmployeeProfilePage = lazy(() => import("@/pages/shared/EmployeeProfile"))
 const AdminProjectDetailsPage = lazy(() => import("@/pages/admin/ProjectDetails"))
@@ -35,10 +37,14 @@ const EmployeeRegistrationPage = lazy(() =>
   import("@/pages/hr/EmployeeRegistration")
 )
 const HRAnnouncementsPage = lazy(() => import("@/pages/hr/HRAnnouncements"))
-const SettingsLegacyPage = lazy(() => import("@/pages/shared/SettingsLegacy"))
 const HRCreateAnnouncementPage = lazy(() =>
   import("@/pages/hr/CreateAnnouncement")
 )
+
+const SettingsLegacyPage = lazy(() => import("@/pages/shared/SettingsLegacy"))
+
+const PerformancePage = lazy(() => import("@/pages/shared/Performance"))
+const ActivityPage = lazy(() => import("@/pages/shared/Activity"))
 
 const LeadOverview = lazy(() => import("@/pages/teamlead/LeadOverview"))
 const TaskManagement = lazy(() => import("@/pages/teamlead/Tasks"))
@@ -194,6 +200,7 @@ export default function App() {
               element={<AdminEmployeeRegistrationPage />} 
             />
             <Route path="/admin/projects/:id" element={<AdminProjectDetailsPage />} />
+            <Route path="/admin/insights" element={<AdminInsightsPage />} />
           </Route>
 
           <Route path="/settings" element={<SettingsPage />} />
@@ -231,7 +238,9 @@ export default function App() {
             />
           </Route>
 
-
+          {/* Shared Feature Routes — used by Technical Employee portal */}
+          <Route path="/performance" element={<PerformancePage />} />
+          <Route path="/activity" element={<ActivityPage />} />
 
           <Route element={<RequirePortalAccess portal="technical" />}>
             <Route path="/technical" element={<TechnicalPortalLayout />}>
@@ -247,7 +256,7 @@ export default function App() {
             <Route path="/security" element={<CyberSecurityPortalLayout />}>
               <Route index element={<CyberSecurityDashboardPage />} />
               <Route path="tasks" element={<CyberSecurityTasksPage />} />
-              <Route path="incidents" element={<CyberSecurityIncidentsPage />} />
+              <Route path="incidents" element={<CyberSecurityIncidentsPage />} /> 
               <Route path="leave" element={<CyberSecurityLeavePage />} />
               <Route path="announcements" element={<CyberSecurityAnnouncementsPage />} />
               <Route

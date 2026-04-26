@@ -3,30 +3,35 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from core.mixins import TenantFilterMixin
+from core.permissions import IsAdminOrHR
+
 from .models import Broadcast, BroadcastAcknowledgment, Notification
 from .serializers import (
     BroadcastCreateSerializer,
     BroadcastSerializer,
     NotificationSerializer,
 )
-from core.permissions import IsAdminOrHR
-from core.viewsets import TenantAwareViewSetMixin
 
 
-class NotificationViewSet(TenantAwareViewSetMixin, viewsets.ReadOnlyModelViewSet):
+class NotificationViewSet(TenantFilterMixin, viewsets.ReadOnlyModelViewSet):
     """
     Allows users to view their notifications and mark them as read.
     """
 
+    queryset = Notification.objects.all()
     permission_classes = [IsAuthenticated]
     serializer_class = NotificationSerializer
-    queryset = Notification.objects.all()
 
     def get_queryset(self):
         # SECURITY: Strictly isolate to the logged-in user.
         if getattr(self, "swagger_fake_view", False):
             return Notification.objects.none()
-        return super().get_queryset().filter(recipient=self.request.user, is_read=False)
+            
+        # First apply tenant isolation
+        qs = super().get_queryset()
+        
+        return qs.filter(recipient=self.request.user, is_read=False)
 
     @action(detail=True, methods=["patch"], url_path="read")
     def mark_as_read(self, request, pk=None):
@@ -47,7 +52,7 @@ class NotificationViewSet(TenantAwareViewSetMixin, viewsets.ReadOnlyModelViewSet
         )
 
 
-class BroadcastViewSet(TenantAwareViewSetMixin, viewsets.ModelViewSet):
+class BroadcastViewSet(TenantFilterMixin, viewsets.ModelViewSet):
     """
     Handles company-wide announcements.
     - HR/Admins create broadcasts.
@@ -67,13 +72,17 @@ class BroadcastViewSet(TenantAwareViewSetMixin, viewsets.ModelViewSet):
             return Broadcast.objects.none()
 
         user = self.request.user
-        qs = super().get_queryset().filter(is_active=True)
+        
+        # ── Step 1: Tenant Isolation ──────────────────────────
+        qs = super().get_queryset()
+        
+        qs = qs.filter(is_active=True)
 
         if user.is_admin or user.is_hr:
-            # HR/Admin can see all active broadcasts (within their tenant) to manage them
+            # HR/Admin can see all active broadcasts within tenant
             return qs
 
-        # Employees only see org-wide or their department's broadcasts
+        # Employees only see org-wide or their department's broadcasts within tenant
         from django.db.models import Q
 
         employee_filter = Q(target_scope=Broadcast.TargetScope.ORG_WIDE) | Q(
@@ -82,7 +91,10 @@ class BroadcastViewSet(TenantAwareViewSetMixin, viewsets.ModelViewSet):
         return qs.filter(employee_filter)
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user, tenant=self.request.user.tenant)
+        serializer.save(
+            created_by=self.request.user,
+            tenant=self.request.user.tenant
+        )
 
     @action(detail=True, methods=["post"], url_path="acknowledge")
     def acknowledge(self, request, pk=None):
@@ -112,9 +124,15 @@ class BroadcastViewSet(TenantAwareViewSetMixin, viewsets.ModelViewSet):
 
         # If it was targeted to a department, only show that department's employees
         if broadcast.target_scope == Broadcast.TargetScope.DEPARTMENT:
-            total_employees = Employee.objects.filter(department=broadcast.department).count()
+            total_employees = Employee.objects.filter(
+                tenant=request.user.tenant, 
+                department=broadcast.department
+            ).count()
         else:
-            total_employees = Employee.objects.filter(is_active=True).count()
+            total_employees = Employee.objects.filter(
+                tenant=request.user.tenant, 
+                is_active=True
+            ).count()
 
         ack_count = acknowledgments.count()
 

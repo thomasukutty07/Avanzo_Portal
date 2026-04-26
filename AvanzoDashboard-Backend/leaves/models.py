@@ -1,10 +1,10 @@
 from django.db import models
 
 from accounts.models import Employee
-from core.models import TenantAwareModel, TimeStampedModel
+from core.models import TimeStampedModel
 
 
-class LeaveRequest(TenantAwareModel):
+class LeaveRequest(TimeStampedModel):
     class LeaveType(models.TextChoices):
         SICK = "sick", "Sick Leave"
         CASUAL = "casual", "Casual Leave"
@@ -19,6 +19,9 @@ class LeaveRequest(TenantAwareModel):
         REJECTED = "rejected", "Rejected"
 
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="leave_requests")
+    tenant = models.ForeignKey(
+        "clients.Client", on_delete=models.CASCADE, related_name="leave_requests", null=True
+    )
     leave_type = models.CharField(
         max_length=20, choices=LeaveType.choices, default=LeaveType.CASUAL
     )

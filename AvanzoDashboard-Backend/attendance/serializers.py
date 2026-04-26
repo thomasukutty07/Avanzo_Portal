@@ -1,3 +1,4 @@
+from django.utils.html import strip_tags
 from rest_framework import serializers
 
 from .models import DailyLog, DailyLogEntry
@@ -74,7 +75,6 @@ class DailyLogSerializer(serializers.ModelSerializer):
     entries = DailyLogEntryReadSerializer(many=True, read_only=True)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
     employee_name = serializers.CharField(source="employee.get_full_name", read_only=True)
-    is_early_exit = serializers.SerializerMethodField()
 
     class Meta:
         model = DailyLog
@@ -93,19 +93,8 @@ class DailyLogSerializer(serializers.ModelSerializer):
             "entries",
             "has_clocked_in",
             "has_clocked_out",
-            "is_early_exit",
         ]
         read_only_fields = fields
-
-    def get_is_early_exit(self, obj):
-        from django.utils import timezone
-
-        if obj.clock_out_time:
-            local_time = timezone.localtime(obj.clock_out_time)
-            # Threshold is 5:30 PM (17:30)
-            if local_time.hour < 17 or (local_time.hour == 17 and local_time.minute < 30):
-                return True
-        return False
 
 
 # ─────────────────────────────────────────────────────────────
@@ -130,15 +119,23 @@ class ClockInEntrySerializer(serializers.Serializer):
     """
 
     project = serializers.UUIDField(required=False, allow_null=True, default=None)
+    task = serializers.UUIDField(required=False, allow_null=True, default=None)
     custom_label = serializers.CharField(required=False, allow_blank=True, default="")
     intent_text = serializers.CharField()
+    morning_confidence = serializers.IntegerField(
+        required=False, allow_null=True, min_value=1, max_value=5, default=None
+    )
     priority_order = serializers.IntegerField(required=False, default=0)
 
     def validate_intent_text(self, value):
+        value = strip_tags(value)
         words = value.strip().split()
         if len(words) < 3:
             raise serializers.ValidationError("Please describe your plan in at least 3 words.")
         return value
+
+    def validate_custom_label(self, value):
+        return strip_tags(value)
 
     def validate(self, data):
         # Must have either a project OR a custom_label
@@ -178,6 +175,9 @@ class ClockInSerializer(serializers.Serializer):
             raise serializers.ValidationError("Maximum 10 work items per day. Focus is key!")
         return value
 
+    def validate_general_notes(self, value):
+        return strip_tags(value)
+
 
 class ClockOutEntrySerializer(serializers.Serializer):
     """
@@ -196,8 +196,12 @@ class ClockOutEntrySerializer(serializers.Serializer):
     entry_id = serializers.UUIDField()
     output_text = serializers.CharField()
     outcome = serializers.ChoiceField(choices=DailyLogEntry.Outcome.choices)
+    outcome_reason = serializers.ChoiceField(
+        choices=DailyLogEntry.OutcomeReason.choices, required=False, allow_blank=True, default=""
+    )
 
     def validate_output_text(self, value):
+        value = strip_tags(value)
         words = value.strip().split()
         if len(words) < 3:
             raise serializers.ValidationError(
@@ -237,3 +241,59 @@ class ClockOutSerializer(serializers.Serializer):
                 "Please provide an update for at least one work item."
             )
         return value
+
+    def validate_general_notes(self, value):
+        return strip_tags(value)
+
+
+# ─────────────────────────────────────────────────────────────
+# EXPLICIT RESPONSE SERIALIZERS (OpenAPI Schema Types)
+# ─────────────────────────────────────────────────────────────
+
+
+class TeamFeedEmployeeSerializer(serializers.Serializer):
+    employee_id = serializers.UUIDField()
+    employee_name = serializers.CharField()
+    employee_code = serializers.CharField()
+    department = serializers.CharField(allow_null=True)
+    status = serializers.CharField()
+    status_display = serializers.CharField()
+    clock_in_time = serializers.DateTimeField(allow_null=True)
+    is_late = serializers.BooleanField()
+    general_notes = serializers.CharField(allow_blank=True)
+    entries = DailyLogEntryReadSerializer(many=True)
+
+
+class TeamFeedResponseSerializer(serializers.Serializer):
+    date = serializers.CharField()
+    team_count = serializers.IntegerField()
+    clocked_in = serializers.IntegerField()
+    missing = serializers.IntegerField()
+    late = serializers.IntegerField()
+    feed = TeamFeedEmployeeSerializer(many=True)
+
+
+class PulseEmployeeSerializer(serializers.Serializer):
+    employee_id = serializers.UUIDField()
+    employee_name = serializers.CharField()
+    employee_code = serializers.CharField()
+    department = serializers.CharField(allow_null=True)
+    designation = serializers.CharField(allow_null=True)
+    status = serializers.CharField()
+    status_display = serializers.CharField()
+    clock_in_time = serializers.DateTimeField(allow_null=True)
+    clock_out_time = serializers.DateTimeField(allow_null=True)
+    is_late = serializers.BooleanField()
+    total_hours = serializers.FloatField(allow_null=True)
+    entry_count = serializers.IntegerField()
+    intent_summary = serializers.CharField(allow_blank=True)
+
+
+class PulseResponseSerializer(serializers.Serializer):
+    date = serializers.CharField()
+    total_employees = serializers.IntegerField()
+    clocked_in = serializers.IntegerField()
+    missing = serializers.IntegerField()
+    late = serializers.IntegerField()
+    on_time = serializers.IntegerField()
+    employees = PulseEmployeeSerializer(many=True)

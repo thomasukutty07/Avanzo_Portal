@@ -1,0 +1,94 @@
+# Compose Specification (version is obsolete)
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: avanzo_db
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: avanzo
+      POSTGRES_PASSWORD: securepassword
+      POSTGRES_DB: avanzo_db
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U avanzo -d avanzo_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: avanzo_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: avanzo_web
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    environment:
+      CONTAINER_ROLE: web
+    ports:
+      - "8001:8000"
+    volumes:
+      - .:/app  # Optional: for hot-reloading in dev. Remove in true production.
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: avanzo_celery_worker
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    environment:
+      CONTAINER_ROLE: celery_worker
+    volumes:
+      - .:/app  # Optional: keep in sync with web
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      web:
+        condition: service_started
+
+  celery_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: avanzo_celery_beat
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    environment:
+      CONTAINER_ROLE: celery_beat
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      web:
+        condition: service_started
+
+volumes:
+  postgres_data:

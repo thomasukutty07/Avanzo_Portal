@@ -1,12 +1,12 @@
 // src/lib/axios.ts
 import axios from "axios"
 
-const BASE_URL =
-  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ||
-  "http://localhost:8000"
+const getBaseUrl = () => {
+  return import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") || "http://localhost:8000"
+}
 
 export const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: getBaseUrl(),
   headers: {
     "Content-Type": "application/json",
   },
@@ -46,7 +46,7 @@ api.interceptors.response.use(
         const refreshToken = localStorage.getItem("refresh_token")
         if (!refreshToken) throw new Error("No refresh token")
 
-        const res = await axios.post(`${BASE_URL}/api/auth/refresh/`, {
+        const res = await axios.post(`${getBaseUrl()}/api/auth/refresh/`, {
           refresh: refreshToken,
         })
 

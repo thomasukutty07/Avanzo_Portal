@@ -45,7 +45,7 @@ export function HRPortalChrome({ children }: { children: React.ReactNode }) {
 
   return (
     <div
-      className="design-portal design-portal-light flex min-h-screen w-full bg-[#fcfcfc] text-slate-900 overflow-x-hidden font-display transition-colors duration-500"
+      className="design-portal design-portal-light flex h-screen w-full overflow-hidden bg-[#fcfcfc] text-slate-900 font-display transition-colors duration-500"
       style={style}
     >
       {/* Mobile Sidebar Overlay */}
@@ -120,8 +120,8 @@ export function HRPortalChrome({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Content Area */}
-      <div className={`flex min-h-0 min-w-0 flex-1 flex-col transition-all duration-300 ${isSidebarOpen ? 'md:pl-72' : ''}`}>
-        <header className="flex h-16 shrink-0 items-center justify-between bg-white border-b border-slate-100 px-6 md:px-8 sticky top-0 z-20">
+      <div className={`flex h-screen min-w-0 flex-1 flex-col overflow-y-auto transition-all duration-300 ${isSidebarOpen ? 'md:pl-72' : ''}`}>
+        <header className="flex h-16 shrink-0 items-center justify-between bg-white/90 backdrop-blur-md border-b border-slate-100 px-6 md:px-8 sticky top-0 z-20 shadow-sm shadow-slate-100/80">
           <div className="flex items-center gap-6 flex-1 max-w-2xl">
             <button 
               onClick={() => setIsSidebarOpen(true)}

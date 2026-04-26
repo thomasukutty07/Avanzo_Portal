@@ -66,26 +66,29 @@ export default function UsersPage() {
       const count = Array.isArray(data) ? data.length : (data.count || 0)
       setTotalCount(count)
 
-      const mappedUsers = apiUsers.map((u: any, idx: number) => {
-         const colors = [
-           "bg-indigo-500",
-           "bg-orange-500",
-           "bg-emerald-500",
-           "bg-violet-500"
-         ];
-         return {
-           id: u.id,
-           name: `${u.first_name} ${u.last_name || ''}`,
-           email: u.email,
-           role: u.role || 'Personnel',
-           dept: u.department_name || 'General',
-           status: (u.status || 'ACTIVE').toUpperCase(),
-           lastLogin: u.last_login ? new Date(u.last_login).toLocaleDateString() : 'N/A',
-           initial: `${u.first_name?.[0] || ''}${u.last_name?.[0] || ''}`,
-           color: colors[idx % colors.length]
-         }
-      })
+      const mappedUsers = apiUsers
+        .filter((u: any) => (u.access_role_name || u.role) !== "Admin")
+        .map((u: any, idx: number) => {
+          const colors = [
+            "bg-indigo-500",
+            "bg-orange-500",
+            "bg-emerald-500",
+            "bg-violet-500"
+          ];
+          return {
+            id: u.id,
+            name: `${u.first_name} ${u.last_name || ''}`,
+            email: u.email,
+            role: u.access_role_name || u.role || 'Personnel',
+            dept: u.department_name || 'General',
+            status: (u.status || 'ACTIVE').toUpperCase(),
+            lastLogin: u.last_login ? new Date(u.last_login).toLocaleDateString() : 'N/A',
+            initial: `${u.first_name?.[0] || ''}${u.last_name?.[0] || ''}`,
+            color: colors[idx % colors.length]
+          }
+        })
       setUsers(mappedUsers)
+      setTotalCount(mappedUsers.length)
     } catch (e) {
       toast.error("Process interrupted while fetching data.")
     } finally {

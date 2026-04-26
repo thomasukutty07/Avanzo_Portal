@@ -2,17 +2,20 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from accounts.models import Employee
-from core.models import TenantAwareModel, TimeStampedModel
+from core.models import TimeStampedModel
 from organization.models import Department
 
 
-class ExternalClient(TenantAwareModel):
+class ExternalClient(TimeStampedModel):
     """
     An external customer/organization that Avanzo provides services to.
     Renamed from 'Client' to avoid collision with clients.Client (tenant model).
     """
 
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
+    tenant = models.ForeignKey(
+        "clients.Client", on_delete=models.CASCADE, related_name="external_clients", null=True
+    )
     contact_email = models.EmailField(blank=True, null=True)
     industry = models.CharField(max_length=100, blank=True)
     is_active = models.BooleanField(default=True)
@@ -20,30 +23,29 @@ class ExternalClient(TenantAwareModel):
     class Meta:
         db_table = "projects_client"  # keep the same table name for backward compat
         verbose_name = "External Client"
-        unique_together = ("name", "tenant")
 
     def __str__(self):
         return self.name
 
 
-class Service(TenantAwareModel):
+class Service(TimeStampedModel):
     """e.g., 'VPT Audit', 'Incident Response', 'Web App Development'"""
 
-    name = models.CharField(max_length=255)
-    description = models.TextField(blank=True)
-    department = models.ForeignKey(
-        Department, on_delete=models.CASCADE, null=True, blank=True, related_name="services"
+    name = models.CharField(max_length=255, unique=True)
+    tenant = models.ForeignKey(
+        "clients.Client", on_delete=models.CASCADE, related_name="services", null=True
     )
+    department = models.ForeignKey(
+        Department, on_delete=models.SET_NULL, null=True, blank=True, related_name="services"
+    )
+    description = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
-
-    class Meta:
-        unique_together = ("name", "tenant")
 
     def __str__(self):
         return self.name
 
 
-class Project(TenantAwareModel):
+class Project(TimeStampedModel):
     class Status(models.TextChoices):
         DRAFT = "draft", "Draft"
         ACTIVE = "active", "Active"
@@ -51,7 +53,9 @@ class Project(TenantAwareModel):
         COMPLETED = "completed", "Completed"
 
     title = models.CharField(max_length=255)
-    description = models.TextField(blank=True, default="")
+    tenant = models.ForeignKey(
+        "clients.Client", on_delete=models.CASCADE, related_name="projects", null=True
+    )
 
     # Routing Logic
     is_internal = models.BooleanField(
@@ -66,7 +70,7 @@ class Project(TenantAwareModel):
 
     # Ownership & Access
     owning_department = models.ForeignKey(
-        Department, on_delete=models.CASCADE, related_name="projects"
+        Department, on_delete=models.PROTECT, related_name="projects"
     )
     manager = models.ForeignKey(Employee, on_delete=models.PROTECT, related_name="managed_projects")
     team = models.ManyToManyField(Employee, blank=True, related_name="assigned_projects")
@@ -77,6 +81,13 @@ class Project(TenantAwareModel):
     )
     start_date = models.DateField(null=True, blank=True)
     target_end_date = models.DateField(null=True, blank=True)
+
+    # Delay explanation — filled by the manager when a project exceeds its deadline
+    delay_notes = models.TextField(
+        blank=True,
+        default="",
+        help_text="Manager's explanation for why this project exceeded the target end date.",
+    )
 
     @property
     def weighted_progress(self) -> int:
@@ -170,6 +181,41 @@ class Task(TimeStampedModel):
 
     start_date = models.DateField(db_index=True)
     due_date = models.DateField(db_index=True)
+
+    # ── Estimation & Tracking ─────────────────────────────────
+    estimated_hours = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Estimated hours to complete this task. Input by TL.",
+    )
+    actual_hours = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Actual hours spent, aggregated automatically from daily logs.",
+    )
+
+    @property
+    def estimation_accuracy(self) -> float | None:
+        """Ratio of actual_hours to estimated_hours."""
+        if not self.estimated_hours or not self.actual_hours:
+            return None
+        return float(self.actual_hours / self.estimated_hours)
+
+    @property
+    def estimation_status(self) -> str | None:
+        """Categorize the estimation accuracy."""
+        acc = self.estimation_accuracy
+        if acc is None:
+            return None
+        if acc < 0.9:
+            return "under"
+        elif acc > 1.1:
+            return "over"
+        return "on_track"
 
     def __str__(self):
         return f"{self.title} - {self.assignee.get_full_name()}"

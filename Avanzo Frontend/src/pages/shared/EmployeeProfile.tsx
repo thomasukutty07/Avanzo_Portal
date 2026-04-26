@@ -16,8 +16,14 @@ import {
   ClipboardList,
   AlertCircle,
   CheckCircle,
-  Circle
+  Circle,
+  Award,
+  Plus,
+  Shield
 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { EmployeeUpsertForm } from "@/components/employees/EmployeeUpsertForm"
 import { HRPortalChrome } from "@/components/portal/hr/HRPortalChrome"
@@ -45,6 +51,51 @@ export default function EmployeeProfilePage() {
   const [isEditing, setIsEditing] = useState(false)
   const [activeTab, setActiveTab] = useState("overview")
   const [pendingTab, setPendingTab] = useState<string | null>(null)
+  const [talentTags, setTalentTags] = useState<any[]>([])
+  const [isEvalOpen, setIsEvalOpen] = useState(false)
+  const [updatingSkills, setUpdatingSkills] = useState(false)
+  const [customTagName, setCustomTagName] = useState("")
+
+  useEffect(() => {
+    fetchTalentTags()
+  }, [])
+
+  const fetchTalentTags = async () => {
+    try {
+      const res = await api.get("/api/skills/catalog/")
+      const data = res.data
+      setTalentTags(Array.isArray(data) ? data : (data.results || []))
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const handleAddCustomTag = async () => {
+    if (!customTagName.trim()) return
+    try {
+      const res = await api.post("/api/skills/catalog/", { name: customTagName, category: "Custom" })
+      const newTag = res.data
+      setTalentTags(prev => [...prev, newTag])
+      setEmployee((m: any) => ({ ...m, evaluated_talents: [...(m?.evaluated_talents || []), newTag.id] }))
+      setCustomTagName("")
+      toast.success("New skill added to catalog.")
+    } catch {
+      toast.error("Failed to add skill.")
+    }
+  }
+
+  const handleSaveSkills = async () => {
+    try {
+      setUpdatingSkills(true)
+      await api.post(`/api/auth/employees/${employee.id}/update-skills/`, { talent_ids: employee.evaluated_talents })
+      toast.success("Skills updated successfully.")
+      setIsEvalOpen(false)
+    } catch {
+      toast.error("Failed to update skills.")
+    } finally {
+      setUpdatingSkills(false)
+    }
+  }
 
   const loadEmployee = async () => {
     try {
@@ -185,6 +236,7 @@ export default function EmployeeProfilePage() {
                   { id: "overview", label: "Overview" },
                   { id: "professional", label: "Work Details" },
                   { id: "identity", label: "Personal" },
+                  { id: "skills", label: "Skills" },
                   { id: "assigned_work", label: "Assigned Work" },
                 ].map((tab) => (
                   <TabsTrigger 
@@ -300,6 +352,46 @@ export default function EmployeeProfilePage() {
                        </TabsContent>
 
                        {/* Personal Section */}
+                        {/* Skills Section */}
+                        <TabsContent value="skills" className="m-0">
+                           <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm">
+                              <div className="px-8 py-6 border-b border-slate-50 flex items-center gap-3 bg-slate-50/10">
+                                 <div className="size-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
+                                    <Award size={16} />
+                                 </div>
+                                 <div>
+                                    <h3 className="text-sm font-bold text-slate-900">Professional Skills</h3>
+                                    <p className="text-[11px] text-slate-400 mt-0.5 font-medium">Competencies and expertises</p>
+                                 </div>
+                              </div>
+                              <div className="p-8">
+                                 {employee.evaluated_talents && employee.evaluated_talents.length > 0 ? (
+                                    <div className="flex flex-wrap gap-2">
+                                       {talentTags
+                                          .filter((t: any) => employee.evaluated_talents.includes(t.id))
+                                          .map((tag: any) => (
+                                             <span key={tag.id} className="px-4 py-2 bg-violet-50 border border-violet-100 rounded-xl text-[10px] font-bold text-violet-600 uppercase tracking-wider">
+                                                {tag.name}
+                                             </span>
+                                          ))
+                                       }
+                                    </div>
+                                 ) : (
+                                    <div className="py-12 flex flex-col items-center justify-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                                       <Award size={32} className="text-slate-200 mb-3" />
+                                       <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">No skills evaluated</p>
+                                       <button 
+                                          onClick={() => setIsEvalOpen(true)}
+                                          className="mt-4 text-[10px] font-bold text-violet-600 hover:underline"
+                                       >
+                                          Add Skills Now
+                                       </button>
+                                    </div>
+                                 )}
+                              </div>
+                           </div>
+                        </TabsContent>
+
                        <TabsContent value="identity" className="m-0">
                           <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm">
                              <div className="px-8 py-6 border-b border-slate-50 flex items-center gap-3 bg-slate-50/10">
@@ -379,6 +471,85 @@ export default function EmployeeProfilePage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+       {/* Skills Dialog */}
+       <Dialog open={isEvalOpen} onOpenChange={setIsEvalOpen}>
+         <DialogContent className="sm:max-w-[500px] rounded-[2rem] p-0 overflow-hidden border-none shadow-2xl font-sans bg-white">
+           <div className="bg-slate-50/50 p-10 pb-8 flex items-center gap-6 border-b border-slate-100/50">
+             <div className="size-14 rounded-2xl bg-[#FFF8E6] text-[#FFB800] flex items-center justify-center">
+               <Award className="size-7 stroke-[2.2]" />
+             </div>
+             <div>
+               <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight leading-none">
+                 Skill Evaluation
+               </DialogTitle>
+               <DialogDescription className="text-xs font-medium text-slate-400 mt-1">
+                 Update skills for <span className="text-slate-900 font-bold">{employee.first_name} {employee.last_name}</span>
+               </DialogDescription>
+             </div>
+           </div>
+
+           <div className="p-10 space-y-8">
+             <div className="space-y-3">
+               <Label className="px-1 text-[11px] font-bold text-slate-400">Add New Skill to Catalog</Label>
+               <div className="relative group">
+                 <Input
+                   placeholder="Type a new skill name..."
+                   value={customTagName}
+                   onChange={(e) => setCustomTagName(e.target.value)}
+                   className="h-14 rounded-xl bg-slate-50 border-transparent px-5 text-sm font-semibold text-slate-900 placeholder:text-slate-300 focus:bg-white focus:ring-2 focus:ring-violet-100 transition-all shadow-inner"
+                 />
+                 <button
+                   onClick={handleAddCustomTag}
+                   disabled={!customTagName.trim()}
+                   className="absolute right-2 top-2 size-10 bg-slate-900 text-white rounded-lg flex items-center justify-center hover:bg-violet-600 transition-all active:scale-95 shadow-lg disabled:opacity-0"
+                 >
+                   <Plus className="size-4" />
+                 </button>
+               </div>
+             </div>
+
+             <div className="space-y-4">
+               <Label className="text-[11px] font-bold text-slate-400">Select Skills</Label>
+               <div className="flex flex-wrap gap-2 max-h-[250px] overflow-y-auto pr-2">
+                 {talentTags.map((tag: any) => {
+                   const isSelected = employee?.evaluated_talents?.includes(tag.id)
+                   return (
+                     <button
+                       key={tag.id}
+                       onClick={() => {
+                         const current = employee?.evaluated_talents || []
+                         const updated = isSelected
+                           ? current.filter((tid: any) => tid !== tag.id)
+                           : [...current, tag.id]
+                         setEmployee((m: any) => ({ ...m, evaluated_talents: updated }))
+                       }}
+                       className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all border ${
+                         isSelected
+                           ? 'bg-violet-600 text-white border-violet-600 shadow-lg'
+                           : 'bg-white text-slate-400 border-slate-100 hover:border-violet-100 hover:text-slate-900'
+                       }`}
+                     >
+                       {isSelected && <CheckCircle2 className="size-3 mr-2 inline-block -mt-0.5" />}
+                       {tag.name}
+                     </button>
+                   )
+                 })}
+               </div>
+             </div>
+           </div>
+
+           <div className="p-10 pt-0 flex gap-3">
+             <Button variant="ghost" onClick={() => setIsEvalOpen(false)} className="flex-1 h-12 rounded-xl bg-slate-50 text-slate-400 text-xs font-bold hover:bg-slate-100">
+               Cancel
+             </Button>
+             <Button onClick={handleSaveSkills} disabled={updatingSkills} className="flex-[2] h-12 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-violet-600 transition-all active:scale-95 disabled:opacity-50 flex gap-2 items-center justify-center">
+               {updatingSkills ? <Loader2 className="size-4 animate-spin" /> : <Shield className="size-4" />}
+               Save Changes
+             </Button>
+           </div>
+         </DialogContent>
+       </Dialog>
     </Layout>
   )
 }
@@ -587,6 +758,7 @@ function AssignedWorkTab({ employeeId, employeeName }: { employeeId: string; emp
           </div>
         </DialogContent>
       </Dialog>
+
     </div>
   )
 }

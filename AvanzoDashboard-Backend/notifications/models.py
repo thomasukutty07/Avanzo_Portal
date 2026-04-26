@@ -1,11 +1,11 @@
 from django.db import models
 
 from accounts.models import Employee
-from core.models import TenantAwareModel, TimeStampedModel
+from core.models import TimeStampedModel
 from organization.models import Department
 
 
-class Notification(TenantAwareModel):
+class Notification(TimeStampedModel):
     """
     Centralized model for all system-generated alerts.
     """
@@ -17,6 +17,9 @@ class Notification(TenantAwareModel):
         SUCCESS = "success", "Success"
 
     recipient = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="notifications")
+    tenant = models.ForeignKey(
+        "clients.Client", on_delete=models.CASCADE, related_name="notifications", null=True
+    )
 
     title = models.CharField(max_length=255)
     message = models.TextField()
@@ -37,7 +40,7 @@ class Notification(TenantAwareModel):
         return f"[{self.notification_type.upper()}] To {self.recipient.email}: {self.title}"
 
 
-class Broadcast(TenantAwareModel):
+class Broadcast(TimeStampedModel):
     """
     Company-wide or department-wide announcement.
     Created by HR or Admin.
@@ -55,6 +58,9 @@ class Broadcast(TenantAwareModel):
         Employee,
         on_delete=models.CASCADE,
         related_name="created_broadcasts",
+    )
+    tenant = models.ForeignKey(
+        "clients.Client", on_delete=models.CASCADE, related_name="broadcasts", null=True
     )
 
     # Target targeting

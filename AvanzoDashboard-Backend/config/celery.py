@@ -62,5 +62,10 @@ app.conf.beat_schedule = {
         "task": "attendance.tasks.mark_missing_attendance",
         "schedule": crontab(hour=23, minute=55, day_of_week="1-5"),
     },
+    # Sunday 11 PM — Generate weekly performance snapshots for all employees
+    "generate-weekly-performance-snapshots": {
+        "task": "performance.tasks.generate_weekly_snapshots",
+        "schedule": crontab(hour=23, minute=0, day_of_week=0),
+    },
 }
 app.conf.timezone = "Asia/Kolkata"

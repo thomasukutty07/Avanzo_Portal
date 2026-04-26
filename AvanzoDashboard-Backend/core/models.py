@@ -12,15 +12,3 @@ class TimeStampedModel(models.Model):
 
     class Meta:
         abstract = True
-
-
-class TenantAwareModel(TimeStampedModel):
-    """Base for any model that belongs to a specific organization/tenant."""
-
-    tenant = models.ForeignKey(
-        "clients.Client", on_delete=models.CASCADE, related_name="%(class)ss",
-        null=True, blank=True
-    )
-
-    class Meta:
-        abstract = True

@@ -331,8 +331,11 @@ export function CreateProjectModal({ open, onOpenChange, onSuccess }: { open: bo
           setEmployees(extractResults(employeesData))
           
           // Auto-select user's department if not set
-          if (!formData.owning_department && user?.department) {
-            setFormData(prev => ({ ...prev, owning_department: user.department || "" }))
+          if (!formData.owning_department && user?.department_name) {
+            const userDept = depts.find((d: any) => d.name === user?.department_name)
+            if (userDept) {
+              setFormData(prev => ({ ...prev, owning_department: userDept.id }))
+            }
           }
         })
         .catch(() => { setServices([]); setDepartments([]); setEmployees([]) })
@@ -484,7 +487,12 @@ export function CreateProjectModal({ open, onOpenChange, onSuccess }: { open: bo
                  <div>
                    <Label className="text-xs font-bold text-slate-700 tracking-tight">Assemble Project Team</Label>
                    <div className="mt-2 grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-3 border border-slate-100 rounded-2xl bg-slate-50">
-                      {employees.map(emp => (
+                      {employees.filter(emp => 
+                        emp.access_role_name !== "Admin" && 
+                        emp.access_role_name !== "Organization" && 
+                        emp.id !== user?.id &&
+                        (formData.owning_department ? emp.department === formData.owning_department : true)
+                      ).map(emp => (
                         <label key={emp.id} className="flex items-center gap-2 p-2 hover:bg-white rounded-xl cursor-pointer transition-all border border-transparent hover:border-slate-100">
                           <input 
                             type="checkbox"
@@ -624,6 +632,7 @@ export function EditProjectModal({
   project: any,
   onSuccess?: () => void 
 }) {
+  const { user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [services, setServices] = useState<any[]>([])
   const [departments, setDepartments] = useState<any[]>([])
@@ -801,7 +810,12 @@ export function EditProjectModal({
             <div>
               <Label className="text-xs font-bold text-slate-700">Personnel Registry</Label>
               <div className="mt-2 grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-3 border border-slate-100 rounded-2xl bg-slate-50">
-                {employees.map(emp => (
+                {employees.filter(emp => 
+                  emp.access_role_name !== "Admin" && 
+                  emp.access_role_name !== "Organization" && 
+                  emp.id !== user?.id &&
+                  (formData.owning_department ? emp.department === formData.owning_department : true)
+                ).map(emp => (
                   <label key={emp.id} className="flex items-center gap-2 p-2 hover:bg-white rounded-xl cursor-pointer transition-all border border-transparent hover:border-slate-100">
                     <input 
                       type="checkbox"
@@ -856,6 +870,7 @@ export function CreateTaskModal({
   onSuccess?: () => void, 
   initialProjectId?: string 
 }) {
+  const { user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [projects, setProjects] = useState<any[]>([])
   const [employees, setEmployees] = useState<any[]>([])
@@ -972,7 +987,11 @@ export function CreateTaskModal({
                     required
                   >
                     <option value="">Select Member...</option>
-                    {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.first_name} {emp.last_name}</option>)}
+                    {employees.filter(emp => 
+                      emp.access_role_name !== "Admin" && 
+                      emp.access_role_name !== "Organization" && 
+                      emp.id !== user?.id
+                    ).map(emp => <option key={emp.id} value={emp.id}>{emp.first_name} {emp.last_name}</option>)}
                   </select>
                 </div>
 

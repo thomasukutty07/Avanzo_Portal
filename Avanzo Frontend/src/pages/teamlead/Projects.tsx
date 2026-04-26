@@ -19,6 +19,16 @@ import {
   Trash2,
   Edit2,
 } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { useAuth } from "@/context/AuthContext"
 
 export default function LeadProjectsPage() {
@@ -31,6 +41,7 @@ export default function LeadProjectsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [selectedProject, setSelectedProject] = useState<any>(null)
+  const [projectToDelete, setProjectToDelete] = useState<{id: string, title: string} | null>(null)
 
   useEffect(() => {
     fetchProjects()
@@ -49,18 +60,18 @@ export default function LeadProjectsPage() {
     }
   }
 
-  const handleDeleteProject = async (e: React.MouseEvent, id: string, title: string) => {
-    e.stopPropagation()
-    if (!window.confirm(`Are you absolutely sure you want to delete mission project '${title}'? This action is irreversible.`)) return;
-    
+  const confirmDelete = async () => {
+    if (!projectToDelete) return;
     try {
       setLoading(true)
-      await projectsService.deleteProject(id)
+      await projectsService.deleteProject(projectToDelete.id)
       toast.success("Strategic objective permanently deleted.")
       fetchProjects()
     } catch (error: any) {
       toast.error(error.response?.data?.detail || "Failed to delete project.")
+    } finally {
       setLoading(false)
+      setProjectToDelete(null)
     }
   }
 
@@ -248,7 +259,10 @@ export default function LeadProjectsPage() {
                             <Edit2 className="size-4" />
                           </button>
                           <button 
-                            onClick={(e) => handleDeleteProject(e, p.id, p.title)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setProjectToDelete({ id: p.id, title: p.title });
+                            }}
                             className="p-2.5 bg-white border border-slate-100 hover:border-red-100 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-xl shadow-sm transition-all"
                             title="Delete Project"
                           >
@@ -274,6 +288,25 @@ export default function LeadProjectsPage() {
         project={selectedProject}
         onSuccess={fetchProjects}
       />
+      <AlertDialog open={!!projectToDelete} onOpenChange={(open) => !open && setProjectToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Project</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you absolutely sure you want to delete mission project '{projectToDelete?.title}'? This action is irreversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TeamLeadChrome>
   )
 }
