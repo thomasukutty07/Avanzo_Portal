@@ -21,7 +21,7 @@ User = get_user_model()
 # are registered. That's exactly what caused the cross-org data leak.
 #
 # Change COMPANY_NAME below to match the organisation you want to seed.
-COMPANY_NAME = "Avanzo Solutions"
+COMPANY_NAME = "Avanzo Demo Corp"
 
 tenant = Client.objects.filter(name=COMPANY_NAME).first()
 if not tenant:

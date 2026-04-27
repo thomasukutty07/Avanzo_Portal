@@ -39,6 +39,7 @@ class ActivityFeedView(TenantFilterMixin, ListAPIView):
       - to_date: end date (YYYY-MM-DD)
     """
 
+    queryset = ActivityEvent.objects.select_related("actor", "department")
     serializer_class = ActivityEventSerializer
     permission_classes = [IsAuthenticated]
 
@@ -48,8 +49,6 @@ class ActivityFeedView(TenantFilterMixin, ListAPIView):
         """
         # ── Step 1: Tenant Isolation ──────────────────────────
         qs = super().get_queryset()
-        
-        qs = qs.select_related("actor", "department")
         user = self.request.user
 
         # ── Step 2: Role-based filtering ──────────────────────
