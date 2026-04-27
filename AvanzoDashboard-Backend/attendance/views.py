@@ -339,16 +339,22 @@ class AttendanceViewSet(TenantFilterMixin, viewsets.ReadOnlyModelViewSet):
         """
         today = timezone.localdate()
 
-        # Find all direct reports
-        direct_reports = request.user.direct_reports.filter(is_active=True, status="active")
+        # Find all direct reports (with dept to avoid N+1 on department.name)
+        direct_reports = request.user.direct_reports.select_related(
+            "department"
+        ).filter(is_active=True, status="active")
+
+        # Fetch all logs in a SINGLE query instead of one per employee
+        logs_map = {
+            log.employee_id: log
+            for log in DailyLog.objects.filter(
+                employee__in=direct_reports, date=today
+            ).prefetch_related("entries", "entries__project")
+        }
 
         feed = []
         for employee in direct_reports:
-            log = (
-                DailyLog.objects.filter(employee=employee, date=today)
-                .prefetch_related("entries", "entries__project")
-                .first()
-            )
+            log = logs_map.get(employee.id)
 
             employee_data = {
                 "employee_id": str(employee.id),
@@ -483,8 +489,9 @@ class AttendanceViewSet(TenantFilterMixin, viewsets.ReadOnlyModelViewSet):
                         "clock_out_time": log.clock_out_time,
                         "is_late": log.is_late,
                         "total_hours": log.total_hours,
-                        "entry_count": log.entries.count(),
-                        "intent_summary": ", ".join(e.display_label for e in log.entries.all()[:5]),
+                        # Use prefetched cache — avoid .count()/.all() which bypass it
+                        "entry_count": len(log.entries.all()),
+                        "intent_summary": ", ".join(e.display_label for e in list(log.entries.all())[:5]),
                     }
                 )
             else:

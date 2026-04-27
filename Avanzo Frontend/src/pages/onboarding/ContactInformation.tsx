@@ -56,10 +56,20 @@ export default function ContactInformationPage() {
       navigate("/register-org/status");
     } catch (err: any) {
       console.error("Registration error:", err);
-      const backendError = err.response?.data?.detail || 
-                           err.response?.data?.message || 
-                           (err.response?.data ? Object.values(err.response.data).flat().join(", ") : null) ||
-                           "Registration failed. Please check your network or try a different subdomain.";
+      let backendError = "Registration failed. Please check your network or try a different subdomain.";
+      if (err.response?.data) {
+        if (err.response.data.error?.details) {
+          backendError = Object.values(err.response.data.error.details).flat().join(", ");
+        } else if (err.response.data.error?.message) {
+          backendError = err.response.data.error.message;
+        } else if (err.response.data.detail) {
+          backendError = err.response.data.detail;
+        } else if (err.response.data.message) {
+          backendError = err.response.data.message;
+        } else {
+           backendError = Object.values(err.response.data).flat().join(", ");
+        }
+      }
       setError(backendError);
       setLoading(false);
     }

@@ -26,10 +26,9 @@ class TenantOrchestrator:
         2. Create Admin user linked to this Client
         """
         # 1. Create Organization record in public schema
-        # We use subdomain as the unique schema_name identifier for the record
         tenant, created = Client.objects.get_or_create(
-            schema_name=subdomain.lower().replace("-", "_"), 
-            name=company_name
+            schema_name=subdomain.lower().replace("-", "_"),
+            defaults={"name": company_name}
         )
 
         # 2. Get the Admin AccessRole

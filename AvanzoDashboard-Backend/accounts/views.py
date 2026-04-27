@@ -63,9 +63,11 @@ class TenantRegistrationView(APIView):
                 {"message": "Workspace provisioned successfully. Redirect to login."},
                 status=status.HTTP_201_CREATED,
             )
-        except Exception:
+        except Exception as e:
+            import logging
+            logging.error(f"Provisioning failed: {e}", exc_info=True)
             return Response(
-                {"detail": "Provisioning failed. Contact support."},
+                {"detail": f"Provisioning failed: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 

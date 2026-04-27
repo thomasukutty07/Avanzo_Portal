@@ -21,15 +21,26 @@ class TenantRegistrationSerializer(serializers.Serializer):
     admin_first_name = serializers.CharField(max_length=50, required=False, allow_blank=True)
     admin_last_name = serializers.CharField(max_length=50, required=False, allow_blank=True)
 
+    def validate_admin_email(self, value):
+        from accounts.models import Employee
+        
+        if Employee.objects.filter(email=value.lower()).exists():
+            raise serializers.ValidationError("An account with this email already exists.")
+        return value.lower()
+
     def validate_subdomain(self, value):
         """Ensure subdomain is URL-safe and unique."""
-        from clients.models import Domain
+        from clients.models import Client, Domain
 
-        if not value.isalnum() and "-" not in value:
-            raise serializers.ValidationError("Subdomain must be alphanumeric or hyphens.")
-        if Domain.objects.filter(domain=value.lower()).exists():
+        value = value.lower().replace("-", "_")
+        if not value.replace("_", "").isalnum():
+            raise serializers.ValidationError("Subdomain must be alphanumeric or hyphens only.")
+        # Check both the Domain table and the Client schema_name
+        if Domain.objects.filter(domain=value).exists():
             raise serializers.ValidationError("This subdomain is already taken.")
-        return value.lower()
+        if Client.objects.filter(schema_name=value).exists():
+            raise serializers.ValidationError("An organization with this subdomain already exists.")
+        return value
 
     def validate_admin_password(self, value):
         """Pass password through Django's standard validators."""
