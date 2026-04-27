@@ -8,7 +8,7 @@ import { useParams, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { useState, useEffect, type ReactElement } from "react"
 import { api } from "@/lib/axios"
-import * as XLSX from "xlsx"
+import ExcelJS from "exceljs"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
 
@@ -286,28 +286,57 @@ export default function EmployeeWorkingReportDetail() {
   const lateCount      = filteredRecords.filter((r) => r.is_late).length
 
   // ── Export XLSX ────────────────────────────────────────
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     if (!records.length) { toast.error("No data to export."); return }
-    const sheetData = records.map((r) => ({
-      "Employee": r.employee_name,
-      "ID": r.employee_id ?? "",
-      "Department": r.department,
-      "Designation": r.designation ?? "",
-      "Role": r.role,
-      "Clock In": r.clock_in ?? "",
-      "Clock Out": r.clock_out ?? "",
-      "Late": r.is_late ? "Yes" : "No",
-      "Working Hours": r.total_working_hours,
-      "Completed": r.completed_tasks,
-      "Partial": r.partial_tasks,
-      "Blocked": r.blocked_tasks,
-      "Pending": r.pending_tasks,
-      "Status": r.progress_status,
-    }))
-    const ws = XLSX.utils.json_to_sheet(sheetData)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, "Report")
-    XLSX.writeFile(wb, `Report_${report.report_id}.xlsx`)
+    const wb = new ExcelJS.Workbook()
+    const ws = wb.addWorksheet("Report")
+    ws.columns = [
+      { header: "Employee",      key: "employee",      width: 24 },
+      { header: "ID",            key: "id",            width: 14 },
+      { header: "Department",    key: "department",    width: 18 },
+      { header: "Designation",   key: "designation",   width: 18 },
+      { header: "Role",          key: "role",          width: 16 },
+      { header: "Clock In",      key: "clock_in",      width: 12 },
+      { header: "Clock Out",     key: "clock_out",     width: 12 },
+      { header: "Late",          key: "late",          width: 8  },
+      { header: "Working Hours", key: "hours",         width: 14 },
+      { header: "Completed",     key: "completed",     width: 12 },
+      { header: "Partial",       key: "partial",       width: 10 },
+      { header: "Blocked",       key: "blocked",       width: 10 },
+      { header: "Pending",       key: "pending",       width: 10 },
+      { header: "Status",        key: "status",        width: 14 },
+    ]
+    // Style header row
+    ws.getRow(1).eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" } }
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF6D28D9" } }
+    })
+    records.forEach((r) => {
+      ws.addRow({
+        employee:    r.employee_name,
+        id:          r.employee_id ?? "",
+        department:  r.department,
+        designation: r.designation ?? "",
+        role:        r.role,
+        clock_in:    r.clock_in ?? "",
+        clock_out:   r.clock_out ?? "",
+        late:        r.is_late ? "Yes" : "No",
+        hours:       r.total_working_hours,
+        completed:   r.completed_tasks,
+        partial:     r.partial_tasks,
+        blocked:     r.blocked_tasks,
+        pending:     r.pending_tasks,
+        status:      r.progress_status,
+      })
+    })
+    const buffer = await wb.xlsx.writeBuffer()
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `Report_${report.report_id}.xlsx`
+    a.click()
+    URL.revokeObjectURL(url)
     toast.success(`Exported Report #${report.report_id} to Excel`)
   }
 
