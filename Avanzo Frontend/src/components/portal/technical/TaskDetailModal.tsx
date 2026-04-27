@@ -43,8 +43,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       toast.success("Progress saved successfully");
       onSuccess();
       onClose();
-    } catch (error) {
-      toast.error("Failed to save progress.");
+    } catch (error: any) {
+      const msg = error?.response?.data?.detail || "Failed to save progress.";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -54,11 +55,12 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     try {
       setLoading(true);
       await projectsService.updateTaskProgress(task.id, 100);
-      toast.success("Task completed!");
+      toast.success("Task marked as complete!");
       onSuccess();
       onClose();
-    } catch (error) {
-      toast.error("Failed to update status.");
+    } catch (error: any) {
+      const msg = error?.response?.data?.detail || "Failed to update status.";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -127,7 +129,17 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 </div>
                 <div>
                    <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest leading-none mb-1">Status</p>
-                   <p className="text-xs font-bold text-slate-700 capitalize">{task.status?.replace('_', ' ') || "Open"}</p>
+                   <p className={`text-xs font-bold capitalize ${
+                      task.status === 'resolved' ? 'text-emerald-600' :
+                      task.status === 'closed' ? 'text-slate-400' :
+                      task.status === 'progress' ? 'text-amber-600' :
+                      'text-slate-700'
+                    }`}>
+                      {task.status === 'progress' ? 'In Progress' : task.status?.replace('_', ' ') || 'Open'}
+                    </p>
+                    {task.status === 'resolved' && (
+                      <p className="text-[9px] text-slate-400 font-medium mt-0.5">Drag to reopen</p>
+                    )}
                 </div>
              </div>
           </div>
@@ -159,7 +171,6 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   step="5"
                   value={progress}
                   onChange={(e) => setProgress(parseInt(e.target.value))}
-                  disabled={task.status === 'resolved' || task.status === 'closed'}
                   className="w-full h-1.5 bg-slate-100 rounded-full appearance-none cursor-pointer accent-violet-600 transition-all hover:h-2"
                 />
                 <div className="flex justify-between mt-3 px-1">
@@ -180,8 +191,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             Dismiss
           </button>
           
-          {task.status !== 'resolved' && task.status !== 'closed' && (
-            <>
+          <>
               <Button
                 variant="outline"
                 onClick={handleUpdateProgress}
@@ -204,7 +214,6 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 )}
               </Button>
             </>
-          )}
         </div>
       </div>
     </div>

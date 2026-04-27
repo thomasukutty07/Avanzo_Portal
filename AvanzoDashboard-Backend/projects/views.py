@@ -237,11 +237,13 @@ class TaskViewSet(TenantFilterMixin, viewsets.ModelViewSet):
 
         task.completion_pct = new_pct
 
-        # Auto-update status based on completion
+        # Auto-update status based on completion percentage
         if new_pct == 100:
             task.status = Task.Status.RESOLVED
         elif new_pct > 0:
             task.status = Task.Status.IN_PROGRESS
+        else:
+            task.status = Task.Status.OPEN
 
         task.save()
 
