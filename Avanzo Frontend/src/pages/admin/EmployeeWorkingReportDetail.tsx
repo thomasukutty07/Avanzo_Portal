@@ -1,7 +1,8 @@
 import {
   ArrowLeft, Clock, Download, HardDriveDownload, Search,
   TrendingUp, Users, Loader2, CheckCircle2, AlertTriangle,
-  XCircle, Timer, LogIn, LogOut, Mail, Briefcase, ChevronDown, ChevronUp
+  XCircle, Timer, LogIn, LogOut, Mail, Briefcase, ChevronDown, ChevronUp,
+  Lock, ShieldCheck
 } from "lucide-react"
 import { OrganizationAdminChrome } from "@/components/portal/organizationadmin/OrganizationAdminChrome"
 import { useParams, useNavigate } from "react-router-dom"
@@ -24,6 +25,23 @@ interface EntryRecord {
   confidence: number | null
 }
 
+interface DayRecord {
+  date: string
+  clock_in: string | null
+  clock_out: string | null
+  is_late: boolean
+  is_early_exit: boolean
+  total_working_hours: number
+  progress_status: string
+  general_notes: string | null
+  completed_tasks: number
+  partial_tasks: number
+  blocked_tasks: number
+  pending_tasks: number
+  entries: EntryRecord[]
+}
+
+// Daily snapshot shape
 interface ReportRecord {
   employee_name: string
   employee_id: string | null
@@ -42,8 +60,15 @@ interface ReportRecord {
   partial_tasks: number
   blocked_tasks: number
   pending_tasks: number
-  remaining_workload: string
+  remaining_workload?: string
   entries: EntryRecord[]
+  // Range-report extras
+  days?: DayRecord[]
+  days_present?: number
+  days_missing?: number
+  late_count?: number
+  early_exit_count?: number
+  productivity_score?: number
 }
 
 // ─── Helpers ──────────────────────────────────────────────
@@ -69,6 +94,74 @@ const OUTCOME_LABEL: Record<string, string> = {
   blocked:      "Blocked",
   carried_over: "Carried Over",
   not_started:  "Not Started",
+}
+
+// ─── Productivity score badge ──────────────────────────────
+function ScoreBadge({ score }: { score: number }) {
+  const color =
+    score >= 80 ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
+    score >= 50 ? "bg-amber-50 text-amber-600 border-amber-100" :
+                  "bg-rose-50 text-rose-500 border-rose-100"
+  return (
+    <span className={`px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase border flex items-center gap-1 ${color}`}>
+      <TrendingUp className="size-3" />{score}/100
+    </span>
+  )
+}
+
+// ─── Per-entry rows (shared) ───────────────────────────────
+function EntryList({ entries }: { entries: EntryRecord[] }) {
+  if (!entries.length) return (
+    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center py-4">No work log entries recorded</p>
+  )
+  return (
+    <div className="space-y-3">
+      {entries.map((entry, i) => (
+        <div key={i} className="bg-white rounded-2xl border border-slate-100 p-5 space-y-3">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <p className="font-black text-slate-900 text-sm">{entry.project}</p>
+              {entry.task && <p className="text-[10px] text-violet-500 font-bold mt-0.5 uppercase tracking-widest">Task: {entry.task}</p>}
+            </div>
+            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+              {entry.outcome && (
+                <span className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-50 border border-slate-100 text-[10px] font-black text-slate-600 uppercase tracking-widest">
+                  {OUTCOME_ICON[entry.outcome]} {OUTCOME_LABEL[entry.outcome] ?? entry.outcome}
+                </span>
+              )}
+              {entry.hours != null && (
+                <span className="flex items-center gap-1 px-3 py-1 rounded-lg bg-blue-50 border border-blue-100 text-[10px] font-black text-blue-600">
+                  <Clock className="size-3" /> {entry.hours}h
+                </span>
+              )}
+              {entry.confidence != null && (
+                <span className="px-2.5 py-1 rounded-lg bg-violet-50 border border-violet-100 text-[10px] font-black text-violet-500">
+                  Confidence {entry.confidence}/5
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Morning Intent</p>
+              <p className="text-sm text-slate-700 font-medium leading-relaxed">{entry.intent}</p>
+            </div>
+            {entry.output && (
+              <div>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Evening Output</p>
+                <p className="text-sm text-slate-700 font-medium leading-relaxed">{entry.output}</p>
+              </div>
+            )}
+          </div>
+          {entry.outcome_reason && (
+            <p className="text-[10px] font-bold text-rose-400 uppercase tracking-widest">
+              Reason: {entry.outcome_reason.replace(/_/g, " ")}
+            </p>
+          )}
+        </div>
+      ))}
+    </div>
+  )
 }
 
 // ─── Employee Card ─────────────────────────────────────────
@@ -128,17 +221,23 @@ function EmployeeCard({ record }: { record: ReportRecord }) {
           {record.pending_tasks > 0 && <span className="px-3 py-1 rounded-lg bg-orange-50 text-orange-500 text-[10px] font-black border border-orange-100">{record.pending_tasks} Pending</span>}
         </div>
 
-        {/* Hours + Status */}
+        {/* Hours + Status / Score */}
         <div className="flex items-center gap-4 shrink-0">
           <div className="text-right">
             <p className="text-lg font-black text-slate-900 leading-none">{record.total_working_hours}</p>
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">hrs</p>
           </div>
-          <span className={`px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase border ${STATUS_STYLE[record.progress_status] ?? ""}`}>
-            {record.progress_status}
-          </span>
-          {record.is_late && (
-            <span className="px-2.5 py-1 rounded-lg bg-rose-50 border border-rose-100 text-[9px] font-black text-rose-500 uppercase tracking-widest">Late</span>
+          {record.productivity_score !== undefined ? (
+            <ScoreBadge score={record.productivity_score} />
+          ) : (
+            <>
+              <span className={`px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase border ${STATUS_STYLE[record.progress_status] ?? ""}`}>
+                {record.progress_status}
+              </span>
+              {record.is_late && (
+                <span className="px-2.5 py-1 rounded-lg bg-rose-50 border border-rose-100 text-[9px] font-black text-rose-500 uppercase tracking-widest">Late</span>
+              )}
+            </>
           )}
           {expanded ? <ChevronUp className="size-4 text-slate-400 ml-1" /> : <ChevronDown className="size-4 text-slate-400 ml-1" />}
         </div>
@@ -158,71 +257,96 @@ function EmployeeCard({ record }: { record: ReportRecord }) {
                 <Briefcase className="size-3.5 text-slate-300" /> {record.role}
               </div>
             )}
+            {/* Range-only attendance stats */}
+            {record.days_present !== undefined && (
+              <>
+                <span className="px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-100 text-[10px] font-black text-emerald-600 uppercase tracking-widest">
+                  {record.days_present} Days Present
+                </span>
+                {(record.days_missing ?? 0) > 0 && (
+                  <span className="px-2.5 py-1 rounded-lg bg-rose-50 border border-rose-100 text-[10px] font-black text-rose-500 uppercase tracking-widest">
+                    {record.days_missing} Absent
+                  </span>
+                )}
+                {(record.late_count ?? 0) > 0 && (
+                  <span className="px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-100 text-[10px] font-black text-amber-600 uppercase tracking-widest">
+                    {record.late_count}x Late
+                  </span>
+                )}
+              </>
+            )}
             {record.is_early_exit && (
               <span className="px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-100 text-[10px] font-black text-amber-600 uppercase tracking-widest">Early Exit</span>
             )}
           </div>
 
-          {/* General notes */}
-          {record.general_notes && (
-            <div className="bg-white rounded-xl border border-slate-100 px-5 py-4">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">General Notes</p>
-              <p className="text-sm text-slate-700 font-medium leading-relaxed">{record.general_notes}</p>
-            </div>
+          {/* Daily snapshot: flat entries */}
+          {!record.days && (
+            <>
+              {record.general_notes && (
+                <div className="bg-white rounded-xl border border-slate-100 px-5 py-4">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">General Notes</p>
+                  <p className="text-sm text-slate-700 font-medium leading-relaxed">{record.general_notes}</p>
+                </div>
+              )}
+              <div className="space-y-3">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Work Log Entries</p>
+                <EntryList entries={record.entries} />
+              </div>
+            </>
           )}
 
-          {/* Entry breakdown */}
-          {record.entries.length > 0 ? (
+          {/* Range report: per-day accordion */}
+          {record.days && record.days.length > 0 && (
             <div className="space-y-3">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Work Log Entries</p>
-              {record.entries.map((entry, i) => (
-                <div key={i} className="bg-white rounded-2xl border border-slate-100 p-5 space-y-3">
-                  <div className="flex items-start justify-between gap-4 flex-wrap">
-                    <div>
-                      <p className="font-black text-slate-900 text-sm">{entry.project}</p>
-                      {entry.task && <p className="text-[10px] text-violet-500 font-bold mt-0.5 uppercase tracking-widest">Task: {entry.task}</p>}
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                      {entry.outcome && (
-                        <span className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-50 border border-slate-100 text-[10px] font-black text-slate-600 uppercase tracking-widest">
-                          {OUTCOME_ICON[entry.outcome]} {OUTCOME_LABEL[entry.outcome] ?? entry.outcome}
-                        </span>
-                      )}
-                      {entry.hours != null && (
-                        <span className="flex items-center gap-1 px-3 py-1 rounded-lg bg-blue-50 border border-blue-100 text-[10px] font-black text-blue-600">
-                          <Clock className="size-3" /> {entry.hours}h
-                        </span>
-                      )}
-                      {entry.confidence != null && (
-                        <span className="px-2.5 py-1 rounded-lg bg-violet-50 border border-violet-100 text-[10px] font-black text-violet-500">
-                          Confidence {entry.confidence}/5
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Morning Intent</p>
-                      <p className="text-sm text-slate-700 font-medium leading-relaxed">{entry.intent}</p>
-                    </div>
-                    {entry.output && (
-                      <div>
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Evening Output</p>
-                        <p className="text-sm text-slate-700 font-medium leading-relaxed">{entry.output}</p>
-                      </div>
-                    )}
-                  </div>
-                  {entry.outcome_reason && (
-                    <p className="text-[10px] font-bold text-rose-400 uppercase tracking-widest">
-                      Reason: {entry.outcome_reason.replace(/_/g, " ")}
-                    </p>
-                  )}
-                </div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Day-by-Day Breakdown</p>
+              {record.days.map((day, di) => (
+                <DayAccordion key={di} day={day} />
               ))}
             </div>
-          ) : (
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center py-4">No work log entries recorded</p>
           )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Day Accordion (range reports) ───────────────────────────
+function DayAccordion({ day }: { day: DayRecord }) {
+  const [open, setOpen] = useState(false)
+  const dateLabel = new Date(day.date + "T00:00:00").toLocaleDateString("en-US", {
+    weekday: "short", month: "short", day: "numeric",
+  })
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+      <div
+        className="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-slate-50/50 transition-colors"
+        onClick={() => setOpen(v => !v)}
+      >
+        <span className="text-[11px] font-black text-violet-600 bg-violet-50 px-3 py-1 rounded-lg border border-violet-100 shrink-0">{dateLabel}</span>
+        <div className="flex items-center gap-3 flex-1 flex-wrap">
+          <div className="flex items-center gap-1.5 text-[11px] font-black text-slate-500">
+            <LogIn className="size-3 text-emerald-400" />{day.clock_in ?? "—"}
+          </div>
+          <div className="flex items-center gap-1.5 text-[11px] font-black text-slate-500">
+            <LogOut className="size-3 text-rose-400" />{day.clock_out ?? "—"}
+          </div>
+          <span className="text-[11px] font-black text-slate-500">{day.total_working_hours}h</span>
+          <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${STATUS_STYLE[day.progress_status] ?? ""}`}>{day.progress_status}</span>
+          {day.is_late && <span className="px-2.5 py-1 rounded-lg bg-rose-50 border border-rose-100 text-[9px] font-black text-rose-500 uppercase">Late</span>}
+          <span className="ml-auto text-[10px] font-black text-emerald-600">{day.completed_tasks} done</span>
+        </div>
+        {open ? <ChevronUp className="size-4 text-slate-300" /> : <ChevronDown className="size-4 text-slate-300" />}
+      </div>
+      {open && (
+        <div className="border-t border-slate-50 px-5 py-4 bg-slate-50/30 space-y-3">
+          {day.general_notes && (
+            <div className="bg-white rounded-xl border border-slate-100 px-4 py-3">
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Notes</p>
+              <p className="text-sm text-slate-600 font-medium">{day.general_notes}</p>
+            </div>
+          )}
+          <EntryList entries={day.entries} />
         </div>
       )}
     </div>
@@ -289,22 +413,38 @@ export default function EmployeeWorkingReportDetail() {
   const handleExportExcel = async () => {
     if (!records.length) { toast.error("No data to export."); return }
     const wb = new ExcelJS.Workbook()
-    const ws = wb.addWorksheet("Report")
-    ws.columns = [
-      { header: "Employee",      key: "employee",      width: 24 },
-      { header: "ID",            key: "id",            width: 14 },
-      { header: "Department",    key: "department",    width: 18 },
-      { header: "Designation",   key: "designation",   width: 18 },
-      { header: "Role",          key: "role",          width: 16 },
-      { header: "Clock In",      key: "clock_in",      width: 12 },
-      { header: "Clock Out",     key: "clock_out",     width: 12 },
-      { header: "Late",          key: "late",          width: 8  },
-      { header: "Working Hours", key: "hours",         width: 14 },
-      { header: "Completed",     key: "completed",     width: 12 },
-      { header: "Partial",       key: "partial",       width: 10 },
-      { header: "Blocked",       key: "blocked",       width: 10 },
-      { header: "Pending",       key: "pending",       width: 10 },
-      { header: "Status",        key: "status",        width: 14 },
+    const isRange = report.report_type === "range"
+    const ws = wb.addWorksheet("Performance Summary")
+    ws.columns = isRange ? [
+      { header: "Employee",          key: "employee",    width: 24 },
+      { header: "ID",                key: "id",          width: 14 },
+      { header: "Department",        key: "department",  width: 18 },
+      { header: "Designation",       key: "designation", width: 18 },
+      { header: "Role",              key: "role",        width: 16 },
+      { header: "Total Hours",       key: "hours",       width: 13 },
+      { header: "Days Present",      key: "present",     width: 13 },
+      { header: "Days Absent",       key: "absent",      width: 13 },
+      { header: "Late Count",        key: "late",        width: 11 },
+      { header: "Tasks Done",        key: "completed",   width: 12 },
+      { header: "Partial",           key: "partial",     width: 10 },
+      { header: "Blocked",           key: "blocked",     width: 10 },
+      { header: "Pending",           key: "pending",     width: 10 },
+      { header: "Productivity Score",key: "score",       width: 18 },
+    ] : [
+      { header: "Employee",      key: "employee",    width: 24 },
+      { header: "ID",            key: "id",          width: 14 },
+      { header: "Department",    key: "department",  width: 18 },
+      { header: "Designation",   key: "designation", width: 18 },
+      { header: "Role",          key: "role",        width: 16 },
+      { header: "Clock In",      key: "clock_in",    width: 12 },
+      { header: "Clock Out",     key: "clock_out",   width: 12 },
+      { header: "Late",          key: "late",        width: 8  },
+      { header: "Working Hours", key: "hours",       width: 14 },
+      { header: "Completed",     key: "completed",   width: 12 },
+      { header: "Partial",       key: "partial",     width: 10 },
+      { header: "Blocked",       key: "blocked",     width: 10 },
+      { header: "Pending",       key: "pending",     width: 10 },
+      { header: "Status",        key: "status",      width: 14 },
     ]
     // Style header row
     ws.getRow(1).eachCell((cell) => {
@@ -312,23 +452,50 @@ export default function EmployeeWorkingReportDetail() {
       cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF6D28D9" } }
     })
     records.forEach((r) => {
-      ws.addRow({
-        employee:    r.employee_name,
-        id:          r.employee_id ?? "",
-        department:  r.department,
-        designation: r.designation ?? "",
-        role:        r.role,
-        clock_in:    r.clock_in ?? "",
-        clock_out:   r.clock_out ?? "",
-        late:        r.is_late ? "Yes" : "No",
-        hours:       r.total_working_hours,
-        completed:   r.completed_tasks,
-        partial:     r.partial_tasks,
-        blocked:     r.blocked_tasks,
-        pending:     r.pending_tasks,
-        status:      r.progress_status,
-      })
+      if (isRange) {
+        ws.addRow({
+          employee: r.employee_name, id: r.employee_id ?? "",
+          department: r.department, designation: r.designation ?? "", role: r.role,
+          hours: r.total_working_hours, present: r.days_present ?? "",
+          absent: r.days_missing ?? "", late: r.late_count ?? 0,
+          completed: r.completed_tasks, partial: r.partial_tasks,
+          blocked: r.blocked_tasks, pending: r.pending_tasks,
+          score: r.productivity_score !== undefined ? `${r.productivity_score}/100` : "",
+        })
+      } else {
+        ws.addRow({
+          employee: r.employee_name, id: r.employee_id ?? "",
+          department: r.department, designation: r.designation ?? "", role: r.role,
+          clock_in: r.clock_in ?? "", clock_out: r.clock_out ?? "",
+          late: r.is_late ? "Yes" : "No", hours: r.total_working_hours,
+          completed: r.completed_tasks, partial: r.partial_tasks,
+          blocked: r.blocked_tasks, pending: r.pending_tasks, status: r.progress_status,
+        })
+      }
     })
+    // Sheet 2 – daily breakdown (range reports only)
+    if (isRange) {
+      const ws2 = wb.addWorksheet("Daily Breakdown")
+      ws2.columns = [
+        { header: "Employee", key: "employee", width: 24 }, { header: "Date", key: "date", width: 14 },
+        { header: "Clock In", key: "in", width: 11 },       { header: "Clock Out", key: "out", width: 11 },
+        { header: "Hours", key: "hours", width: 10 },       { header: "Status", key: "status", width: 14 },
+        { header: "Late", key: "late", width: 8 },          { header: "Done", key: "done", width: 8 },
+        { header: "Blocked", key: "blocked", width: 10 },
+      ]
+      ws2.getRow(1).eachCell((cell) => {
+        cell.font = { bold: true, color: { argb: "FFFFFFFF" } }
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1E40AF" } }
+      })
+      records.forEach((r) => {
+        (r.days ?? []).forEach((d: any) => {
+          ws2.addRow({ employee: r.employee_name, date: d.date, in: d.clock_in ?? "",
+            out: d.clock_out ?? "", hours: d.total_working_hours,
+            status: d.progress_status, late: d.is_late ? "Yes" : "No",
+            done: d.completed_tasks, blocked: d.blocked_tasks })
+        })
+      })
+    }
     const buffer = await wb.xlsx.writeBuffer()
     const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
     const url = URL.createObjectURL(blob)
@@ -343,28 +510,35 @@ export default function EmployeeWorkingReportDetail() {
   // ── Export PDF ─────────────────────────────────────────
   const handleExportPDF = () => {
     if (!records.length) { toast.error("No data to export."); return }
+    const isRange = report.report_type === "range"
     const doc = new jsPDF({ orientation: "landscape" })
     doc.setFontSize(14)
     doc.setFont("helvetica", "bold")
-    doc.text(`Working Report Snapshot — #${report.report_id}`, 14, 16)
+    doc.text(`Employee Working Report — #${report.report_id}`, 14, 16)
     doc.setFontSize(9)
     doc.setFont("helvetica", "normal")
     doc.setTextColor(120)
-    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 23)
+    if (isRange && report.date_from && report.date_to) {
+      doc.text(`Period: ${report.date_from}  to  ${report.date_to}`, 14, 23)
+    }
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, isRange ? 28 : 23)
     doc.setTextColor(0)
     autoTable(doc, {
-      startY: 28,
-      head: [["Employee", "Dept", "In", "Out", "Late", "Hours", "Done", "Blocked", "Status"]],
-      body: records.map((r) => [
-        r.employee_name,
-        r.department,
-        r.clock_in ?? "—",
-        r.clock_out ?? "—",
-        r.is_late ? "Yes" : "No",
-        r.total_working_hours,
-        r.completed_tasks,
-        r.blocked_tasks,
-        r.progress_status,
+      startY: isRange ? 34 : 28,
+      head: [isRange
+        ? ["Employee", "Dept", "Total Hrs", "Present", "Absent", "Late", "Done", "Blocked", "Score"]
+        : ["Employee", "Dept", "In", "Out", "Late", "Hours", "Done", "Blocked", "Status"]
+      ],
+      body: records.map((r) => isRange ? [
+        r.employee_name, r.department, r.total_working_hours,
+        r.days_present ?? "", r.days_missing ?? "", r.late_count ?? 0,
+        r.completed_tasks, r.blocked_tasks,
+        r.productivity_score !== undefined ? `${r.productivity_score}/100` : "",
+      ] : [
+        r.employee_name, r.department,
+        r.clock_in ?? "—", r.clock_out ?? "—",
+        r.is_late ? "Yes" : "No", r.total_working_hours,
+        r.completed_tasks, r.blocked_tasks, r.progress_status,
       ]),
       headStyles: { fillColor: [109, 40, 217], fontStyle: "bold", fontSize: 9 },
       bodyStyles: { fontSize: 9 },
@@ -377,10 +551,24 @@ export default function EmployeeWorkingReportDetail() {
 
   return (
     <OrganizationAdminChrome>
-      <div className="p-6 md:p-10 space-y-10 animate-in fade-in duration-500 min-h-screen font-display bg-[#fcfcfc] text-slate-900">
+      <div className="animate-in fade-in duration-500 min-h-screen font-display bg-[#fcfcfc] text-slate-900">
+
+        {/* ── Immutable Record Banner ── */}
+        <div className="bg-amber-50 border-b border-amber-100 px-6 md:px-10 py-3 flex items-center gap-3">
+          <Lock className="size-3.5 text-amber-500 shrink-0" />
+          <p className="text-[11px] font-black uppercase tracking-widest text-amber-600">
+            Immutable Record — This report is locked and cannot be modified or deleted.
+          </p>
+          <span className="ml-auto flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-amber-500">
+            <ShieldCheck className="size-3.5" />
+            Read Only
+          </span>
+        </div>
+
+        <div className="p-6 md:p-10 space-y-10">
 
         {/* ── Header ── */}
-        <div className="sticky top-0 z-30 -mx-6 md:-mx-10 px-6 md:px-10 py-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-transparent">
+        <div className="sticky top-0 z-30 -mx-6 md:-mx-10 px-6 md:px-10 py-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-[#fcfcfc]/90 backdrop-blur-md border-b border-slate-100">
           <div className="flex flex-col gap-2">
             <button
               onClick={() => navigate("/reports")}
@@ -391,8 +579,17 @@ export default function EmployeeWorkingReportDetail() {
             <h1 className="text-3xl font-black tracking-tight text-slate-900 leading-tight font-headline flex items-center gap-3 mt-2">
               Report Snapshot
               <span className="text-xl text-slate-300 font-bold tracking-normal italic select-all">#{report.report_id}</span>
-              <span className="ml-2 px-3 py-1 bg-slate-100 text-slate-500 rounded-lg text-[9px] font-black tracking-widest uppercase border border-slate-200/50">LOCKED RECORD</span>
+              <span className="ml-2 px-3 py-1.5 bg-amber-50 text-amber-600 rounded-xl text-[9px] font-black tracking-widest uppercase border border-amber-200 inline-flex items-center gap-1.5">
+                <Lock className="size-3" /> Locked Record
+              </span>
             </h1>
+            <p className="text-[11px] text-slate-400 font-bold">
+              Generated&nbsp;
+              {new Date(report.generated_at).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+              &nbsp;·&nbsp;
+              {new Date(report.generated_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+              &nbsp;·&nbsp;{report.report_type === "range" ? "Date Range Report" : "Daily Snapshot"}
+            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -471,9 +668,11 @@ export default function EmployeeWorkingReportDetail() {
               <p className="text-slate-400 font-bold tracking-widest uppercase text-sm">No records found.</p>
             </div>
           )}
-        </div>
+        </div>{/* end departments */}
 
-      </div>
+        </div>{/* end p-6 padding wrapper */}
+
+      </div>{/* end outer bg wrapper */}
     </OrganizationAdminChrome>
   )
 }

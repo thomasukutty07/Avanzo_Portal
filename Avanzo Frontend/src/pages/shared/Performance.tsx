@@ -61,10 +61,10 @@ export default function PerformancePage() {
   }
 
   const scoreMetrics = [
-    { label: "Attendance", value: liveScore?.attendance_score || 0, icon: Calendar, color: "text-blue-500", bg: "bg-blue-50" },
-    { label: "Delivery", value: liveScore?.delivery_score || 0, icon: Zap, color: "text-violet-600", bg: "bg-violet-50" },
-    { label: "Quality", value: liveScore?.quality_score || 0, icon: Shield, color: "text-emerald-500", bg: "bg-emerald-50" },
-    { label: "Reliability", value: liveScore?.reliability_score || 0, icon: Target, color: "text-orange-500", bg: "bg-orange-50" },
+    { label: "Attendance", value: Number(liveScore?.attendance_score ?? 0), icon: Calendar, color: "text-blue-500", bg: "bg-blue-50" },
+    { label: "Delivery", value: Number(liveScore?.delivery_score ?? 0), icon: Zap, color: "text-violet-600", bg: "bg-violet-50" },
+    { label: "Quality", value: Number(liveScore?.quality_score ?? 0), icon: Shield, color: "text-emerald-500", bg: "bg-emerald-50" },
+    { label: "Reliability", value: Number(liveScore?.reliability_score ?? 0), icon: Target, color: "text-orange-500", bg: "bg-orange-50" },
   ]
 
   if (loading) {
@@ -116,11 +116,11 @@ export default function PerformancePage() {
                  <div 
                    className="absolute inset-[-12px] rounded-full border-[12px] border-violet-600 border-t-transparent animate-[spin_3s_linear_infinite]" 
                    style={{ 
-                     clipPath: `polygon(50% 50%, 0 0, ${liveScore?.overall_score || 0}% 0, 100% 0, 100% 100%, 0 100%, 0 0)`,
-                     transform: `rotate(${(liveScore?.overall_score || 0) * 3.6}deg)`
+                     clipPath: `polygon(50% 50%, 0 0, ${Number(liveScore?.overall_score ?? 0)}% 0, 100% 0, 100% 100%, 0 100%, 0 0)`,
+                     transform: `rotate(${Number(liveScore?.overall_score ?? 0) * 3.6}deg)`
                    }} 
                  />
-                 <p className="text-6xl font-black text-slate-900 leading-none tracking-tighter">{Math.round(liveScore?.overall_score || 0)}</p>
+                 <p className="text-6xl font-black text-slate-900 leading-none tracking-tighter">{Math.round(Number(liveScore?.overall_score ?? 0))}</p>
                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Overall Score</p>
               </div>
            </div>
@@ -168,7 +168,7 @@ export default function PerformancePage() {
                             {new Date(s.period_start).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - {new Date(s.period_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                          </p>
                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">
-                            {s.period_type} Snapshot • {s.overall_score.toFixed(1)} Overall
+                            {s.period_type} Snapshot • {Number(s.overall_score).toFixed(1)} Overall
                          </p>
                       </div>
                    </div>

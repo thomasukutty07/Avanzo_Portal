@@ -3,7 +3,7 @@ import {
   BarChart3, TrendingUp, Activity,
   Users, Calendar, AlertCircle, CheckCircle2, Clock,
   Zap, Download, RefreshCw,
-  Star, SlidersHorizontal
+  SlidersHorizontal
 } from "lucide-react"
 import { OrganizationAdminChrome } from "@/components/portal/organizationadmin/OrganizationAdminChrome"
 import { api } from "@/lib/axios"
@@ -78,7 +78,6 @@ const NAV_SECTIONS = [
 export default function AdminInsightsPage() {
   const [analytics, setAnalytics] = useState<any>(null)
   const [deptHealth, setDeptHealth] = useState<any[]>([])
-  const [departments, setDepartments] = useState<any[]>([])
   const [performance, setPerformance] = useState<any[]>([])
   const [activityFeed, setActivityFeed] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -91,19 +90,33 @@ export default function AdminInsightsPage() {
 
   async function fetchAll() {
     try {
-      const [anaRes, healthRes, deptRes, perfRes, actRes] = await Promise.allSettled([
+      const [anaRes, healthRes, perfRes, actRes] = await Promise.allSettled([
         api.get("/api/analytics/admin/dashboard/"),
         api.get("/api/analytics/admin/department-health/"),
-        api.get("/api/organization/departments/"),
-        api.get("/api/performance/leaderboard/"),
+        api.get("/api/performance/live-leaderboard/"),
         api.get("/api/activity/feed/"),
       ])
 
       if (anaRes.status === "fulfilled") setAnalytics(anaRes.value.data)
       if (healthRes.status === "fulfilled") setDeptHealth(extractResults(healthRes.value.data))
-      if (deptRes.status === "fulfilled") setDepartments(extractResults(deptRes.value.data))
-      if (perfRes.status === "fulfilled") setPerformance(extractResults(perfRes.value.data))
+
+      // Live leaderboard — fall back to snapshot leaderboard if live errors
+      if (perfRes.status === "fulfilled") {
+        const data = perfRes.value.data
+        setPerformance(Array.isArray(data) ? data : extractResults(data))
+      } else {
+        console.warn("[Insights] live-leaderboard failed:", perfRes.reason?.response?.status, perfRes.reason?.message)
+        // Fallback: try the snapshot leaderboard
+        try {
+          const fallback = await api.get("/api/performance/leaderboard/")
+          setPerformance(extractResults(fallback.data))
+        } catch (fb) {
+          console.warn("[Insights] leaderboard fallback also failed:", fb)
+        }
+      }
+
       if (actRes.status === "fulfilled") setActivityFeed(extractResults(actRes.value.data))
+      else console.warn("[Insights] activity/feed failed:", actRes.reason?.message)
     } catch {
       toast.error("Failed to load some sections.")
     } finally {
@@ -208,7 +221,7 @@ export default function AdminInsightsPage() {
         <div className="px-6 md:px-10 py-10 space-y-20">
 
           {/* ══ INSIGHTS ══════════════════════════════════════ */}
-          <div ref={(el) => (sectionRefs.current["insights"] = el)}>
+          <div ref={(el) => { sectionRefs.current["insights"] = el }}>
             <SectionAnchor id="insights" />
             <SectionHeader icon={BarChart3} title="Insights" subtitle="Real-time org-wide KPI summary" color="text-violet-600" bg="bg-violet-50" />
 
@@ -257,10 +270,10 @@ export default function AdminInsightsPage() {
 
 
           {/* ══ PERFORMANCE ═══════════════════════════════════ */}
-          <div ref={(el) => (sectionRefs.current["performance"] = el)}>
+          <div ref={(el) => { sectionRefs.current["performance"] = el }}>
             <SectionAnchor id="performance" />
             <div className="flex items-center justify-between mb-8">
-              <SectionHeader icon={TrendingUp} title="Performance" subtitle="Weekly leaderboard — top performers across departments" color="text-emerald-600" bg="bg-emerald-50" />
+              <SectionHeader icon={TrendingUp} title="Performance" subtitle="Live scores — current week across all employees" color="text-emerald-600" bg="bg-emerald-50" />
               <button
                 onClick={() => setShowPerfConfigModal(true)}
                 className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 shadow-sm transition-all shrink-0"
@@ -270,42 +283,85 @@ export default function AdminInsightsPage() {
             </div>
 
             {performance.length === 0 ? (
-              <EmptyState message="No performance snapshots available" />
+              <EmptyState message="No employees found in your organisation" />
             ) : (
               <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
+                {/* Column header */}
+                <div className="hidden md:grid grid-cols-[2rem_1fr_5rem_5rem_5rem_5rem_6rem] gap-4 px-8 py-3 border-b border-slate-50 text-[9px] font-black uppercase tracking-widest text-slate-400">
+                  <span>#</span>
+                  <span>Employee</span>
+                  <span className="text-center">Attend.</span>
+                  <span className="text-center">Delivery</span>
+                  <span className="text-center">Quality</span>
+                  <span className="text-center">Reliability</span>
+                  <span className="text-right">Overall</span>
+                </div>
                 <div className="divide-y divide-slate-50">
-                  {performance.slice(0, 10).map((item: any, idx: number) => {
-                    const score = item.overall_score ?? item.score ?? 0
+                  {performance.slice(0, 15).map((item: any, idx: number) => {
+                    const overall = Number(item.overall_score ?? 0)
+                    const attend  = Number(item.attendance_score ?? 0)
+                    const deliver = Number(item.delivery_score ?? 0)
+                    const quality = Number(item.quality_score ?? 0)
+                    const reliab  = Number(item.reliability_score ?? 0)
+                    const medal   = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : null
+                    const scoreColor = overall >= 75 ? "text-emerald-600" : overall >= 50 ? "text-amber-500" : "text-rose-500"
+                    const barColor   = overall >= 75 ? "bg-emerald-500" : overall >= 50 ? "bg-amber-400" : "bg-rose-400"
+
                     return (
-                      <div key={item.id ?? idx} className="flex items-center gap-6 px-8 py-5 hover:bg-slate-50/50 transition-colors">
-                        <span className={`text-sm font-black w-8 text-center ${idx === 0 ? "text-amber-500" : idx === 1 ? "text-slate-500" : idx === 2 ? "text-orange-500" : "text-slate-300"}`}>
-                          #{item.rank ?? idx + 1}
+                      <div key={item.employee_id ?? idx} className="flex flex-col md:grid md:grid-cols-[2rem_1fr_5rem_5rem_5rem_5rem_6rem] gap-4 px-8 py-5 hover:bg-slate-50/50 transition-colors items-center">
+                        {/* Rank */}
+                        <span className="text-sm font-black text-slate-300 text-center">
+                          {medal ?? `#${item.rank ?? idx + 1}`}
                         </span>
-                        {idx < 3 && <Star className={`size-4 shrink-0 ${idx === 0 ? "text-amber-400 fill-amber-400" : "text-slate-300"}`} />}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-black text-slate-900 text-sm truncate">
-                            {item.employee_name ?? item.employee?.first_name ?? "Employee"}
-                          </p>
-                          <p className="text-[10px] text-slate-400 font-bold mt-0.5">
-                            {item.department ?? item.employee?.department ?? ""}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.min(score, 100)}%` }} />
+
+                        {/* Identity */}
+                        <div className="flex items-center gap-3 min-w-0 w-full">
+                          <div className="size-9 rounded-2xl bg-violet-600 text-white flex items-center justify-center text-sm font-black shrink-0 shadow-sm shadow-violet-600/20">
+                            {(item.employee_name ?? "?")[0].toUpperCase()}
                           </div>
-                          <span className="text-sm font-black text-slate-900 w-12 text-right">{Number(score).toFixed(1)}</span>
+                          <div className="min-w-0">
+                            <p className="font-black text-slate-900 text-sm truncate">{item.employee_name}</p>
+                            <p className="text-[10px] text-slate-400 font-bold truncate">{item.department}{item.role ? ` · ${item.role}` : ""}</p>
+                          </div>
+                        </div>
+
+                        {/* Sub-scores */}
+                        {[attend, deliver, quality, reliab].map((val, si) => (
+                          <div key={si} className="flex flex-col items-center gap-1 w-full">
+                            <span className="text-[11px] font-black text-slate-700">{val.toFixed(0)}</span>
+                            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full ${val >= 75 ? "bg-emerald-400" : val >= 50 ? "bg-amber-400" : "bg-rose-400"}`}
+                                style={{ width: `${Math.min(val, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+
+                        {/* Overall */}
+                        <div className="flex flex-col items-end gap-1 w-full">
+                          <span className={`text-base font-black ${scoreColor} leading-none`}>{overall.toFixed(1)}</span>
+                          <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full ${barColor}`} style={{ width: `${Math.min(overall, 100)}%` }} />
+                          </div>
                         </div>
                       </div>
                     )
                   })}
                 </div>
+                {performance.length > 0 && (
+                  <div className="px-8 py-4 border-t border-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <Clock className="size-3" />
+                    Live — current week ({performance[0]?.period_start ?? "..."} → {performance[0]?.period_end ?? "..."})
+                  </div>
+                )}
               </div>
             )}
           </div>
 
+
           {/* ══ ACTIVITY ══════════════════════════════════════ */}
-          <div ref={(el) => (sectionRefs.current["activity"] = el)}>
+          <div ref={(el) => { sectionRefs.current["activity"] = el }}>
             <SectionAnchor id="activity" />
             <SectionHeader icon={Activity} title="Audit Logs" subtitle="Last 20 system events across the organisation" color="text-rose-600" bg="bg-rose-50" />
 

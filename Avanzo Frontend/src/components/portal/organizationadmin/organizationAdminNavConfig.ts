@@ -4,6 +4,7 @@ import {
   CalendarDays,
   Megaphone,
   BarChart3,
+  Lightbulb,
   UserPlus
 } from "lucide-react"
 
@@ -14,5 +15,5 @@ export const ORGANIZATION_ADMIN_NAV = [
   { to: "/departments", label: "Departments", icon: CalendarDays },
   { to: "/admin-announcements", label: "Announcements", icon: Megaphone },
   { to: "/reports", label: "Reports", icon: BarChart3 },
-  { to: "/admin/insights", label: "Insights", icon: BarChart3 },
+  { to: "/admin/insights", label: "Insights", icon: Lightbulb },
 ]
