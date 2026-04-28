@@ -83,36 +83,74 @@ class AnalyticsService:
     def get_department_health(tenant):
         """
         Aggregate health metrics per department for a specific tenant.
+        Uses live score calculation for the current week (same as live-leaderboard)
+        so it always reflects real-time performance rather than stale snapshots.
         """
-        departments = Department.objects.filter(tenant=tenant).prefetch_related(
-            "projects", "employees__performance_snapshots"
+        from datetime import timedelta
+        from performance.calculators import calculate_overall_score
+        from performance.models import PerformanceWeightConfig
+        from accounts.models import Employee as Emp
+
+        today = timezone.localdate()
+        # Current week: Monday → today
+        period_start = today - timedelta(days=today.weekday())
+
+        config, _ = PerformanceWeightConfig.objects.get_or_create(
+            tenant=tenant,
+            defaults={},
         )
 
+        departments = Department.objects.filter(tenant=tenant)
         health_data = []
 
         for dept in departments:
-            # Avg Performance Score
-            recent_snapshots = PerformanceSnapshot.objects.filter(
+            # ── Live avg performance score for this week ──────────
+            dept_employees = (
+                Emp.objects.filter(
+                    tenant=tenant,
+                    department=dept,
+                    is_active=True,
+                    status="active",
+                )
+                .select_related("access_role")
+                .exclude(access_role__name="Admin")
+            )
+
+            scores = []
+            for emp in dept_employees:
+                result = calculate_overall_score(emp, period_start, today, config=config)
+                scores.append(float(result["overall_score"]))
+
+            avg_score_val = round(sum(scores) / len(scores), 1) if scores else 0.0
+
+            # ── Real attendance % for today ────────────────────────
+            total_in_dept = dept_employees.count()
+            if total_in_dept > 0:
+                clocked_today = DailyLog.objects.filter(
+                    tenant=tenant,
+                    employee__department=dept,
+                    date=today,
+                    status__in=[DailyLog.Status.CLOCKED_IN, DailyLog.Status.CLOCKED_OUT],
+                ).count()
+                attendance_pct = round((clocked_today / total_in_dept) * 100, 1)
+            else:
+                attendance_pct = 0.0
+
+            # ── Active projects ────────────────────────────────────
+            active_projects = Project.objects.filter(
                 tenant=tenant,
-                employee__department=dept, 
-                period_type=PerformanceSnapshot.PeriodType.WEEKLY
-            ).order_by("-period_start")
-
-            avg_score = recent_snapshots.aggregate(Avg("overall_score"))["overall_score__avg"]
-            avg_score_val = float(avg_score) if avg_score else 0.0
-
-            # Projects
-            active_projects = dept.projects.filter(tenant=tenant, status=Project.Status.ACTIVE).count()
-
-            # Open Tickets
-            open_tickets = Ticket.objects.filter(
-                tenant=tenant,
-                assigned_to__department=dept, 
-                status=Ticket.Status.OPEN
+                owning_department=dept,
+                status=Project.Status.ACTIVE,
             ).count()
 
-            attendance_pct = 95.0
+            # ── Open tickets ───────────────────────────────────────
+            open_tickets = Ticket.objects.filter(
+                tenant=tenant,
+                assigned_to__department=dept,
+                status=Ticket.Status.OPEN,
+            ).count()
 
+            # ── Health status ──────────────────────────────────────
             if (
                 open_tickets > 10
                 or attendance_pct < 80.0
@@ -133,7 +171,7 @@ class AnalyticsService:
                     "department_id": dept.id,
                     "department_name": dept.name,
                     "attendance_pct": attendance_pct,
-                    "avg_performance_score": round(avg_score_val, 1),
+                    "avg_performance_score": avg_score_val,
                     "active_projects_count": active_projects,
                     "open_tickets_count": open_tickets,
                     "health_status": color,

@@ -213,7 +213,13 @@ def calculate_overall_score(employee, start_date, end_date, config=None):
     from .models import PerformanceWeightConfig
 
     if config is None:
-        config, _ = PerformanceWeightConfig.objects.get_or_create()
+        # This path is only hit in tests / management commands.
+        # Production code always passes config= from the view.
+        # Fall back to a default config (no tenant) only for safety.
+        config, _ = PerformanceWeightConfig.objects.get_or_create(
+            tenant=None,
+            defaults={},
+        )
 
     attendance = calculate_attendance_score(employee, start_date, end_date)
     delivery = calculate_delivery_score(employee, start_date, end_date)

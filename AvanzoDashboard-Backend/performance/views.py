@@ -1,12 +1,13 @@
 """
 Performance scoring API views.
 
-5 endpoints:
-  /api/performance/my-score/     — employee sees own live score
-  /api/performance/team-scores/  — TL sees direct reports' snapshots
-  /api/performance/leaderboard/  — Admin/HR sees company ranking
-  /api/performance/history/      — historical trend for one employee
-  /api/performance/config/       — Admin views/updates scoring weights
+6 endpoints:
+  /api/performance/my-score/        — employee sees own live score
+  /api/performance/team-scores/     — TL sees direct reports' snapshots
+  /api/performance/leaderboard/     — Admin/HR sees company ranking (snapshots)
+  /api/performance/live-leaderboard/ — Admin/HR live scores for all employees
+  /api/performance/history/         — historical trend for one employee
+  /api/performance/config/          — Admin views/updates scoring weights
 """
 
 from datetime import timedelta
@@ -144,6 +145,67 @@ class LeaderboardView(TenantFilterMixin, ListAPIView):
             .select_related("employee", "employee__department")
             .order_by("rank")
         )
+
+
+class LiveLeaderboardView(APIView):
+    """
+    GET /api/performance/live-leaderboard/
+
+    Compute real-time performance scores for every employee in the tenant
+    for the current week (Monday → today).  Returns results sorted by
+    overall_score descending.
+
+    This endpoint works even when no PerformanceSnapshot rows exist yet
+    (i.e. before the first weekly celery task runs).
+    Admin and HR only.
+    """
+
+    permission_classes = [IsAuthenticated, IsAdminOrHR]
+
+    def get(self, request):
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        today = timezone.localdate()
+        period_start = today - timedelta(days=today.weekday())  # Monday
+
+        # Get the tenant-level weight config
+        config, _ = PerformanceWeightConfig.objects.get_or_create(
+            tenant=request.user.tenant
+        )
+
+        employees = (
+            User.objects.filter(
+                tenant=request.user.tenant,
+                is_active=True,
+            )
+            .select_related("department", "access_role")
+            .exclude(access_role__name="Admin")   # role_name is a @property — use FK path
+        )
+
+        results = []
+        for emp in employees:
+            scores = calculate_overall_score(emp, period_start, today, config=config)
+            results.append({
+                "employee_id": str(emp.id),
+                "employee_name": emp.get_full_name() or emp.email,
+                "department": emp.department.name if emp.department else "",
+                "role": getattr(emp, "role_name", ""),
+                "attendance_score": float(scores["attendance_score"]),
+                "delivery_score": float(scores["delivery_score"]),
+                "quality_score": float(scores["quality_score"]),
+                "reliability_score": float(scores["reliability_score"]),
+                "overall_score": float(scores["overall_score"]),
+                "period_start": str(period_start),
+                "period_end": str(today),
+            })
+
+        # Sort by overall_score descending and add rank
+        results.sort(key=lambda x: x["overall_score"], reverse=True)
+        for i, row in enumerate(results, start=1):
+            row["rank"] = i
+
+        return Response(results)
 
 
 class HistoryView(TenantFilterMixin, ListAPIView):

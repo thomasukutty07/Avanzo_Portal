@@ -9,6 +9,7 @@ Edge cases handled:
 - LeaveRequest skips 'tl_approved' intermediate state (clutters feed)
 - Task progress updates NOT logged (spam). Only creation + completion.
 - Employee department can be NULL → FK is nullable.
+- tenant= is always derived from the actor so events are org-scoped.
 """
 
 import logging
@@ -40,9 +41,9 @@ def log_attendance_activity(sender, instance, created, **kwargs):
     Avoids duplicate events by checking if event already exists for this log.
     """
     ct = ContentType.objects.get_for_model(DailyLog)
+    tenant = instance.employee.tenant
 
     if instance.status == DailyLog.Status.CLOCKED_IN and instance.clock_in_time:
-        # Avoid duplicate: check if clock_in event already logged for this DailyLog
         if ActivityEvent.objects.filter(
             content_type=ct,
             object_id=instance.id,
@@ -54,6 +55,7 @@ def log_attendance_activity(sender, instance, created, **kwargs):
         ActivityEvent.objects.create(
             event_type=ActivityEvent.EventType.CLOCK_IN,
             actor=instance.employee,
+            tenant=tenant,
             title=f"{instance.employee.get_full_name()} clocked in{late_text}",
             department=instance.employee.department,
             content_type=ct,
@@ -74,6 +76,7 @@ def log_attendance_activity(sender, instance, created, **kwargs):
         ActivityEvent.objects.create(
             event_type=ActivityEvent.EventType.CLOCK_OUT,
             actor=instance.employee,
+            tenant=tenant,
             title=f"{instance.employee.get_full_name()} clocked out ({hours}h)",
             department=instance.employee.department,
             content_type=ct,
@@ -93,11 +96,13 @@ def log_task_activity(sender, instance, created, **kwargs):
     Skips progress updates to avoid spamming the feed.
     """
     ct = ContentType.objects.get_for_model(Task)
+    tenant = instance.assignee.tenant if instance.assignee else None
 
     if created:
         ActivityEvent.objects.create(
             event_type=ActivityEvent.EventType.TASK_CREATED,
             actor=instance.assignee,
+            tenant=tenant,
             title=f"New task: {instance.title}",
             detail=f"Project: {instance.project.title} | Complexity: {instance.complexity}",
             department=instance.project.owning_department,
@@ -110,7 +115,6 @@ def log_task_activity(sender, instance, created, **kwargs):
             },
         )
     elif instance.status == Task.Status.RESOLVED:
-        # Avoid duplicate completion events
         if ActivityEvent.objects.filter(
             content_type=ct,
             object_id=instance.id,
@@ -121,6 +125,7 @@ def log_task_activity(sender, instance, created, **kwargs):
         ActivityEvent.objects.create(
             event_type=ActivityEvent.EventType.TASK_COMPLETED,
             actor=instance.assignee,
+            tenant=tenant,
             title=f"{instance.assignee.get_full_name()} completed: {instance.title}",
             detail=f"Project: {instance.project.title} | Complexity: {instance.complexity}",
             department=instance.project.owning_department,
@@ -145,6 +150,7 @@ def log_leave_activity(sender, instance, created, **kwargs):
     Only logs: pending (new request), approved (final), rejected.
     """
     ct = ContentType.objects.get_for_model(LeaveRequest)
+    tenant = instance.employee.tenant
 
     event_map = {
         LeaveRequest.Status.PENDING: (
@@ -169,7 +175,6 @@ def log_leave_activity(sender, instance, created, **kwargs):
 
     event_type, title, icon = event_map[instance.status]
 
-    # Avoid duplicate for same status transition
     if ActivityEvent.objects.filter(
         content_type=ct,
         object_id=instance.id,
@@ -180,6 +185,7 @@ def log_leave_activity(sender, instance, created, **kwargs):
     ActivityEvent.objects.create(
         event_type=event_type,
         actor=instance.employee,
+        tenant=tenant,
         title=title,
         detail=(
             f"{instance.start_date} to {instance.end_date} ({instance.get_leave_type_display()})"
@@ -202,11 +208,13 @@ def log_leave_activity(sender, instance, created, **kwargs):
 def log_ticket_activity(sender, instance, created, **kwargs):
     """Log ticket creation and resolution."""
     ct = ContentType.objects.get_for_model(Ticket)
+    tenant = instance.created_by.tenant if instance.created_by else None
 
     if created:
         ActivityEvent.objects.create(
             event_type=ActivityEvent.EventType.TICKET_CREATED,
             actor=instance.created_by,
+            tenant=tenant,
             title=(
                 f"{instance.created_by.get_full_name()} filed "
                 f"{instance.get_ticket_type_display()} ticket"
@@ -229,6 +237,7 @@ def log_ticket_activity(sender, instance, created, **kwargs):
         ActivityEvent.objects.create(
             event_type=ActivityEvent.EventType.TICKET_RESOLVED,
             actor=instance.resolved_by,
+            tenant=instance.resolved_by.tenant,
             title=f"Ticket resolved: {instance.title}",
             department=instance.created_by.department,
             content_type=ct,
@@ -244,11 +253,13 @@ def log_ticket_activity(sender, instance, created, **kwargs):
 def log_project_activity(sender, instance, created, **kwargs):
     """Log project creation and completion."""
     ct = ContentType.objects.get_for_model(Project)
+    tenant = instance.manager.tenant if instance.manager else None
 
     if created:
         ActivityEvent.objects.create(
             event_type=ActivityEvent.EventType.PROJECT_CREATED,
             actor=instance.manager,
+            tenant=tenant,
             title=f"New project: {instance.title}",
             department=instance.owning_department,
             content_type=ct,
@@ -266,6 +277,7 @@ def log_project_activity(sender, instance, created, **kwargs):
         ActivityEvent.objects.create(
             event_type=ActivityEvent.EventType.PROJECT_COMPLETED,
             actor=instance.manager,
+            tenant=tenant,
             title=f"Project completed: {instance.title}",
             department=instance.owning_department,
             content_type=ct,
@@ -286,6 +298,7 @@ def log_employee_joined(sender, instance, created, **kwargs):
     ActivityEvent.objects.create(
         event_type=ActivityEvent.EventType.EMPLOYEE_JOINED,
         actor=instance,
+        tenant=instance.tenant,
         title=f"Welcome {instance.get_full_name()}!",
         detail=f"Department: {instance.department.name if instance.department else 'Unassigned'}",
         department=instance.department,
@@ -307,6 +320,7 @@ def log_broadcast_activity(sender, instance, created, **kwargs):
     ActivityEvent.objects.create(
         event_type=ActivityEvent.EventType.BROADCAST_SENT,
         actor=instance.created_by,
+        tenant=instance.created_by.tenant,
         title=f"Broadcast: {instance.title}",
         detail=f"Scope: {instance.get_target_scope_display()}",
         department=instance.department,
