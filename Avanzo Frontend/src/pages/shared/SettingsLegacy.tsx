@@ -4,19 +4,15 @@ import {
   Camera, 
   LogOut, 
   User, 
-  Star, 
   Layers, 
   ShieldCheck, 
   Workflow, 
-  UserCircle,
-  CheckCircle2
+  UserCircle
 } from "lucide-react"
 import { UserAvatar } from "@/components/shared/UserAvatar"
 import { OrgDepartmentsDesignations } from "@/components/organization/OrgDepartmentsDesignations"
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef } from "react"
 import { toast } from "sonner"
-import { api } from "@/lib/axios"
-import { extractResults } from "@/lib/apiResults"
 import {
   Dialog,
   DialogContent,
@@ -38,36 +34,6 @@ export default function SettingsLegacyPage() {
     user?.role === "Organization" ||
     user?.role === "HR" ||
     user?.role === "Team Lead"
-
-  const [talentTags, setTalentTags] = useState<any[]>([])
-  const [declaredTalents, setDeclaredTalents] = useState<number[]>(user?.evaluated_talents || [])
-  const [savingSkills, setSavingSkills] = useState(false)
-
-  useEffect(() => {
-    fetchTalentTags()
-  }, [])
-
-  const fetchTalentTags = async () => {
-    try {
-      const res = await api.get("/api/skills/catalog/");
-      setTalentTags(extractResults(res.data));
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  const handleSaveSkills = async () => {
-    if (!user?.id) return;
-    try {
-      setSavingSkills(true);
-      await api.post(`/api/auth/employees/${user.id}/update-skills/`, { talent_ids: declaredTalents });
-      toast.success("Skills updated.");
-    } catch (e) {
-      toast.error("Failed to sync skills.");
-    } finally {
-      setSavingSkills(false);
-    }
-  }
 
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -265,55 +231,6 @@ export default function SettingsLegacyPage() {
               </div>
             </section>
 
-            {/* Talent Declaration Section */}
-            <section className="space-y-6">
-              <header className="flex items-center gap-4">
-                <div className="p-2.5 bg-amber-50 rounded-xl text-amber-600 shadow-sm border border-amber-100">
-                   <Star className="h-4 w-4 stroke-[3]" />
-                </div>
-                <h3 className="text-slate-900 font-black text-[12px]">
-                  My Skills
-                </h3>
-              </header>
-              
-              <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm space-y-8">
-                <div className="space-y-2">
-                   <h4 className="text-sm font-black text-slate-900 tracking-tight">Select Your Skills</h4>
-                   <p className="text-[10px] font-bold text-slate-400 opacity-60">Select the skills you possess to help with matching projects.</p>
-                </div>
-
-                <div className="flex flex-wrap gap-3">
-                  {talentTags.map((tag: any) => {
-                    const isSelected = declaredTalents.includes(tag.id);
-                    return (
-                      <button 
-                        key={tag.id}
-                        onClick={() => {
-                          if (isSelected) setDeclaredTalents(prev => prev.filter(id => id !== tag.id));
-                          else setDeclaredTalents(prev => [...prev, tag.id]);
-                        }}
-                        className={`px-5 py-2.5 rounded-xl text-[11px] font-bold transition-all border flex items-center gap-2.5 ${
-                          isSelected 
-                            ? 'bg-violet-600 text-white border-violet-600 shadow-lg shadow-violet-600/20' 
-                            : 'bg-slate-50 text-slate-400 border-slate-100 hover:border-violet-100 hover:text-slate-600'
-                        }`}
-                      >
-                        {isSelected && <CheckCircle2 className="size-3.5" />}
-                        {tag.name}
-                      </button>
-                    )
-                  })}
-                </div>
-
-                <button 
-                  onClick={handleSaveSkills}
-                  disabled={savingSkills}
-                  className="px-10 py-4 bg-slate-900 text-white text-[11px] font-bold rounded-2xl hover:bg-violet-600 transition-all shadow-xl active:scale-95 disabled:opacity-50"
-                >
-                  {savingSkills ? "Saving..." : "Save Skills"}
-                </button>
-              </div>
-            </section>
           </TabsContent>
 
           {canManageOrg && (
