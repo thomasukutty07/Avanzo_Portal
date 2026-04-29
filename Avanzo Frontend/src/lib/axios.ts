@@ -5,7 +5,14 @@ import { jwtDecode } from "jwt-decode"
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 const getBaseUrl = () => {
-  return import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") || "http://localhost:8000"
+  // In development: Vite proxies /api/* → localhost:8000, so we use a
+  // relative base URL (""). This makes all API calls same-origin and lets
+  // CSP connect-src 'self' work without whitelisting the backend host.
+  //
+  // In production: VITE_API_BASE_URL must be set to the real backend domain
+  // (e.g. https://api.avanzo.io) since there is no proxy layer.
+  if (import.meta.env.DEV) return ""
+  return import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") || ""
 }
 
 /** Returns true if the token's `exp` claim is in the past (with 30s leeway). */

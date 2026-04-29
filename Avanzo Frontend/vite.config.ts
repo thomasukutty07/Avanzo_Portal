@@ -9,6 +9,26 @@ export default defineConfig({
   server: {
     host: true, // Listen on all local IPs
     port: 5173,
+    // ── Dev proxy ────────────────────────────────────────────────────────────
+    // Proxies /api/* and /ws/* through Vite's dev server so they appear
+    // same-origin to the browser (origin: localhost:5173 → backend: localhost:8000).
+    //
+    // Benefits:
+    //  ✅ CSP connect-src 'self' works without whitelisting localhost:8000
+    //  ✅ No CORS configuration needed in Django for local dev
+    //  ✅ No VITE_API_BASE_URL needed — axios uses relative paths in dev
+    proxy: {
+      "/api": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+        secure: false,
+      },
+      "/ws": {
+        target: "ws://localhost:8000",
+        ws: true,
+        changeOrigin: true,
+      },
+    },
     // ── Dev-server security headers ─────────────────────────────────────────
     // Mirrors what core.security_middleware.SecurityHeadersMiddleware serves
     // in production so developers get protected during local development too.
