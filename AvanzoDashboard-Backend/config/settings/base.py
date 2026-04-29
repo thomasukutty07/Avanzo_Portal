@@ -59,6 +59,9 @@ TENANT_MODEL = "clients.Client"
 TENANT_DOMAIN_MODEL = "clients.Domain"
 
 MIDDLEWARE = [
+    # ── 1st: Block scanners & path traversal before touching Django internals ─
+    "core.security_middleware.SuspiciousRequestBlockerMiddleware",
+    # ── Django core ───────────────────────────────────────────────────────────
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -67,6 +70,10 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # ── Last: Inject security headers into every outbound response ────────────
+    "core.security_middleware.SecurityHeadersMiddleware",
+    # ── Audit trail for all write operations ─────────────────────────────────
+    "auditlog.middleware.AuditlogMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -135,20 +142,38 @@ USE_TZ = True
 STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# ── Security hardening (base-level — supplements production.py) ───────────────
+# Clickjacking protection: deny all framing (strongest setting).
+X_FRAME_OPTIONS = "DENY"
+# Prevent MIME sniffing on all environments.
+SECURE_CONTENT_TYPE_NOSNIFF = True
+# Disable the Django admin 'changelist' redirect to prevent open redirect abuse.
+APPEND_SLASH = False
+
 # Custom User Model
 AUTH_USER_MODEL = "accounts.Employee"
 
 # Django REST Framework
-# 🟡 DEV (DX): Consolidated and fixed redundancy bug from previous iteration
 REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "core.exceptions.custom_exception_handler",
+    # Default throttles apply to every view unless overridden at the view level.
+    # Authenticated users get a burst + sustained window; anon gets a tighter limit.
     "DEFAULT_THROTTLE_CLASSES": [
-        "rest_framework.throttling.AnonRateThrottle",
-        "rest_framework.throttling.UserRateThrottle",
+        "core.throttling.BurstRateThrottle",
+        "core.throttling.SustainedRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
+        # Generic defaults
         "anon": "60/minute",
-        "user": "1000/minute",
+        "user": "1000/hour",
+        # Fine-grained per-endpoint scopes (used by core.throttling custom classes)
+        "burst": "60/minute",
+        "sustained": "1000/hour",
+        "login": "5/minute",
+        "registration": "3/hour",
+        "password_reset": "3/900s",   # 3 per 15 minutes
+        "token_refresh": "30/minute",
+        "report_export": "10/hour",
     },
     "DEFAULT_AUTHENTICATION_CLASSES": ("core.authentication.TenantAwareJWTAuthentication",),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
@@ -199,5 +224,64 @@ CHANNEL_LAYERS = {
         "CONFIG": {
             "hosts": [env("REDIS_URL", default="redis://127.0.0.1:6379/2")],
         },
+    },
+}
+
+# ── Structured Security Logging ───────────────────────────────────────────────
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
+        },
+        "json_security": {
+            "format": '{"level": "%(levelname)s", "time": "%(asctime)s", "logger": "%(name)s", "message": "%(message)s"}',
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+        "security_file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": BASE_DIR / "logs" / "security.log",
+            "maxBytes": 10 * 1024 * 1024,  # 10 MB per file
+            "backupCount": 5,
+            "formatter": "json_security",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": env("DJANGO_LOG_LEVEL", default="INFO"),
+            "propagate": False,
+        },
+        "django.security": {
+            "handlers": ["console", "security_file"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "core.authentication": {
+            "handlers": ["console", "security_file"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "core.security_middleware": {
+            "handlers": ["console", "security_file"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "accounts.views": {
+            "handlers": ["console", "security_file"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
     },
 }

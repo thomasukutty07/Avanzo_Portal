@@ -9,6 +9,25 @@ export default defineConfig({
   server: {
     host: true, // Listen on all local IPs
     port: 5173,
+    // ── Dev-server security headers ─────────────────────────────────────────
+    // Mirrors what core.security_middleware.SecurityHeadersMiddleware serves
+    // in production so developers get protected during local development too.
+    headers: {
+      "X-Frame-Options": "DENY",
+      "X-Content-Type-Options": "nosniff",
+      "X-XSS-Protection": "1; mode=block",
+      "Referrer-Policy": "strict-origin-when-cross-origin",
+      "Permissions-Policy":
+        "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()",
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Cross-Origin-Resource-Policy": "same-origin",
+    },
+  },
+  build: {
+    // Remove console statements and source maps from production bundles
+    // to prevent leaking internal logic to the browser devtools.
+    sourcemap: false,
+    minify: "esbuild",
   },
   plugins: [
     react(),
@@ -55,3 +74,4 @@ export default defineConfig({
     },
   },
 })
+

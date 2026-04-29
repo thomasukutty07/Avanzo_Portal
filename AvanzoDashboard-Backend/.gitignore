@@ -27,3 +27,5 @@ media/
 # openai schema
 schema.yaml
 erd.png
+
+logs/*.log

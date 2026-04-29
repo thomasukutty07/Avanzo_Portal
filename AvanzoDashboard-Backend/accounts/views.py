@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 
 from django.utils import timezone
@@ -13,6 +14,9 @@ from rest_framework_simplejwt.tokens import BlacklistedToken, OutstandingToken, 
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from core.permissions import IsAdminOrHR, IsTeamLeadOrAbove
+from core.throttling import LoginRateThrottle, RegistrationRateThrottle, TokenRefreshRateThrottle
+
+logger = logging.getLogger(__name__)
 
 from .models import AccessRole, Employee, LoginAttempt
 from .serializers import (
@@ -25,8 +29,6 @@ from .serializers import (
 from .services import TenantOrchestrator
 
 
-class RegistrationRateThrottle(AnonRateThrottle):
-    rate = "5/hour"
 
 
 class TenantRegistrationView(APIView):
@@ -63,17 +65,14 @@ class TenantRegistrationView(APIView):
                 {"message": "Workspace provisioned successfully. Redirect to login."},
                 status=status.HTTP_201_CREATED,
             )
-        except Exception as e:
-            import logging
-            logging.error(f"Provisioning failed: {e}", exc_info=True)
+        except Exception:
+            # 🛡️ SECURITY: Never leak internal exception details to the response.
+            # The full traceback is logged internally for engineers to debug.
+            logger.error("Provisioning failed for subdomain '%s'", data.get("subdomain"), exc_info=True)
             return Response(
-                {"detail": f"Provisioning failed: {str(e)}"},
+                {"detail": "Workspace provisioning failed. Please contact support."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
-
-class LoginRateThrottle(AnonRateThrottle):
-    rate = "5/minute"
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):

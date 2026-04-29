@@ -84,7 +84,37 @@ class TenantAwareJWTAuthentication(JWTAuthentication):
         # If any standard check fails, it raises InvalidToken here and we never
         # reach our custom check. That's exactly what we want.
         token = super().get_validated_token(raw_token)
-        return token
+
+        # ── Step 2: Enforce token type — only ACCESS tokens allowed here ──────
+        # Prevents refresh tokens from being used as access tokens directly.
+        token_type = token.get("token_type", "")
+        if token_type != "access":
+            logger.warning(
+                "Rejected non-access token type '%s' used as bearer token.", token_type
+            )
+            raise AuthenticationFailed(
+                "Invalid token type. Only access tokens are accepted.",
+                code="token_type_invalid",
+            )
+
+        # ── Step 3: Enforce tenant boundary ───────────────────────────────────
+        # A token issued by tenant "company_a" must NOT authenticate at "company_b".
+        # The tenant schema name is embedded into the JWT at login time by
+        # CustomTokenObtainPairSerializer.
+        token_tenant = token.get("tenant_schema")
+        current_tenant = connection.tenant.schema_name if hasattr(connection, "tenant") else None
+
+        if token_tenant and current_tenant and token_tenant != current_tenant:
+            # Deliberately ambiguous message — don't reveal schema names to attackers.
+            logger.warning(
+                "Tenant mismatch: token issued for '%s' used against '%s'.",
+                token_tenant,
+                current_tenant,
+            )
+            raise AuthenticationFailed(
+                "Authentication credentials are invalid for this workspace.",
+                code="tenant_mismatch",
+            )
 
         return token
 

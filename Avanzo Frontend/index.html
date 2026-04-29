@@ -9,6 +9,47 @@
       name="description"
       content="Avanzo Cyber Security Solutions - Internal Workspace Dashboard"
     />
+
+    <!--
+      ════════════════════════════════════════════════════════════════
+      SECURITY HEADERS (meta-tag equivalents)
+      Note: The Django backend also sets these as HTTP response headers
+      via core.security_middleware.SecurityHeadersMiddleware.
+      These meta tags provide a second layer for environments where the
+      backend headers may be stripped (e.g. CDN edge caches).
+      ════════════════════════════════════════════════════════════════
+    -->
+
+    <!-- Content-Security-Policy: Prevent XSS by whitelisting resource origins -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline';
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+        font-src 'self' https://fonts.gstatic.com data:;
+        img-src 'self' data: blob:;
+        connect-src 'self';
+        frame-ancestors 'none';
+        base-uri 'self';
+        form-action 'self';
+        object-src 'none';
+        upgrade-insecure-requests;
+      "
+    />
+
+    <!-- Prevent MIME-type sniffing (supplementary to X-Content-Type-Options header) -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+
+    <!-- Prevent this page from being embedded in any frame (anti-clickjacking) -->
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+
+    <!-- Referrer: Only send origin on same-site; no referrer on cross-origin -->
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+    <!-- Disable cache for the HTML shell (API responses are separately no-store) -->
+    <meta http-equiv="Cache-Control" content="no-store" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -20,7 +61,6 @@
       rel="stylesheet"
     />
     <meta name="theme-color" content="#ffffff" />
-    <meta name="description" content="Avanzo HR & Employee Dashboard" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
   </head>
   <body>
@@ -28,3 +68,4 @@
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
+
