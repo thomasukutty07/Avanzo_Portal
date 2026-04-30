@@ -56,7 +56,7 @@ export default function TechnicalDashboardPage() {
           {
             label: "Project progress",
             value: `${Math.round(avgProgress)}%`,
-            sub: "Mission deployment",
+            sub: "Overall progress",
             subColor: "text-emerald-500",
             accent: "text-slate-900",
             bar: true,
@@ -82,7 +82,7 @@ export default function TechnicalDashboardPage() {
           { 
             label: "SLA compliance", 
             value: `${slaVal}%`, 
-            sub: slaVal > 90 ? "Optimal hub" : "Alert protocol", 
+            sub: slaVal > 90 ? "On track" : "Needs attention", 
             color: slaVal > 90 ? "text-emerald-500" : "text-amber-500", 
             val: slaVal,
             accent: "text-slate-900"
@@ -90,8 +90,8 @@ export default function TechnicalDashboardPage() {
         ]);
 
       } catch (error) {
-        console.error("Dashboard synchronization failed:", error);
-        toast.error("Failed to synchronize operation overview.");
+        console.error("Dashboard data load failed:", error);
+        toast.error("Failed to load dashboard data.");
       } finally {
         setLoading(false);
       }
@@ -109,7 +109,7 @@ export default function TechnicalDashboardPage() {
         <div className="flex h-[80vh] items-center justify-center bg-[#fcfcfc]">
             <div className="flex flex-col items-center gap-6">
                 <Loader2 className="h-10 w-10 animate-spin text-violet-600" />
-                <p className="text-[11px] font-black text-slate-400 font-headline">Scanning operation center intelligence...</p>
+                <p className="text-sm font-black text-slate-400 font-headline">Loading dashboard...</p>
             </div>
         </div>
     );
@@ -120,24 +120,24 @@ export default function TechnicalDashboardPage() {
       {/* Page Header */}
       <div className="sticky top-0 z-30 -mx-4 md:-mx-8 px-4 md:px-8 py-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-8 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-transparent transition-all">
         <div>
-          <p className="text-[10px] font-black tracking-[0.3em] text-violet-600 mb-2 leading-none">
-            Technical sector
+          <p className="text-[12px] font-black tracking-[0.2em] text-violet-600 mb-2 leading-none uppercase">
+            Dashboard
           </p>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">Operational hub</h1>
-          <p className="text-slate-500 mt-2 text-xs font-medium">Real-time engineering telemetry and mission health protocols.</p>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">Overview</h1>
+          <p className="text-slate-500 mt-2 text-xs font-medium">View your projects, tasks, and overall progress.</p>
         </div>
         <div className="flex items-center gap-4 self-start md:self-auto">
           <button
             type="button"
             onClick={() => navigate("/technical/leave")}
-            className="px-7 py-3 rounded-xl border border-slate-100 bg-white text-slate-900 text-[10px] font-black hover:bg-slate-50 transition-all active:scale-95 shadow-sm"
+            className="px-7 py-3 rounded-xl border border-slate-100 bg-white text-slate-900 text-xs font-black hover:bg-slate-50 transition-all active:scale-95 shadow-sm"
           >
             Leave request
           </button>
           <button
             type="button"
             onClick={() => navigate("/technical/tasks")}
-            className="flex items-center gap-3 px-7 py-3 rounded-xl bg-violet-600 text-white text-[10px] font-black hover:bg-violet-700 transition-all shadow-lg shadow-violet-600/20 active:scale-95 shadow-md"
+            className="flex items-center gap-3 px-7 py-3 rounded-xl bg-violet-600 text-white text-xs font-black hover:bg-violet-700 transition-all shadow-lg shadow-violet-600/20 active:scale-95 shadow-md"
           >
             <Plus className="size-4 stroke-[3px]" />
             My tasks
@@ -150,9 +150,9 @@ export default function TechnicalDashboardPage() {
         {stats.map((s: any) => (
           <div key={s.label} className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-8 hover:shadow-xl hover:-translate-y-1 transition-all group">
             <div className="flex items-center justify-between mb-6">
-              <p className="text-[9px] font-black text-slate-400">{s.label}</p>
+              <p className="text-[11px] font-black text-slate-400 uppercase tracking-wider">{s.label}</p>
               {s.sub && (
-                <span className={`text-[10px] font-black ${s.subColor} bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100/50`}>{s.sub}</span>
+                <span className={`text-[11px] font-black ${s.subColor} bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100/50`}>{s.sub}</span>
               )}
             </div>
             <p className={`text-2xl font-black tracking-tight ${s.accent} leading-none`}>{s.value}</p>
@@ -165,8 +165,11 @@ export default function TechnicalDashboardPage() {
               </div>
             )}
             {!s.bar && s.val !== undefined && (
-               <div className="mt-8 h-1 w-full bg-slate-50 rounded-full overflow-hidden">
-                  <div className={`h-full bg-slate-200 transition-all duration-1000`} style={{ width: `${s.val}%` }} />
+               <div className="mt-8 h-2 w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100 shadow-inner group-hover:border-slate-200 transition-colors">
+                  <div 
+                    className={`h-full rounded-full transition-all duration-1000 ${s.val > 90 ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]' : 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.3)]'}`} 
+                    style={{ width: `${s.val}%` }} 
+                  />
                </div>
             )}
           </div>
@@ -183,13 +186,13 @@ export default function TechnicalDashboardPage() {
         {/* Personal Task List */}
         <div className="lg:col-span-12 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden hover:shadow-xl transition-all duration-700">
           <div className="flex items-center justify-between px-10 py-8 border-b border-slate-50 bg-slate-50/10">
-            <h3 className="font-black text-xl text-slate-900 tracking-tight">Assigned directives</h3>
+            <h3 className="font-black text-xl text-slate-900 tracking-tight">Assigned tasks</h3>
             <button
               type="button"
               onClick={() => navigate("/technical/tasks")}
-              className="text-[10px] font-black text-violet-600 hover:text-violet-800 transition-colors flex items-center gap-3 bg-violet-50 px-5 py-2.5 rounded-xl border border-violet-100 shadow-sm"
+              className="text-xs font-black text-violet-600 hover:text-violet-800 transition-colors flex items-center gap-3 bg-violet-50 px-5 py-2.5 rounded-xl border border-violet-100 shadow-sm"
             >
-              Full roster
+              View all
               <ExternalLink className="size-3.5" />
             </button>
           </div>
@@ -199,18 +202,18 @@ export default function TechnicalDashboardPage() {
                 const isUrgent = t.priority === 'high' || t.priority === 'urgent' || t.priority === 'critical';
                 
                 return (
-                  <div key={i} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8 px-6 sm:px-10 py-8 group hover:bg-slate-50/30 transition-all cursor-pointer" onClick={() => toast.info(`Syncing directive: ${t.title}`)}>
+                  <div key={i} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8 px-6 sm:px-10 py-8 group hover:bg-slate-50/30 transition-all cursor-pointer" onClick={() => toast.info(`Opening task: ${t.title}`)}>
                     <div className="size-14 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-3xl shadow-sm group-hover:scale-110 transition-all group-hover:border-violet-100 group-hover:shadow-xl group-hover:rotate-6">
                       {isUrgent ? "⚠" : t.task_type === 'bug' ? "🐛" : "🔧"}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[16px] font-black text-slate-900 group-hover:text-violet-700 transition-colors tracking-tight leading-none mb-2.5">{t.title}</p>
-                      <p className="text-[11px] text-slate-300 font-black leading-none opacity-80">
-                        {t.project_name || "Strategic unit"} • {t.due_date ? `due ${t.due_date}` : "Mission pending"}
+                      <p className="text-xs text-slate-400 font-bold leading-none">
+                        {t.project_name || "Project"} • {t.due_date ? `due ${t.due_date}` : "No due date"}
                       </p>
                     </div>
                     <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                       <div className={`px-5 py-2 rounded-xl text-[10px] font-black shrink-0 border transition-all shadow-sm ${
+                       <div className={`px-5 py-2 rounded-xl text-xs font-black shrink-0 border transition-all shadow-sm ${
                          isUrgent ? 'bg-red-50 text-red-600 border-red-100' :
                          t.priority === 'medium' ? 'bg-violet-50 text-violet-600 border-violet-100' :
                          'bg-slate-50 text-slate-400 border-slate-100'
@@ -229,9 +232,9 @@ export default function TechnicalDashboardPage() {
                 );
               })
             ) : (
-                <div className="px-10 py-24 text-center opacity-30">
-                   <Shield className="size-12 mx-auto mb-6 text-slate-200" />
-                   <p className="text-[11px] font-black tracking-[0.2em]">Operational stack synchronized</p>
+                <div className="px-10 py-24 text-center opacity-40">
+                   <Shield className="size-12 mx-auto mb-6 text-slate-300" />
+                   <p className="text-sm font-black tracking-[0.1em] text-slate-400 uppercase">No pending tasks</p>
                 </div>
             )}
           </div>
@@ -241,7 +244,7 @@ export default function TechnicalDashboardPage() {
       <TicketModal 
         isOpen={isTicketModalOpen} 
         onClose={() => setIsTicketModalOpen(false)} 
-        onSuccess={() => toast.success("System pulse record synchronized.")}
+        onSuccess={() => toast.success("Record updated successfully.")}
       />
     </div>
   )

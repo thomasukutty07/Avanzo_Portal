@@ -6,7 +6,7 @@ import { api } from "@/lib/axios"
 import { TECHNICAL_NAV_ITEMS } from "./technicalNavConfig"
 
 const linkBase =
-  "flex items-center gap-3 rounded-xl px-4 py-3 text-[13px] font-bold transition-all duration-200"
+  "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition-all duration-200"
 const inactive = `${linkBase} text-slate-500 hover:bg-slate-50 hover:text-slate-900`
 const active = `${linkBase} bg-violet-600 text-white shadow-md shadow-violet-600/20`
 
@@ -46,8 +46,8 @@ export function TechnicalPortalSidebar({
             alt="Avanzo" 
             className="w-32 h-auto object-contain"
           />
-          <p className="text-[9px] font-black tracking-[0.2em] leading-none text-violet-600/90 whitespace-nowrap italic">
-            Technical: engineering hub
+          <p className="text-[11px] font-black tracking-[0.2em] leading-none text-violet-600/90 whitespace-nowrap italic uppercase">
+            Technical Portal
           </p>
         </div>
       </div>
@@ -63,7 +63,7 @@ export function TechnicalPortalSidebar({
             <Icon className="size-5 shrink-0" />
             {!isCollapsed && <span className="flex-1 transition-all">{label}</span>}
             {!isCollapsed && label === "Announcements" && announcementCount > 0 && (
-              <span className="bg-violet-600 text-white text-[10px] font-black px-2 py-0.5 rounded-lg shadow-sm animate-in zoom-in duration-300">
+              <span className="bg-violet-600 text-white text-[11px] font-black px-2 py-0.5 rounded-lg shadow-sm animate-in zoom-in duration-300">
                 {announcementCount}
               </span>
             )}
@@ -78,7 +78,7 @@ export function TechnicalPortalSidebar({
             onNavClick?.()
             navigate("/login", { replace: true })
           }}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-50 py-3 text-[13px] font-bold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-50 py-3 text-sm font-bold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
         >
           <LogOut className={`size-4 ${isCollapsed ? 'mx-auto' : ''}`} />
           {!isCollapsed && "Log out"}

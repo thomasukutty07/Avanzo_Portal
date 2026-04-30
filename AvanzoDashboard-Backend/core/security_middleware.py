@@ -63,11 +63,11 @@ class SecurityHeadersMiddleware(MiddlewareMixin):
         # Adjust 'connect-src' to include your production API domain.
         csp_directives = [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline'",   # 'unsafe-inline' needed for Vite HMR in dev;
-                                                     # use nonce-based CSP in production.
+            "script-src 'self' 'unsafe-inline'",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "font-src 'self' https://fonts.gstatic.com data:",
-            "img-src 'self' data: blob:",
+            # Google profile photos (lh3.googleusercontent.com) for employee avatars
+            "img-src 'self' data: blob: https://*.googleusercontent.com",
             "connect-src 'self'",
             "frame-ancestors 'none'",               # Strongest clickjacking protection
             "base-uri 'self'",                      # Prevents base tag injection

@@ -13,14 +13,18 @@
     <!--
       ════════════════════════════════════════════════════════════════
       SECURITY HEADERS (meta-tag equivalents)
-      Note: The Django backend also sets these as HTTP response headers
-      via core.security_middleware.SecurityHeadersMiddleware.
-      These meta tags provide a second layer for environments where the
-      backend headers may be stripped (e.g. CDN edge caches).
+      ── What works in <meta> ──────────────────────────────────────
+        ✅ Content-Security-Policy  (except frame-ancestors — HTTP only)
+        ✅ Referrer-Policy
+        ✅ Cache-Control
+      ── HTTP-header-only (set in vite.config.ts + Django middleware) ─
+        ✗ frame-ancestors          (ignored in meta per spec)
+        ✗ X-Frame-Options          (ignored in meta per spec)
+        ✗ X-Content-Type-Options   (HTTP header only)
       ════════════════════════════════════════════════════════════════
     -->
 
-    <!-- Content-Security-Policy: Prevent XSS by whitelisting resource origins -->
+    <!-- Content-Security-Policy via meta (HTTP header in vite.config.ts takes precedence) -->
     <meta
       http-equiv="Content-Security-Policy"
       content="
@@ -28,27 +32,20 @@
         script-src 'self' 'unsafe-inline';
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
         font-src 'self' https://fonts.gstatic.com data:;
-        img-src 'self' data: blob:;
+        img-src 'self' data: blob: https://*.googleusercontent.com https://lh3.googleusercontent.com;
         connect-src 'self' http://localhost:8000 ws://localhost:8000 http://127.0.0.1:8000;
-        frame-ancestors 'none';
         base-uri 'self';
         form-action 'self';
         object-src 'none';
-        upgrade-insecure-requests;
       "
     />
-
-    <!-- Prevent MIME-type sniffing (supplementary to X-Content-Type-Options header) -->
-    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-
-    <!-- Prevent this page from being embedded in any frame (anti-clickjacking) -->
-    <meta http-equiv="X-Frame-Options" content="DENY" />
 
     <!-- Referrer: Only send origin on same-site; no referrer on cross-origin -->
     <meta name="referrer" content="strict-origin-when-cross-origin" />
 
-    <!-- Disable cache for the HTML shell (API responses are separately no-store) -->
+    <!-- Disable cache for the HTML shell -->
     <meta http-equiv="Cache-Control" content="no-store" />
+
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

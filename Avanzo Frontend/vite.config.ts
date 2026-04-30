@@ -33,6 +33,24 @@ export default defineConfig({
     // Mirrors what core.security_middleware.SecurityHeadersMiddleware serves
     // in production so developers get protected during local development too.
     headers: {
+      // CSP as an HTTP header — always overrides the meta tag and is never
+      // cached by the browser. localhost:8000 is allowed as a fallback for
+      // tools that bypass the proxy (e.g. Postman, browser extensions).
+      "Content-Security-Policy": [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline'",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "font-src 'self' https://fonts.gstatic.com data:",
+        // Google profile photos (lh3.googleusercontent.com) used for employee avatars
+        "img-src 'self' data: blob: https://*.googleusercontent.com",
+        // Allow same-origin (proxied requests) + direct to backend (fallback)
+        "connect-src 'self' http://localhost:8000 ws://localhost:8000 http://127.0.0.1:8000 ws://127.0.0.1:8000",
+        // frame-ancestors is HTTP-header-only (ignored in <meta>) — keep it here
+        "frame-ancestors 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "object-src 'none'",
+      ].join("; "),
       "X-Frame-Options": "DENY",
       "X-Content-Type-Options": "nosniff",
       "X-XSS-Protection": "1; mode=block",
