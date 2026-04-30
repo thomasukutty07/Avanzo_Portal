@@ -4,7 +4,7 @@ import { toast } from "sonner"
 import { MoreVertical, Plus, Shield, ExternalLink, Loader2 } from "lucide-react"
 
 import { projectsService } from "@/services/projects";
-import { notificationsService } from "@/services/notifications";
+
 import { useAuth } from "@/context/AuthContext";
 
 import { TicketModal } from "@/components/portal/technical/SupportModals";
