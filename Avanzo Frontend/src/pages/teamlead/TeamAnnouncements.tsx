@@ -1,4 +1,4 @@
-import TeamLeadChrome from "@/components/portal/teamlead/TeamLeadChrome"
+
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
 import { notificationsService } from "@/services/notifications"
 import { useState, useEffect } from "react"
@@ -45,24 +45,23 @@ export default function TeamAnnouncementsPage() {
   )
 
   return (
-    <TeamLeadChrome>
-      <div className="p-4 md:p-8 space-y-10 animate-in fade-in duration-700 font-sans">
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 font-headline leading-none">Team Announcements</h2>
-            <p className="text-sm font-medium text-slate-500 mt-2 font-headline leading-none">Post updates and news for your team</p>
-          </div>
-          <div className="flex gap-4 shrink-0">
-             <button 
-              onClick={() => navigate("/team-announcements/create")}
-              className="flex items-center gap-2.5 px-6 py-3 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 hover:shadow-xl hover:shadow-violet-600/20 transition-all text-sm active:scale-95 shadow-md shadow-violet-600/10"
-            >
-              <Plus className="size-4 stroke-[3px]" />
-              Create announcement
-            </button>
-          </div>
+    <div className="p-4 md:p-8 space-y-10 animate-in fade-in duration-700 font-sans">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+        <div>
+          <h2 className="text-2xl font-black tracking-tight text-slate-900 font-headline leading-none">Announcements</h2>
+          <p className="text-xs font-bold text-slate-400 mt-2 font-headline leading-none opacity-60">Broadcast mission critical updates to your units</p>
         </div>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => navigate("/team-announcements/create")}
+            className="flex items-center gap-2.5 px-6 py-3 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 hover:shadow-xl hover:shadow-violet-600/20 transition-all text-sm active:scale-95 shadow-md shadow-violet-600/10"
+          >
+            <Plus className="size-4 stroke-[3px]" />
+            Create announcement
+          </button>
+        </div>
+      </div>
 
         {/* Filters/Search Row */}
         <div className="flex flex-col md:flex-row gap-5">
@@ -185,7 +184,6 @@ export default function TeamAnnouncementsPage() {
             </div>
           ))}
         </div>
-      </div>
-    </TeamLeadChrome>
+    </div>
   )
 }

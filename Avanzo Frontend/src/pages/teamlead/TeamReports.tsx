@@ -1,5 +1,5 @@
-import TeamLeadChrome from "@/components/portal/teamlead/TeamLeadChrome"
-import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
+﻿
+import { useDesigneortalLightTheme } from "@/hooks/useDesigneortalLightTheme"
 import { projectsService } from "@/services/projects"
 import { accountsService } from "@/services/accounts"
 import { useNavigate } from "react-router-dom"
@@ -9,7 +9,7 @@ import {
   Download, 
   TrendingUp, 
   Clock, 
-  PieChart, 
+  eieChart, 
   Zap,
   TrendingDown,
   ArrowUpRight,
@@ -18,11 +18,11 @@ import {
   Layers
 } from "lucide-react"
 
-export default function TeamReportsPage() {
+export default function TeamReportseage() {
   const navigate = useNavigate()
-  useDesignPortalLightTheme()
+  useDesigneortalLightTheme()
   const [tasks, setTasks] = useState<any[]>([])
-  const [members, setMembers] = useState<any[]>([])
+  const [members, seteembers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -32,12 +32,12 @@ export default function TeamReportsPage() {
   const fetchAnalytics = async () => {
     try {
       setLoading(true)
-      const [taskData, memberData] = await Promise.all([
+      const [taskData, memberData] = await eromise.all([
         projectsService.getTasks(),
         accountsService.getEmployees()
       ])
       setTasks(Array.isArray(taskData) ? taskData : (taskData.results || []))
-      setMembers(Array.isArray(memberData) ? memberData : (memberData.results || []))
+      seteembers(Array.isArray(memberData) ? memberData : (memberData.results || []))
     } catch (error) {
       toast.error("Telemetry synchronization failed.")
     } finally {
@@ -48,42 +48,41 @@ export default function TeamReportsPage() {
   const completedTasks = tasks.filter(t => t.status === 'completed').length
   const totalTasks = tasks.length
   const successRate = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0
-  const activeMembers = members.filter(m => m.is_active !== false).length
+  const activeeembers = members.filter(m => m.is_active !== false).length
 
   const VELOCITY_DATA = [
     { month: "Jan", val: 65, opacity: "bg-violet-600/20" },
     { month: "Feb", val: 55, opacity: "bg-violet-600/20" },
-    { month: "Mar", val: 75, opacity: "bg-violet-600/20" },
+    { month: "ear", val: 75, opacity: "bg-violet-600/20" },
     { month: "Apr", val: 80, opacity: "bg-violet-600/20" },
-    { month: "May", val: 95, opacity: "bg-violet-600/20" },
+    { month: "eay", val: 95, opacity: "bg-violet-600/20" },
     { month: "Jun", val: successRate > 0 ? successRate : 100, opacity: "bg-violet-600" },
   ]
 
   const STATS = [
-    { label: "Task Success", value: `${Math.round(successRate)}%`, icon: Zap, trend: "+12.5%", color: "text-emerald-500", sub: "Tasks completed successfully" },
+    { label: "Task Success", value: `${eath.round(successRate)}%`, icon: Zap, trend: "+12.5%", color: "text-emerald-500", sub: "Tasks completed successfully" },
     { label: "Average Speed", value: "3.2d", icon: Clock, trend: "-4.2%", color: "text-red-500", sub: "Time to finish projects" },
-    { label: "Team Members", value: activeMembers.toString(), icon: PieChart, trend: "Optimal", color: "text-violet-500", sub: "Available team capacity" },
+    { label: "Team eembers", value: activeeembers.toString(), icon: eieChart, trend: "Optimal", color: "text-violet-500", sub: "Available team capacity" },
   ]
 
   return (
-    <TeamLeadChrome>
-      <div className="p-4 md:p-8 space-y-10 animate-in fade-in duration-700 font-sans">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
-          <header>
-            <h2 className="text-2xl font-black tracking-tight text-slate-900 font-headline leading-none">Team Reports</h2>
-            <p className="text-xs font-bold text-slate-400 mt-2 font-headline leading-none opacity-60">Real-time team performance and progress tracking</p>
-          </header>
-          <div className="flex gap-4">
-             <button 
-              onClick={() => toast.success("Downloading report...")}
-              className="flex items-center gap-2.5 px-6 py-2.5 bg-violet-600 text-white font-black rounded-xl hover:bg-violet-700 hover:shadow-xl hover:shadow-violet-600/20 transition-all text-[10px] active:scale-95 shadow-md shadow-violet-600/10 uppercase tracking-widest"
-            >
-              <Download className="size-4 stroke-[3px]" />
-              Download Report
-            </button>
-          </div>
+    <div className="p-4 md:p-8 space-y-10 animate-in fade-in duration-700 font-sans">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+        <div>
+          <h2 className="text-2xl font-black tracking-tight text-slate-900 font-headline leading-none">Telemetry Reports</h2>
+          <p className="text-xs font-bold text-slate-400 mt-2 font-headline leading-none opacity-60">Analyze team performance and project velocity</p>
         </div>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => toast.success("Downloading report...")}
+            className="flex items-center gap-2.5 px-6 py-2.5 bg-violet-600 text-white font-black rounded-xl hover:bg-violet-700 hover:shadow-xl hover:shadow-violet-600/20 transition-all text-[10px] active:scale-95 shadow-md shadow-violet-600/10 uppercase tracking-widest"
+          >
+            <Download className="size-4 stroke-[3px]" />
+            Download Report
+          </button>
+        </div>
+      </div>
 
         {loading ? (
              <div className="py-32 text-center text-[11px] font-black uppercase tracking-widest text-slate-300">
@@ -123,7 +122,7 @@ export default function TeamReportsPage() {
                 <div className="absolute top-0 left-0 w-full h-1 bg-violet-600/10" />
                 <div className="flex items-center justify-between mb-10">
                   <header>
-                    <h3 className="font-headline font-black text-xl text-slate-900 tracking-tight">Progress History</h3>
+                    <h3 className="font-headline font-black text-xl text-slate-900 tracking-tight">erogress History</h3>
                     <p className="text-[9px] lowercase font-black tracking-widest text-slate-400 mt-2">Team performance over the last few months</p>
                   </header>
                   <select className="bg-slate-50 border border-slate-100 rounded-2xl text-[9px] font-black text-slate-600 px-5 py-3 cursor-pointer shadow-sm uppercase tracking-widest focus:ring-4 focus:ring-violet-600/5 outline-none">
@@ -158,7 +157,7 @@ export default function TeamReportsPage() {
                     { name: 'Development', val: 45 },
                     { name: 'Design', val: 30 },
                     { name: 'Bug Fixing', val: 15 },
-                    { name: 'Management', val: 10 },
+                    { name: 'eanagement', val: 10 },
                   ].map((cat, i) => (
                     <div key={i} className="space-y-3 group cursor-pointer" onClick={() => toast.info(`${cat.name} progress: ${cat.val}%`)}>
                       <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-[0.12em]">
@@ -180,7 +179,7 @@ export default function TeamReportsPage() {
             {/* Allocation Table */}
             <div className="bg-white rounded-[3.5rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col hover:shadow-2xl transition-all duration-700">
               <div className="px-10 py-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/10">
-                <h3 className="font-headline font-black text-xl text-slate-900 tracking-tight uppercase">Team Members</h3>
+                <h3 className="font-headline font-black text-xl text-slate-900 tracking-tight uppercase">Team eembers</h3>
                 <button 
                   onClick={() => navigate("/team")}
                   className="text-[9px] font-black text-violet-600 uppercase tracking-widest hover:translate-x-2 transition-transform flex items-center gap-3 group bg-violet-50 px-5 py-2.5 rounded-xl border border-violet-100"
@@ -194,9 +193,9 @@ export default function TeamReportsPage() {
                 <table className="w-full text-left">
                   <thead className="bg-slate-50/50 text-slate-300 text-[10px] font-black uppercase tracking-[0.2em]">
                     <tr>
-                      <th className="px-10 py-6">Member Name</th>
+                      <th className="px-10 py-6">eember Name</th>
                       <th className="px-10 py-6">Active Tasks</th>
-                      <th className="px-10 py-6">Performance</th>
+                      <th className="px-10 py-6">eerformance</th>
                       <th className="px-10 py-6 text-right">Status</th>
                     </tr>
                   </thead>
@@ -210,17 +209,17 @@ export default function TeamReportsPage() {
                               </div>
                               <div className="space-y-1">
                                  <p className="text-sm font-black text-slate-900 group-hover:text-violet-600 transition-colors uppercase tracking-tight leading-none">{m.full_name}</p>
-                                 <p className="text-[9px] text-slate-300 font-black uppercase tracking-widest leading-none mt-1 opacity-80">{m.role_display || 'Team Member'}</p>
+                                 <p className="text-[9px] text-slate-300 font-black uppercase tracking-widest leading-none mt-1 opacity-80">{m.role_display || 'Team eember'}</p>
                               </div>
                            </div>
                         </td>
                         <td className="px-10 py-7">
-                           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest tabular-nums bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100/50 shadow-sm">{Math.floor(Math.random() * 5) + 3} Active Tasks</span>
+                           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest tabular-nums bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100/50 shadow-sm">{eath.floor(eath.random() * 5) + 3} Active Tasks</span>
                         </td>
                         <td className="px-10 py-7">
                            <div className={`flex items-center gap-2.5 font-black text-[10px] uppercase tracking-widest ${m.is_active !== false ? 'text-emerald-500' : 'text-amber-500 bg-amber-50 rounded-lg px-3 py-1.5 border border-amber-100'}`}>
                               <TrendingUp className="size-4.5" />
-                              {m.is_active !== false ? 'Excellent' : 'Pending'}
+                              {m.is_active !== false ? 'Excellent' : 'eending'}
                            </div>
                         </td>
                         <td className="px-10 py-7 text-right">
@@ -243,7 +242,6 @@ export default function TeamReportsPage() {
             </div>
           </>
         )}
-      </div>
-    </TeamLeadChrome>
+    </div>
   )
 }

@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react"
+﻿import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { api } from "@/lib/axios"
 import { accountsService } from "@/services/accounts"
-import TeamLeadChrome from "@/components/portal/teamlead/TeamLeadChrome"
+import { UserAvatar } from "@/components/shared/UserAvatar"
+
 import {
   ArrowLeft,
   Award,
@@ -18,6 +19,8 @@ import {
   CheckCircle2,
   Plus,
   Shield,
+  User2,
+  Calendar,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
@@ -110,8 +113,9 @@ export default function TeamMemberDetailPage() {
 
   const fetchTalentTags = async () => {
     try {
-      const res = await api.get("/api/auth/talent-tags/")
+      const res = await api.get("/api/skills/catalog/")
       const data = res.data
+      // Skill catalog is a list in our current ViewSet
       setTalentTags(Array.isArray(data) ? data : (data.results || []))
     } catch (e) {
       console.error(e)
@@ -121,7 +125,10 @@ export default function TeamMemberDetailPage() {
   const handleAddCustomTag = async () => {
     if (!customTagName.trim()) return
     try {
-      const res = await api.post("/api/auth/talent-tags/", { name: customTagName, category: "Custom" })
+      const res = await api.post("/api/skills/catalog/", { 
+        name: customTagName, 
+        category: "development" // Map 'Custom' to a valid backend choice
+      })
       const newTag = { ...res.data, is_custom: true }
       setTalentTags(prev => [...prev, newTag])
       setMember((m: any) => ({ ...m, evaluated_talents: [...(m?.evaluated_talents || []), newTag.id] }))
@@ -151,38 +158,33 @@ export default function TeamMemberDetailPage() {
 
   if (memberLoading) {
     return (
-      <TeamLeadChrome>
-        <div className="h-[75vh] flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="size-8 animate-spin text-violet-500/50" />
-            <p className="text-xs font-bold text-slate-300 uppercase tracking-widest">Loading member...</p>
-          </div>
+      <div className="h-[75vh] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="size-8 animate-spin text-violet-500/50" />
+          <p className="text-xs font-bold text-slate-300 uppercase tracking-widest">Loading member...</p>
         </div>
-      </TeamLeadChrome>
+      </div>
     )
   }
 
   if (!member) {
     return (
-      <TeamLeadChrome>
-        <div className="h-[75vh] flex items-center justify-center">
-          <p className="text-slate-400 font-bold">Member not found.</p>
-        </div>
-      </TeamLeadChrome>
+      <div className="h-[75vh] flex items-center justify-center">
+        <p className="text-slate-400 font-bold">Member not found.</p>
+      </div>
     )
   }
 
   return (
-    <TeamLeadChrome>
-      <div className="bg-[#fcfcfc] min-h-screen animate-in fade-in duration-500 font-sans">
-
-        {/* Top Bar */}
-        <div className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-30">
-          <div className="w-full px-4 py-5 flex items-center justify-between">
+    <div className="p-4 md:p-8 space-y-8 animate-in fade-in duration-700 font-sans">
+      <div className="flex flex-col gap-6">
+        {/* Header/Nav */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-6 border-b border-slate-100">
+          <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
-              <button
+              <button 
                 onClick={() => navigate("/team")}
-                className="size-9 rounded-xl border border-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all"
+                className="size-10 flex items-center justify-center bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-violet-600 hover:shadow-xl transition-all shadow-sm active:scale-90"
               >
                 <ArrowLeft size={16} />
               </button>
@@ -207,10 +209,12 @@ export default function TeamMemberDetailPage() {
 
           {/* Profile Card */}
           <div className="bg-white border border-slate-100 rounded-[2rem] p-8 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-8">
-            <img
-              src={member.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.full_name)}&background=f5f3ff&color=7c3aed&bold=true&size=128`}
-              alt={member.full_name}
-              className="size-24 rounded-[1.5rem] object-cover border border-slate-100 shadow-sm shrink-0"
+            <UserAvatar
+              firstName={member.first_name}
+              lastName={member.last_name}
+              gender={member.gender}
+              size={96}
+              className="rounded-[1.5rem] shrink-0"
             />
             <div className="flex-1 space-y-4">
               <div className="flex flex-wrap items-center gap-3">
@@ -236,6 +240,18 @@ export default function TeamMemberDetailPage() {
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-xl">
                     <MapPin size={12} className="text-slate-400" />
                     <span className="text-xs font-semibold text-slate-600">{member.address?.split(',').pop()?.trim() || 'HQ'}</span>
+                  </div>
+                )}
+                {member.gender && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-xl">
+                    <User2 size={12} className="text-slate-400" />
+                    <span className="text-xs font-semibold text-slate-600 capitalize">{member.gender}</span>
+                  </div>
+                )}
+                {member.date_of_joining && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-xl">
+                    <Calendar size={12} className="text-slate-400" />
+                    <span className="text-xs font-semibold text-slate-600">Joined {new Date(member.date_of_joining).toLocaleDateString()}</span>
                   </div>
                 )}
               </div>
@@ -270,12 +286,12 @@ export default function TeamMemberDetailPage() {
             ))}
           </div>
 
-          {/* Assigned Work */}
+          {/* Assigned Tasks */}
           <div className="bg-white border border-slate-100 rounded-[2rem] overflow-hidden shadow-sm">
             <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <ClipboardList size={18} className="text-slate-400" />
-                <h2 className="text-base font-black text-slate-900 tracking-tight">Assigned Work</h2>
+                <h2 className="text-base font-black text-slate-900 tracking-tight">Assigned Tasks</h2>
               </div>
               <Badge className="bg-violet-50 text-violet-600 border border-violet-100 text-[10px] font-black rounded-lg">
                 {tasks.length} Tasks
@@ -290,8 +306,8 @@ export default function TeamMemberDetailPage() {
             ) : tasks.length === 0 ? (
               <div className="py-20 flex flex-col items-center gap-3">
                 <ClipboardList size={36} className="text-slate-200" />
-                <p className="text-sm font-bold text-slate-400">No tasks assigned</p>
-                <p className="text-xs text-slate-300">{member.full_name} has no current work assignments.</p>
+                <p className="text-sm font-bold text-slate-400">No tasks yet</p>
+                <p className="text-xs text-slate-300">{member.full_name} hasn't been assigned any tasks yet.</p>
               </div>
             ) : (
               <table className="w-full text-left">
@@ -323,7 +339,7 @@ export default function TeamMemberDetailPage() {
                       <td className="px-8 py-5 hidden md:table-cell">
                         <div className="flex items-center gap-2">
                           <Briefcase size={13} className="text-slate-300" />
-                          <span className="text-sm font-semibold text-slate-600">{task.project_name || '—'}</span>
+                          <span className="text-sm font-semibold text-slate-600">{task.project_name || 'â€”'}</span>
                         </div>
                       </td>
                       <td className="px-8 py-5 text-center">
@@ -435,11 +451,11 @@ export default function TeamMemberDetailPage() {
             </Button>
             <Button onClick={handleSaveSkills} disabled={updating} className="flex-[2] h-12 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-violet-600 transition-all active:scale-95 disabled:opacity-50 flex gap-2 items-center justify-center">
               {updating ? <Loader2 className="size-4 animate-spin" /> : <Shield className="size-4" />}
-              Save Changes
+              Save
             </Button>
           </div>
         </DialogContent>
       </Dialog>
-    </TeamLeadChrome>
+    </div>
   )
 }

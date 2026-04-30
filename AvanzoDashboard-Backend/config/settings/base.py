@@ -165,15 +165,15 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         # Generic defaults
         "anon": "60/minute",
-        "user": "1000/hour",
+        "user": "5000/hour",
         # Fine-grained per-endpoint scopes (used by core.throttling custom classes)
-        "burst": "60/minute",
-        "sustained": "1000/hour",
-        "login": "5/minute",
-        "registration": "3/hour",
-        "password_reset": "3/900s",   # 3 per 15 minutes
-        "token_refresh": "30/minute",
-        "report_export": "10/hour",
+        "burst": "600/minute",
+        "sustained": "10000/hour",
+        "login": "20/minute",
+        "registration": "10/hour",
+        "password_reset": "10/900s",   # 10 per 15 minutes
+        "token_refresh": "100/minute",
+        "report_export": "20/hour",
     },
     "DEFAULT_AUTHENTICATION_CLASSES": ("core.authentication.TenantAwareJWTAuthentication",),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),

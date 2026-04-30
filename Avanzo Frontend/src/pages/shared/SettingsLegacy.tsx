@@ -7,11 +7,13 @@ import {
   Layers, 
   ShieldCheck, 
   Workflow, 
-  UserCircle
+  UserCircle,
+  Award
 } from "lucide-react"
 import { UserAvatar } from "@/components/shared/UserAvatar"
 import { OrgDepartmentsDesignations } from "@/components/organization/OrgDepartmentsDesignations"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
+import { api } from "@/lib/axios"
 import { toast } from "sonner"
 import {
   Dialog,
@@ -28,6 +30,36 @@ export default function SettingsLegacyPage() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const [talentTags, setTalentTags] = useState<any[]>([])
+  const [selectedTalents, setSelectedTalents] = useState<number[]>(user?.evaluated_talents || [])
+  const [updatingSkills, setUpdatingSkills] = useState(false)
+
+  useEffect(() => {
+    const fetchTalentTags = async () => {
+      try {
+        const res = await api.get("/api/skills/catalog/")
+        const data = res.data
+        setTalentTags(Array.isArray(data) ? data : (data.results || []))
+      } catch (e) {
+        console.error(e)
+      }
+    }
+    fetchTalentTags()
+  }, [])
+
+  const handleSaveSkills = async () => {
+    if (!user) return
+    try {
+      setUpdatingSkills(true)
+      await api.post(`/api/auth/employees/${user.id}/update-skills/`, { talent_ids: selectedTalents })
+      toast.success("Skills updated successfully.")
+    } catch {
+      toast.error("Failed to update skills.")
+    } finally {
+      setUpdatingSkills(false)
+    }
+  }
 
   const canManageOrg =
     user?.role === "Admin" ||
@@ -230,6 +262,61 @@ export default function SettingsLegacyPage() {
                 </div>
               </div>
             </section>
+
+            {/* Skills Information Section */}
+            {user?.role !== "Admin" && user?.role !== "Organization" && (
+              <section className="space-y-6">
+              <header className="flex items-center gap-4">
+                <div className="p-2.5 bg-amber-50 rounded-xl text-amber-600 shadow-sm border border-amber-100">
+                   <Award className="h-4 w-4 stroke-[3]" />
+                </div>
+                <h3 className="text-slate-900 font-black text-[12px]">
+                  My Skills & Talents
+                </h3>
+              </header>
+              
+              <div className="bg-white rounded-[2.5rem] p-6 md:p-10 border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-500">
+                 <div className="mb-6">
+                    <p className="text-sm font-bold text-slate-500">Select your core competencies from the organization's catalog below.</p>
+                 </div>
+                 
+                 <div className="flex flex-wrap gap-2 mb-8">
+                   {talentTags.map(tag => {
+                      const isSelected = selectedTalents.includes(tag.id)
+                      return (
+                        <button
+                          key={tag.id}
+                          onClick={() => {
+                             if (isSelected) {
+                                setSelectedTalents(selectedTalents.filter(id => id !== tag.id))
+                             } else {
+                                setSelectedTalents([...selectedTalents, tag.id])
+                             }
+                          }}
+                          className={`px-4 py-2 rounded-xl text-xs font-black tracking-widest uppercase transition-all shadow-sm border ${
+                            isSelected 
+                              ? 'bg-violet-600 text-white border-violet-500 hover:bg-violet-700 hover:shadow-violet-600/20 shadow-md' 
+                              : 'bg-slate-50 text-slate-500 border-slate-100 hover:bg-slate-100 hover:text-slate-700'
+                          }`}
+                        >
+                          {tag.name}
+                        </button>
+                      )
+                   })}
+                 </div>
+
+                 <div className="pt-6 border-t border-slate-50 flex items-center justify-end">
+                    <button 
+                      onClick={handleSaveSkills}
+                      disabled={updatingSkills}
+                      className="px-8 py-3.5 bg-slate-900 hover:bg-violet-600 text-white font-black text-[11px] rounded-xl transition-all shadow-xl shadow-slate-900/10 active:scale-95 uppercase tracking-widest disabled:opacity-50"
+                    >
+                      {updatingSkills ? "Saving..." : "Save Skills"}
+                    </button>
+                 </div>
+              </div>
+            </section>
+            )}
 
           </TabsContent>
 

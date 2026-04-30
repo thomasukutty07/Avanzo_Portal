@@ -12,6 +12,7 @@ import { FullPageLayout } from "@/components/layout/FullPageLayout"
 import { PublicDesignLayout } from "@/components/layout/PublicDesignLayout"
 import { TechnicalPortalLayout } from "@/components/portal/technical/TechnicalPortalLayout"
 import { CyberSecurityPortalLayout } from "@/components/portal/cyber_security/CyberSecurityPortalLayout"
+import TeamLeadChrome from "@/components/portal/teamlead/TeamLeadChrome"
 import { Loader2 } from "lucide-react"
 
 const Login = lazy(() => import("@/pages/Login"))
@@ -58,6 +59,7 @@ const TeamLeadCreateAnnouncementPage = lazy(() =>
 )
 const LeadProjectDetailsPage = lazy(() => import("@/pages/teamlead/ProjectDetails"))
 const TeamMemberDetailPage = lazy(() => import("@/pages/teamlead/TeamMemberDetail"))
+const TeamReportsPage = lazy(() => import("@/pages/teamlead/TeamReports"))
 
 const TechnicalDashboardPage = lazy(() =>
   import("@/pages/technical/TechnicalDashboard")
@@ -67,6 +69,8 @@ const TechnicalLeavePage = lazy(() => import("@/pages/technical/TechnicalLeave")
 const TechnicalAnnouncementsPage = lazy(() =>
   import("@/pages/technical/TechnicalAnnouncements")
 )
+const TechnicalProjectsPage = lazy(() => import("@/pages/technical/TechnicalProjects"))
+const TechnicalProjectDetailsPage = lazy(() => import("@/pages/technical/TechnicalProjectDetails"))
 
 const CyberSecurityDashboardPage = lazy(() =>
   import("@/pages/cyber_security/CyberSecurityDashboard")
@@ -113,7 +117,7 @@ function RoleBasedHome() {
   const { user } = useAuth()
   if (user?.role === "Admin") return <AdminDashboard />
   if (user?.role === "HR") return <HROverview />
-  if (user?.role === "Team Lead") return <LeadOverview />
+  if (user?.role === "Team Lead") return <Navigate to="/lead" replace />
   if (user?.role === "Employee") {
     if (isCyberSecurityEmployeeTrack(user))
       return <Navigate to="/security" replace />
@@ -223,19 +227,23 @@ export default function App() {
           </Route>
 
           <Route element={<RequireRole roles={["Team Lead", "Admin"]} />}>
-            <Route path="/tasks" element={<TaskManagement />} />
-            <Route path="/projects" element={<ProjectProgress />} />
-            <Route path="/projects/:id" element={<LeadProjectDetailsPage />} />
-            <Route path="/team" element={<TeamPage />} />
-            <Route path="/team/:id" element={<TeamMemberDetailPage />} />
-            <Route
-              path="/team-announcements"
-              element={<TeamAnnouncementsPage />}
-            />
-            <Route
-              path="/team-announcements/create"
-              element={<TeamLeadCreateAnnouncementPage />}
-            />
+            <Route element={<TeamLeadChrome />}>
+              <Route path="/lead" element={<LeadOverview />} />
+              <Route path="/tasks" element={<TaskManagement />} />
+              <Route path="/projects" element={<ProjectProgress />} />
+              <Route path="/projects/:id" element={<LeadProjectDetailsPage />} />
+              <Route path="/team" element={<TeamPage />} />
+              <Route path="/team/:id" element={<TeamMemberDetailPage />} />
+              <Route path="/team-reports" element={<TeamReportsPage />} />
+              <Route
+                path="/team-announcements"
+                element={<TeamAnnouncementsPage />}
+              />
+              <Route
+                path="/team-announcements/create"
+                element={<TeamLeadCreateAnnouncementPage />}
+              />
+            </Route>
           </Route>
 
           {/* Shared Feature Routes — used by Technical Employee portal */}
@@ -248,6 +256,8 @@ export default function App() {
               <Route path="tasks" element={<TechnicalTasksPage />} />
               <Route path="leave" element={<TechnicalLeavePage />} />
               <Route path="announcements" element={<TechnicalAnnouncementsPage />} />
+              <Route path="projects" element={<TechnicalProjectsPage />} />
+              <Route path="projects/:id" element={<TechnicalProjectDetailsPage />} />
               <Route path="profile" element={<SettingsLegacyPage />} />
             </Route>
           </Route>

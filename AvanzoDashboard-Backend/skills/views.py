@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from core.mixins import TenantFilterMixin
-from core.permissions import IsAdmin
+from core.permissions import IsAdmin, IsTeamLeadOrAbove
 from projects.models import Project
 
 from .models import EmployeeSkill, ProjectSkillRequirement, Skill
@@ -27,7 +27,7 @@ class SkillViewSet(TenantFilterMixin, viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action in ["create", "update", "partial_update", "destroy"]:
-            return [IsAuthenticated(), IsAdmin()]
+            return [IsAuthenticated(), IsTeamLeadOrAbove()]
         return [IsAuthenticated()]
 
 

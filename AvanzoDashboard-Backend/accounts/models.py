@@ -51,9 +51,18 @@ class Employee(AbstractUser):
     username = None
     email = models.EmailField("work email", unique=True, db_index=True)
 
-    # Profile fields
+    class Gender(models.TextChoices):
+        MALE = "male", "Male"
+        FEMALE = "female", "Female"
+        OTHER = "other", "Other"
+        PREFER_NOT_TO_SAY = "prefer_not_to_say", "Prefer not to say"
+
     phone = models.CharField(max_length=20, blank=True)
     avatar = models.URLField(blank=True)
+    gender = models.CharField(
+        max_length=20, choices=Gender.choices, blank=True, null=True, db_index=True
+    )
+    date_of_birth = models.DateField(blank=True, null=True)
     employee_id = models.CharField(
         max_length=20,
         unique=True,

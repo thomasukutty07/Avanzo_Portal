@@ -71,6 +71,7 @@ class ProjectSerializer(serializers.ModelSerializer):
                 "full_name": emp.get_full_name() or emp.email,
                 "email": emp.email,
                 "avatar": emp.avatar.url if emp.avatar else None,
+                "gender": emp.gender,
             }
             for emp in obj.team.all()
         ]

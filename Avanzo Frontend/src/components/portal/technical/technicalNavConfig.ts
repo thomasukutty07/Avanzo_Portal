@@ -7,7 +7,8 @@ import {
   Umbrella,
   User,
   Award,
-  TrendingUp
+  TrendingUp,
+  FolderGit2
 } from "lucide-react"
 
 export type TechnicalNavItem = {
@@ -21,6 +22,7 @@ export type TechnicalNavItem = {
 export const TECHNICAL_NAV_ITEMS: TechnicalNavItem[] = [
   { to: "/technical", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/technical/tasks", label: "Technical tasks", icon: ListTodo },
+  { to: "/technical/projects", label: "Active Projects", icon: FolderGit2 },
   { to: "/technical/leave", label: "Leave requests", icon: Umbrella },
   { to: "/technical/announcements", label: "Announcements", icon: Megaphone },
   { to: "/performance", label: "My Performance", icon: TrendingUp },

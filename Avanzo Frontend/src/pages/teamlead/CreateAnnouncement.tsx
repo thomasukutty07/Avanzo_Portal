@@ -1,4 +1,4 @@
-import TeamLeadChrome from "@/components/portal/teamlead/TeamLeadChrome"
+
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
 import { toast } from "sonner"
 import { useNavigate } from "react-router-dom"
@@ -75,155 +75,152 @@ export default function TeamLeadCreateAnnouncementPage() {
   }
 
   return (
-    <TeamLeadChrome>
-      <div className="max-w-5xl mx-auto p-4 md:p-10 space-y-12 animate-in fade-in zoom-in-95 duration-700 font-sans">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <header className="flex items-center gap-6">
-            <button 
-              onClick={() => navigate("/team-announcements")}
-              className="p-3 bg-white border border-slate-100 rounded-2xl text-slate-400 hover:text-violet-600 hover:shadow-xl transition-all shadow-sm"
-            >
-              <ChevronLeft className="size-5" />
-            </button>
-            <div>
-              <h2 className="text-2xl font-black tracking-tight text-slate-900 font-headline leading-none">Draft Transmission</h2>
-              <p className="text-xs font-bold text-slate-400 mt-2 font-headline leading-none opacity-60">Composing tactical update for mission units</p>
-            </div>
-          </header>
+    <div className="max-w-5xl mx-auto p-4 md:p-10 space-y-12 animate-in fade-in zoom-in-95 duration-700 font-sans">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <header className="flex items-center gap-6">
           <button 
             onClick={() => navigate("/team-announcements")}
-            className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
+            className="p-3 bg-white border border-slate-100 rounded-2xl text-slate-400 hover:text-violet-600 hover:shadow-xl transition-all shadow-sm"
           >
-            <X className="size-6" />
+            <ChevronLeft className="size-5" />
           </button>
+          <div>
+            <h2 className="text-2xl font-black tracking-tight text-slate-900 font-headline leading-none">Draft Transmission</h2>
+            <p className="text-xs font-bold text-slate-400 mt-2 font-headline leading-none opacity-60">Composing tactical update for mission units</p>
+          </div>
+        </header>
+        <button 
+          onClick={() => navigate("/team-announcements")}
+          className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
+        >
+          <X className="size-6" />
+        </button>
+      </div>
+
+      <section className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col min-h-[600px] hover:shadow-2xl transition-all duration-500 relative">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-violet-600 via-blue-500 to-violet-600 animate-gradient-x" />
+        
+        {/* Form Area */}
+        <div className="flex-1 p-8 md:p-12 space-y-10">
+          <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => handleFileUpload(e, 'document')} />
+          <input type="file" accept="image/*" ref={mediaInputRef} className="hidden" onChange={(e) => handleFileUpload(e, 'media')} />
+          
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+               <div className="size-8 rounded-xl bg-violet-50 flex items-center justify-center text-violet-600 shadow-sm">
+                  <Type className="size-4" />
+               </div>
+               <label className="text-[10px] font-bold text-slate-400">Subject</label>
+            </div>
+            <input 
+              type="text" 
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="Enter a high-impact title..."
+              className="w-full bg-transparent border-0 border-none outline-none focus:outline-none ring-0 focus:ring-0 p-0 text-2xl font-bold text-slate-900 placeholder:text-slate-100 tracking-tight font-headline"
+            />
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+                <div className="size-8 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-sm">
+                  <FileText className="size-4" />
+               </div>
+               <label className="text-[10px] font-bold text-slate-400">Announcement body</label>
+            </div>
+            <textarea 
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Broadcast your mission parameters or updates here..."
+              className="w-full min-h-[300px] bg-transparent border-0 border-none outline-none focus:outline-none ring-0 focus:ring-0 p-0 text-lg font-medium text-slate-600 placeholder:text-slate-100 resize-none leading-relaxed"
+            />
+          </div>
+
+          {attachments.length > 0 && (
+            <div className="flex flex-wrap gap-4 pt-10 border-t border-slate-50">
+              {attachments.map((file, i) => (
+                <div key={i} className="flex items-center gap-3 pl-4 pr-3 py-3 bg-slate-50 border border-slate-100 rounded-2xl group animate-in fade-in slide-in-from-bottom-4 transition-all hover:bg-white hover:shadow-xl hover:border-violet-100">
+                  <div className="size-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center shadow-sm">
+                     {file.type === 'media' ? <ImageIcon className="size-4 text-violet-600" /> : <Paperclip className="size-4 text-blue-600" />}
+                  </div>
+                  <span className="text-[10px] font-black text-slate-900 uppercase tracking-tight truncate max-w-[180px]">{file.name}</span>
+                  <button type="button" onClick={() => removeAttachment(i)} className="p-1.5 text-slate-300 hover:text-red-500 transition-colors">
+                    <X className="size-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        <section className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col min-h-[600px] hover:shadow-2xl transition-all duration-500 relative">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-violet-600 via-blue-500 to-violet-600 animate-gradient-x" />
-          
-          {/* Form Area */}
-          <div className="flex-1 p-8 md:p-12 space-y-10">
-            <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => handleFileUpload(e, 'document')} />
-            <input type="file" accept="image/*" ref={mediaInputRef} className="hidden" onChange={(e) => handleFileUpload(e, 'media')} />
+        {/* Tools & Actions */}
+        <div className="px-8 py-6 bg-slate-50/20 border-t border-slate-50 flex flex-col sm:flex-row items-center justify-between gap-8">
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => mediaInputRef.current?.click()} 
+              className="p-3.5 text-slate-400 hover:text-violet-600 hover:bg-white hover:shadow-xl rounded-2xl transition-all group scale-100 active:scale-95 shadow-sm" title="Add Visuals"
+            >
+              <ImageIcon className="size-5" />
+            </button>
+            <button 
+              onClick={() => fileInputRef.current?.click()} 
+              className="p-3.5 text-slate-400 hover:text-violet-600 hover:bg-white hover:shadow-xl rounded-2xl transition-all group scale-100 active:scale-95 shadow-sm" title="Attach Dossier"
+            >
+              <Paperclip className="size-5" />
+            </button>
             
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                 <div className="size-8 rounded-xl bg-violet-50 flex items-center justify-center text-violet-600 shadow-sm">
-                    <Type className="size-4" />
-                 </div>
-                 <label className="text-[10px] font-bold text-slate-400">Subject</label>
-              </div>
-              <input 
-                type="text" 
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                placeholder="Enter a high-impact title..."
-                className="w-full bg-transparent border-0 border-none outline-none focus:outline-none ring-0 focus:ring-0 p-0 text-2xl font-bold text-slate-900 placeholder:text-slate-100 tracking-tight font-headline"
-              />
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                  <div className="size-8 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-sm">
-                    <FileText className="size-4" />
-                 </div>
-                 <label className="text-[10px] font-bold text-slate-400">Announcement body</label>
-              </div>
-              <textarea 
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Broadcast your mission parameters or updates here..."
-                className="w-full min-h-[300px] bg-transparent border-0 border-none outline-none focus:outline-none ring-0 focus:ring-0 p-0 text-lg font-medium text-slate-600 placeholder:text-slate-100 resize-none leading-relaxed"
-              />
-            </div>
-
-            {attachments.length > 0 && (
-              <div className="flex flex-wrap gap-4 pt-10 border-t border-slate-50">
-                {attachments.map((file, i) => (
-                  <div key={i} className="flex items-center gap-3 pl-4 pr-3 py-3 bg-slate-50 border border-slate-100 rounded-2xl group animate-in fade-in slide-in-from-bottom-4 transition-all hover:bg-white hover:shadow-xl hover:border-violet-100">
-                    <div className="size-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center shadow-sm">
-                       {file.type === 'media' ? <ImageIcon className="size-4 text-violet-600" /> : <Paperclip className="size-4 text-blue-600" />}
-                    </div>
-                    <span className="text-[10px] font-black text-slate-900 uppercase tracking-tight truncate max-w-[180px]">{file.name}</span>
-                    <button type="button" onClick={() => removeAttachment(i)} className="p-1.5 text-slate-300 hover:text-red-500 transition-colors">
-                      <X className="size-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Tools & Actions */}
-          <div className="px-8 py-6 bg-slate-50/20 border-t border-slate-50 flex flex-col sm:flex-row items-center justify-between gap-8">
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={() => mediaInputRef.current?.click()} 
-                className="p-3.5 text-slate-400 hover:text-violet-600 hover:bg-white hover:shadow-xl rounded-2xl transition-all group scale-100 active:scale-95 shadow-sm" title="Add Visuals"
-              >
-                <ImageIcon className="size-5" />
-              </button>
-              <button 
-                onClick={() => fileInputRef.current?.click()} 
-                className="p-3.5 text-slate-400 hover:text-violet-600 hover:bg-white hover:shadow-xl rounded-2xl transition-all group scale-100 active:scale-95 shadow-sm" title="Attach Dossier"
-              >
-                <Paperclip className="size-5" />
-              </button>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="p-3.5 text-slate-400 hover:text-violet-600 hover:bg-white hover:shadow-xl rounded-2xl transition-all group scale-100 active:scale-95 shadow-sm" title="Insert Sentiment">
-                    <Smile className="size-5" />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="p-3.5 text-slate-400 hover:text-violet-600 hover:bg-white hover:shadow-xl rounded-2xl transition-all group scale-100 active:scale-95 shadow-sm" title="Insert Sentiment">
+                  <Smile className="size-5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="p-3 grid grid-cols-4 gap-2 w-fit rounded-3xl border-slate-100 shadow-2xl bg-white animate-in zoom-in-95 duration-200">
+                {['👍', '🚀', '🔥', '✅', '⚠️', '📈', '💡', '🗓️'].map(emoji => (
+                  <button 
+                    key={emoji} 
+                    type="button" 
+                    onClick={() => addEmoji(emoji)} 
+                    className="size-11 flex items-center justify-center hover:bg-slate-50 rounded-2xl transition-all text-xl hover:scale-110 active:scale-90"
+                  >
+                    {emoji}
                   </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="p-3 grid grid-cols-4 gap-2 w-fit rounded-3xl border-slate-100 shadow-2xl bg-white animate-in zoom-in-95 duration-200">
-                  {['👍', '🚀', '🔥', '✅', '⚠️', '📈', '💡', '🗓️'].map(emoji => (
-                    <button 
-                      key={emoji} 
-                      type="button" 
-                      onClick={() => addEmoji(emoji)} 
-                      className="size-11 flex items-center justify-center hover:bg-slate-50 rounded-2xl transition-all text-xl hover:scale-110 active:scale-90"
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-              <div className="h-8 w-[2px] bg-slate-100 mx-3 rounded-full" />
-              <button onClick={() => toast.info("Advanced formatting enabled")} className="p-3.5 text-slate-400 hover:text-violet-600 hover:bg-white hover:shadow-xl rounded-2xl transition-all group scale-100 active:scale-95 shadow-sm" title="Rich Text">
-                <Layout className="size-5" />
-              </button>
-            </div>
-
-            <div className="flex items-center gap-6 w-full sm:w-auto">
-              <div className="flex items-center gap-3 bg-white border border-slate-100 rounded-xl px-4 py-2.5 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 shadow-sm" title="This broadcast will only be sent to your department">
-                <Globe className="size-3.5 text-emerald-500 animate-pulse" />
-                Your Department
-              </div>
-              <button 
-                disabled={loading}
-                onClick={handleTransmit}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-3.5 px-8 py-3.5 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 transition-all shadow-lg shadow-violet-600/20 active:scale-95 group disabled:opacity-50 text-xs"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="size-4 animate-spin" />
-                    Synchronizing...
-                  </>
-                ) : (
-                  <>
-                    <Send className="size-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                    Publish announcement
-                  </>
-                )}
-              </button>
-            </div>
+            <div className="h-8 w-[2px] bg-slate-100 mx-3 rounded-full" />
+            <button onClick={() => toast.info("Advanced formatting enabled")} className="p-3.5 text-slate-400 hover:text-violet-600 hover:bg-white hover:shadow-xl rounded-2xl transition-all group scale-100 active:scale-95 shadow-sm" title="Rich Text">
+              <Layout className="size-5" />
+            </button>
           </div>
-        </section>
 
-      </div>
-    </TeamLeadChrome>
+          <div className="flex items-center gap-6 w-full sm:w-auto">
+            <div className="flex items-center gap-3 bg-white border border-slate-100 rounded-xl px-4 py-2.5 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 shadow-sm" title="This broadcast will only be sent to your department">
+              <Globe className="size-3.5 text-emerald-500 animate-pulse" />
+              Your Department
+            </div>
+            <button 
+              disabled={loading}
+              onClick={handleTransmit}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-3.5 px-8 py-3.5 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 transition-all shadow-lg shadow-violet-600/20 active:scale-95 group disabled:opacity-50 text-xs"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Synchronizing...
+                </>
+              ) : (
+                <>
+                  <Send className="size-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                  Publish announcement
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
   )
 }

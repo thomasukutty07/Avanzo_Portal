@@ -15,6 +15,7 @@ export default function TechnicalDashboardPage() {
   
   const [loading, setLoading] = useState(true);
   const [personalTasks, setPersonalTasks] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
 
   const [stats, setStats] = useState<any[]>([]);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
@@ -27,6 +28,7 @@ export default function TechnicalDashboardPage() {
         // Fetch projects to calculate overall progress
         const projectsRes = await projectsService.getProjects();
         const projectsList = Array.isArray(projectsRes) ? projectsRes : (projectsRes.results || []);
+        setProjects(projectsList);
 
         // Fetch personal tasks (assigned to me)
         const tasksRes = await projectsService.getTasks({ assignee: user?.id });
@@ -176,9 +178,47 @@ export default function TechnicalDashboardPage() {
         ))}
       </div>
 
-      {/* Main Grid: Chart + Updates */}
+      {/* Main Grid: Projects */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="lg:col-span-12 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden hover:shadow-xl transition-all duration-700">
+          <div className="flex items-center justify-between px-10 py-8 border-b border-slate-50 bg-slate-50/10">
+            <h3 className="font-black text-xl text-slate-900 tracking-tight">Active projects</h3>
+          </div>
+          <div className="divide-y divide-slate-50">
+            {projects.length > 0 ? (
+              projects.map((p: any, i: number) => {
+                const percentage = p.completion_percentage || p.progress || 0;
+                return (
+                  <div key={i} onClick={() => navigate(`/technical/projects/${p.id}`)} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8 px-6 sm:px-10 py-8 group hover:bg-slate-50/30 transition-all cursor-pointer">
 
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[16px] font-black text-slate-900 group-hover:text-violet-700 transition-colors tracking-tight leading-none mb-2.5">{p.title}</p>
+                      <p className="text-xs text-slate-400 font-bold leading-none">
+                        {p.client_name || "Internal project"} • {p.target_end_date ? `due ${p.target_end_date}` : "No due date"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-4 w-full sm:w-auto sm:justify-end">
+                      <div className="flex flex-col items-end gap-2">
+                        <span className="text-lg font-black font-headline tabular-nums text-slate-900 leading-none">{percentage}%</span>
+                        <div className="w-24 sm:w-32 h-2 bg-slate-50 rounded-full overflow-hidden border border-slate-100 shadow-inner group-hover:border-violet-100 transition-colors">
+                          <div 
+                            className="bg-violet-600 h-full rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(124,58,237,0.3)]" 
+                            style={{ width: `${percentage}%` }} 
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+                <div className="px-10 py-24 text-center opacity-40">
+                   <Shield className="size-12 mx-auto mb-6 text-slate-300" />
+                   <p className="text-sm font-black tracking-[0.1em] text-slate-400 uppercase">No active projects</p>
+                </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Bottom Grid: Task List + Node Integrity */}

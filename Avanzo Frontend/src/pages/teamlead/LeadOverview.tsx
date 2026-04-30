@@ -1,5 +1,4 @@
-import TeamLeadChrome from "@/components/portal/teamlead/TeamLeadChrome"
-import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
+﻿import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
 import { useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
 import { useAuth } from "@/context/AuthContext"
@@ -22,6 +21,7 @@ import {
   Fingerprint,
   Activity
 } from "lucide-react"
+import { getAvatarUrl } from "@/lib/utils/avatar"
 
 export default function LeadOverview() {
   const { user } = useAuth()
@@ -108,21 +108,20 @@ export default function LeadOverview() {
   const displayStats = isCyber ? CYBER_STATS : STATS
 
   return (
-    <TeamLeadChrome>
-      <div className="p-4 space-y-10 animate-in fade-in duration-700 font-sans">
-        <header>
-          <h2 className="text-3xl font-black tracking-tight text-slate-900 font-headline leading-none">Dashboard</h2>
-          <p className="text-sm font-bold text-slate-400 mt-2 font-headline leading-none opacity-60">Team overview and progress</p>
-        </header>
+    <div className="p-4 space-y-10 animate-in fade-in duration-700 font-sans">
+      <header>
+        <h2 className="text-3xl font-black tracking-tight text-slate-900 font-headline leading-none">Dashboard</h2>
+        <p className="text-sm font-bold text-slate-400 mt-2 font-headline leading-none opacity-60">Your team's overview and tasks</p>
+      </header>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {displayStats.map((stat, i) => (
-            <button
-              key={i}
-              onClick={() => toast.info(`Viewing analytics for ${stat.label}`)}
-              className="bg-white p-6 rounded-[1.5rem] border border-slate-100 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1 Active:scale-[0.98] text-left group relative overflow-hidden"
-            >
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {displayStats.map((stat, i) => (
+          <button
+            key={i}
+            onClick={() => toast.info(`Viewing analytics for ${stat.label}`)}
+            className="bg-white p-6 rounded-[1.5rem] border border-slate-100 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1 Active:scale-[0.98] text-left group relative overflow-hidden"
+          >
               <div className="flex justify-between items-start mb-5">
                 <div className={`p-2.5 rounded-xl ${
                   stat.color === 'blue' ? 'bg-blue-50 text-blue-600 border border-blue-100' :
@@ -141,7 +140,7 @@ export default function LeadOverview() {
               {stat.color === "orange" && criticalTasks > 0 && (
                 <div className="mt-3 text-[9px] text-orange-600 font-bold flex items-center gap-1.5 animate-pulse">
                   <AlertTriangle className="size-3" />
-                  Category alert: critical load
+                  Needs attention
                 </div>
               )}
             </button>
@@ -211,14 +210,18 @@ export default function LeadOverview() {
               {loading ? (
                  <div className="flex flex-col items-center justify-center py-16 text-center">
                     <Loader2 className="size-6 animate-spin text-violet-600 mb-5" />
-                    <p className="text-[10px] font-black text-slate-300 leading-relaxed uppercase tracking-widest">Loading<br/>Network...</p>
+                    <p className="text-[10px] font-black text-slate-300 leading-relaxed uppercase tracking-widest">Loading<br/>Loading......</p>
                  </div>
               ) : feed.length > 0 ? (
                 feed.map((entry, i) => (
                   <div key={i} className="flex gap-5 group cursor-pointer hover:translate-x-1 transition-transform">
                     <div className="relative shrink-0">
-                      <div className="size-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center ring-4 ring-white font-bold text-slate-400 shadow-sm group-hover:bg-violet-600 group-hover:text-white transition-all text-xs">
-                        {entry.employee_name?.split(' ').map((n: any) => n[0]).join('').toUpperCase()}
+                      <div className="size-12 rounded-xl bg-slate-50 border border-slate-100 overflow-hidden ring-4 ring-white shadow-sm group-hover:scale-105 transition-all">
+                        <img 
+                          src={getAvatarUrl(entry.employee_name || 'User', entry.gender)} 
+                          alt="" 
+                          className="size-full object-cover" 
+                        />
                       </div>
                       <span className={`absolute -bottom-1 -right-1 size-5 ${entry.clock_in_time ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-amber-500 shadow-amber-500/20'} border-4 border-white rounded-xl flex items-center justify-center shadow-lg transition-all group-hover:scale-110`}>
                         {entry.clock_in_time ? <CheckCircle2 className="size-2 text-white font-bold" /> : <Clock className="size-2 text-white font-bold" />}
@@ -239,7 +242,7 @@ export default function LeadOverview() {
               ) : (
                 <div className="text-center py-16 opacity-40">
                    <Zap className="size-8 text-slate-200 mx-auto mb-3" />
-                   <p className="text-[10px] font-bold text-slate-300">No recent activity</p>
+                   <p className="text-[10px] font-bold text-slate-300">No recent activity logged</p>
                 </div>
               )}
             </div>
@@ -248,7 +251,7 @@ export default function LeadOverview() {
               onClick={() => toast.info("Opening activity logs...")}
               className="p-5 text-center text-[10px] font-bold text-violet-600 hover:bg-slate-50 transition-all border-t border-slate-50"
             >
-              View activity logs
+              View all activity
             </button>
           </div>
 
@@ -269,7 +272,7 @@ export default function LeadOverview() {
                     <div className="size-16 rounded-[1.5rem] bg-slate-50 flex items-center justify-center mb-6 border border-slate-100 shadow-sm">
                       <CheckCircle2 className="size-8 text-slate-100" />
                     </div>
-                    <p className="text-[10px] font-bold text-slate-300">Queue processed</p>
+                    <p className="text-[10px] font-bold text-slate-300">No pending requests</p>
                  </div>
               ) : approvals.map((req, i) => (
                 <div key={i} className="p-6 rounded-2xl border border-slate-100 bg-slate-50/20 space-y-5 transition-all hover:bg-white hover:shadow-lg group relative overflow-hidden">
@@ -313,7 +316,7 @@ export default function LeadOverview() {
               onClick={() => navigate("/team")}
               className="p-5 text-center text-[10px] font-bold text-slate-400 hover:text-violet-600 transition-all border-t border-slate-50"
             >
-              View team members
+              Go to team
             </button>
           </div>
         </div>
@@ -399,12 +402,11 @@ export default function LeadOverview() {
                   onClick={() => navigate("/tasks")}
                   className="text-[10px] font-black text-slate-400 hover:text-violet-600 transition-colors tracking-widest uppercase"
                 >
-                  View All {tasks.length} Tasks
+                  View all {tasks.length} Tasks
                 </button>
              </div>
           )}
         </div>
-      </div>
-    </TeamLeadChrome>
+    </div>
   )
 }

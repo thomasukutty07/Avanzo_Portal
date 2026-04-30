@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { 
   ChevronLeft, 
@@ -6,27 +6,22 @@ import {
   Target, 
   Calendar,
   Mail,
-  Phone,
   Briefcase,
   Loader2,
-  Plus,
 } from "lucide-react"
 
-import { EditProjectModal, CreateTaskModal } from "@/components/portal/teamlead/TeamLeadActionForms"
 import { api } from "@/lib/axios"
 import { toast } from "sonner"
 import { Progress } from "@/components/ui/progress"
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
 import { getAvatarUrl } from "@/lib/utils/avatar"
 
-export default function LeadProjectDetailsPage() {
+export default function TechnicalProjectDetailsPage() {
   useDesignPortalLightTheme()
   const { id } = useParams()
   const navigate = useNavigate()
   const [project, setProject] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [showEditModal, setShowEditModal] = useState(false)
-  const [showCreateTaskModal, setShowCreateTaskModal] = useState(false)
 
   const fetchProject = async () => {
     try {
@@ -36,7 +31,7 @@ export default function LeadProjectDetailsPage() {
     } catch (e) {
       console.error(e)
       toast.error("Project not found.")
-      navigate("/projects")
+      navigate("/technical")
     } finally {
       setLoading(false)
     }
@@ -45,40 +40,6 @@ export default function LeadProjectDetailsPage() {
   useEffect(() => {
     fetchProject()
   }, [id])
-
-  const handleGenerateReport = () => {
-    if (!project) return;
-    
-    const rows = [
-      ["Project Title", project.title],
-      ["Department", project.department_name],
-      ["Status", project.status],
-      ["Start Date", project.start_date || "N/A"],
-      ["Target Deadline", project.target_end_date || "N/A"],
-      ["Progress", `${project.progress || 0}%`],
-      ["Team Lead", project.manager_name || project.manager?.full_name || "N/A"],
-      ["", ""],
-      ["Team Roster", ""],
-      ["Name", "Email"],
-    ];
-
-    project.team_members?.forEach((m: any) => {
-      rows.push([m.full_name, m.email]);
-    });
-
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + rows.map(e => e.map(cell => `"${cell}"`).join(",")).join("\n");
-      
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Project_Report_${project.title.replace(/\s+/g, '_')}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    toast.success("Strategic project report generated and downloaded.");
-  }
 
   if (loading) {
     return (
@@ -89,16 +50,16 @@ export default function LeadProjectDetailsPage() {
   }
 
   return (
-    <div className="p-2 space-y-10 animate-in fade-in duration-700 font-sans">
+    <div className="p-2 md:p-8 space-y-10 animate-in fade-in duration-700 font-sans">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-10 border-b border-slate-100">
         <div className="space-y-6">
           <button 
-            onClick={() => navigate("/projects")}
+            onClick={() => navigate("/technical")}
             className="group flex items-center gap-2.5 text-xs font-black text-slate-400 hover:text-slate-900 transition-all uppercase tracking-widest"
           >
             <ChevronLeft className="size-4 group-hover:-translate-x-1 transition-transform" />
-            Back to Projects
+            Back to Dashboard
           </button>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-none capitalize">
@@ -128,28 +89,6 @@ export default function LeadProjectDetailsPage() {
                 {project?.description || "No description provided for this project."}
              </p>
           </div>
-        </div>
-        
-        <div className="flex items-center gap-3">
-           <button 
-            onClick={() => setShowEditModal(true)}
-            className="px-6 py-3 bg-white border border-slate-100 text-slate-900 font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm active:scale-95 whitespace-nowrap"
-           >
-              Settings
-           </button>
-           <button 
-             onClick={handleGenerateReport}
-             className="px-6 py-3 bg-white border border-slate-100 text-slate-900 font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm active:scale-95 whitespace-nowrap"
-           >
-              Report
-           </button>
-           <button 
-             onClick={() => setShowCreateTaskModal(true)}
-             className="flex items-center gap-2 px-6 py-3 bg-violet-600 border border-violet-500 text-white font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-violet-700 transition-all shadow-xl shadow-violet-600/20 active:scale-95 whitespace-nowrap"
-           >
-              <Plus className="size-3.5" />
-              Assign Task
-           </button>
         </div>
       </div>
 
@@ -233,11 +172,6 @@ export default function LeadProjectDetailsPage() {
                           >
                              <Mail className="size-5" />
                           </a>
-                          <button 
-                            className="p-3.5 text-slate-400 hover:text-violet-600 hover:bg-white rounded-2xl transition-all shadow-sm border border-transparent hover:border-slate-100 active:scale-95"
-                          >
-                             <Phone className="size-5" />
-                          </button>
                        </div>
                     </div>
                   )) : (
@@ -245,7 +179,7 @@ export default function LeadProjectDetailsPage() {
                         <Users className="size-16 text-slate-200" />
                         <div className="space-y-2">
                            <p className="text-xl font-black text-slate-900 uppercase tracking-widest font-headline">No members assigned</p>
-                           <p className="text-xs font-bold text-slate-400">Add team members to this project node to see details.</p>
+                           <p className="text-xs font-bold text-slate-400">Team members added to this project will appear here.</p>
                         </div>
                      </div>
                   )}
@@ -267,7 +201,7 @@ export default function LeadProjectDetailsPage() {
                       </div>
                       <div className="space-y-1">
                          <p className="text-[10px] font-black text-slate-300 tracking-widest uppercase leading-none">Sector</p>
-                         <p className="text-base font-black text-slate-900 truncate tracking-tight">{project?.department_name}</p>
+                         <p className="text-base font-black text-slate-900 truncate tracking-tight">{project?.department_name || "N/A"}</p>
                       </div>
                    </div>
 
@@ -296,20 +230,6 @@ export default function LeadProjectDetailsPage() {
           </div>
 
         </div>
-      
-
-      <EditProjectModal 
-        open={showEditModal} 
-        onOpenChange={setShowEditModal} 
-        project={project} 
-        onSuccess={fetchProject} 
-      />
-      <CreateTaskModal 
-        open={showCreateTaskModal}
-        onOpenChange={setShowCreateTaskModal}
-        initialProjectId={id}
-        onSuccess={fetchProject}
-      />
     </div>
   )
 }

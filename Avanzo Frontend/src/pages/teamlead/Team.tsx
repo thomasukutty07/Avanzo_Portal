@@ -1,4 +1,4 @@
-import TeamLeadChrome from "@/components/portal/teamlead/TeamLeadChrome"
+
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
 import { useNavigate } from "react-router-dom"
 import { accountsService } from "@/services/accounts"
@@ -26,6 +26,7 @@ import {
 import { api } from "@/lib/axios"
 import { extractResults } from "@/lib/apiResults"
 import { Badge } from "@/components/ui/badge"
+import { UserAvatar } from "@/components/shared/UserAvatar"
 
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -84,7 +85,7 @@ export default function TeamPage() {
         email: m.email || m.user?.email || ""
       })))
     } catch (error) {
-      toast.error("Unit directory synchronization failed.")
+      toast.error("Failed to load team members.")
       setMembers([])
     } finally {
       setLoading(false)
@@ -101,9 +102,9 @@ export default function TeamPage() {
       const current = selectedMember?.evaluated_talents || [];
       setSelectedMember({...selectedMember, evaluated_talents: [...current, newTag.id]});
       setCustomTagName("");
-      toast.success("New competency sector identified.");
+      toast.success("New skill added.");
     } catch (e) {
-      toast.error("Failed to register custom sector.");
+      toast.error("Failed to add skill.");
     }
   }
 
@@ -136,17 +137,14 @@ export default function TeamPage() {
   }
 
   return (
-    <TeamLeadChrome>
-      <div className="p-4 space-y-10 animate-in fade-in duration-700 font-sans">
-        {/* Header */}
-        <div className="sticky top-[80px] z-30 -mx-4 md:-mx-8 px-4 md:px-8 py-6 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-slate-100 transition-all">
-          <header>
-            <h2 className="text-2xl font-black tracking-tight text-slate-900 font-headline leading-none">Team Members</h2>
-            <p className="text-xs font-bold text-slate-400 mt-2 font-headline leading-none opacity-60">Manage your team and their skill sets</p>
-          </header>
-          <div className="flex gap-3.5">
-          </div>
+    <div className="p-4 md:p-8 space-y-10 animate-in fade-in duration-700 font-sans">
+      {/* Header Row */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+        <div>
+          <h2 className="text-2xl font-black tracking-tight text-slate-900 font-headline leading-none">Team Members</h2>
+          <p className="text-xs font-bold text-slate-400 mt-2 font-headline leading-none opacity-60">View and manage your team</p>
         </div>
+      </div>
 
         {/* Global Registry Bar */}
         <div className="bg-white p-2 rounded-[1.5rem] border border-slate-100 shadow-sm flex flex-col md:flex-row gap-4 hover:shadow-xl transition-all duration-500">
@@ -194,7 +192,7 @@ export default function TeamPage() {
                        </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56 rounded-2xl border border-slate-100 shadow-2xl font-sans p-2">
-                       <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-3 py-2.5">Unit Operations</DropdownMenuLabel>
+                       <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-3 py-2.5">Actions</DropdownMenuLabel>
                        <DropdownMenuItem 
                         onClick={() => navigate(`/tasks`)} 
                         className="text-xs font-bold gap-3 px-3 py-3 cursor-pointer rounded-xl hover:bg-violet-50 hover:text-violet-600 transition-colors"
@@ -212,7 +210,7 @@ export default function TeamPage() {
                        </DropdownMenuItem>
                        
                        <DropdownMenuSeparator className="bg-slate-50 my-1" />
-                       <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-3 py-2.5">Personnel Data</DropdownMenuLabel>
+                       <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-3 py-2.5">Member Info</DropdownMenuLabel>
                        
                        <DropdownMenuItem 
                         onClick={() => {
@@ -222,23 +220,17 @@ export default function TeamPage() {
                         className="text-xs font-bold gap-3 px-3 py-3 cursor-pointer rounded-xl hover:bg-violet-50 hover:text-violet-600 transition-colors"
                        >
                           <Award className="size-4 text-amber-500" />
-                          Skills Evaluation
+                          Edit Skills
                        </DropdownMenuItem>
 
-                       <DropdownMenuItem 
-                        onClick={() => toast.info(`Initializing attendance log for ${member.full_name}`)} 
-                        className="text-xs font-bold gap-3 px-3 py-3 cursor-pointer rounded-xl hover:bg-violet-50 hover:text-violet-600 transition-colors"
-                       >
-                          <Calendar className="size-4 text-blue-500" />
-                          Attendance History
-                       </DropdownMenuItem>
+
                     </DropdownMenuContent>
                  </DropdownMenu>
               </div>
               
               <div className="relative mb-6">
                  <div className="size-24 bg-slate-50 rounded-[1.8rem] p-1 border border-slate-100 group-hover:border-violet-100 group-hover:rotate-6 transition-all duration-700 shadow-sm group-hover:shadow-lg">
-                    <img src={member.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.full_name)}&background=f5f3ff&color=7c3aed&bold=true`} alt={member.full_name} className="size-full rounded-[1.6rem] object-cover" />
+                    <UserAvatar firstName={member.first_name} lastName={member.last_name} gender={member.gender} size={88} className="rounded-[1.6rem]" />
                  </div>
                  <div className="absolute -bottom-1 -right-1 size-7 bg-emerald-500 border-4 border-white rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform">
                     <Activity className="size-3 text-white animate-pulse" />
@@ -264,7 +256,7 @@ export default function TeamPage() {
             </div>
           ))}
         </div>
-      </div>
+
 
       {/* Talent Evaluation - Refined Corporate Dialog (Standard Topology) */}
       <Dialog open={isEvalOpen} onOpenChange={setIsEvalOpen}>
@@ -457,6 +449,6 @@ export default function TeamPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </TeamLeadChrome>
+    </div>
   )
 }

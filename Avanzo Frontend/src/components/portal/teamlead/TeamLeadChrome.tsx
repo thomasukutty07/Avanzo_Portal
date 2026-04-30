@@ -1,6 +1,6 @@
-import { NavLink, useNavigate, useLocation } from "react-router-dom"
+﻿import { NavLink, useNavigate, useLocation, Outlet } from "react-router-dom"
 import { LogOut, LayoutDashboard, CheckSquare, Folder, Users, Megaphone, Search, Bell, Menu, X, Clock } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { toast } from "sonner"
 import { NewUpdateModal, SearchModal } from "./TeamLeadActionForms"
@@ -13,15 +13,15 @@ import { AttendanceClockWidget } from "@/components/shared/AttendanceClockWidget
 import { UserAvatar } from "@/components/shared/UserAvatar"
 
 const NAV_ITEMS = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/lead", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/tasks", label: "Team Tasks", icon: CheckSquare },
   { to: "/projects", label: "Projects", icon: Folder },
   { to: "/team", label: "Team Members", icon: Users, end: true },
   { to: "/team-announcements", label: "Announcements", icon: Megaphone },
 ]
 
-export default function TeamLeadChrome({ children }: { children: React.ReactNode }) {
-  const { user, logout } = useAuth()
+export default function TeamLeadChrome({ children }: { children?: React.ReactNode }) {
+  const { user, logout, isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
@@ -29,31 +29,48 @@ export default function TeamLeadChrome({ children }: { children: React.ReactNode
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [notifications, setNotifications] = useState<any[]>([])
   const [announcementCount, setAnnouncementCount] = useState(0)
+  
+  // Prevent multiple in-flight requests during rapid navigation
+  const isFetchingRef = useRef(false)
 
   useEffect(() => {
+    if (!isAuthenticated) return
+
     async function fetchNotifs() {
       try {
         const res = await api.get("/api/notifications/")
         setNotifications(extractResults(res.data))
-      } catch (e) {
-        console.error(e)
+      } catch (e: any) {
+        if (e?.response?.status !== 429) {
+          console.error("[Notifications] Fetch failed:", e)
+        }
       }
     }
+
     async function fetchAnnouncements() {
+      if (isFetchingRef.current) return
+      isFetchingRef.current = true
+      
       try {
         const res = await api.get("/api/notifications/broadcasts/")
         const data = res.data
         const items = Array.isArray(data) ? data : (data.results || [])
         setAnnouncementCount(items.length)
-      } catch (e) {
-        console.error(e)
+      } catch (e: any) {
+        // Silently handle 429s for polling to avoid console spam
+        if (e?.response?.status !== 429) {
+          console.error("[Announcements] Fetch failed:", e)
+        }
+      } finally {
+        isFetchingRef.current = false
       }
     }
+
     fetchNotifs()
     fetchAnnouncements()
-    const interval = setInterval(fetchAnnouncements, 300000) // 5 minutes polling to avoid 429 errors
+    const interval = setInterval(fetchAnnouncements, 300000) // 5 minutes polling
     return () => clearInterval(interval)
-  }, [])
+  }, [isAuthenticated])
 
   const displayName = user 
     ? [user.first_name, user.last_name].filter(Boolean).join(" ") || user.email
@@ -83,7 +100,7 @@ export default function TeamLeadChrome({ children }: { children: React.ReactNode
                alt="Avanzo" 
                className="w-32 h-auto object-contain"
              />
-             <p className="text-xs font-black uppercase tracking-[0.2em] leading-none text-violet-600 italic">Team Lead Dashboard</p>
+             <p className="text-xs font-black uppercase tracking-[0.2em] leading-none text-violet-600 italic">Team Lead</p>
           </div>
           <button onClick={() => setIsSidebarOpen(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-50 md:hidden">
             <X className="h-4 w-4" />
@@ -91,7 +108,7 @@ export default function TeamLeadChrome({ children }: { children: React.ReactNode
         </div>
         
         <nav className="flex-1 space-y-1 overflow-y-auto px-4 py-4 border-t border-slate-50">
-          <div className="px-4 mb-3 mt-2 text-xs font-black uppercase tracking-[0.15em] text-slate-300">Operations</div>
+          <div className="px-4 mb-3 mt-2 text-xs font-black uppercase tracking-[0.15em] text-slate-300">Navigation</div>
           {NAV_ITEMS.map((item) => (
             <NavLink
               key={item.to}
@@ -220,7 +237,7 @@ export default function TeamLeadChrome({ children }: { children: React.ReactNode
 
         <main key={location.pathname} className="flex-1 relative">
           <div className="p-4 md:p-6">
-            {children}
+            {children || <Outlet />}
           </div>
         </main>
       </div>

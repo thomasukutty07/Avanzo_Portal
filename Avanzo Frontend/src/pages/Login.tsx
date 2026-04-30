@@ -26,12 +26,8 @@ export default function Login() {
     setError(null)
     setSubmitting(true)
     try {
-      const u = await login(trimmed, password)
-      if (u.role === "Admin") {
-        logout()
-        setError("Administrative credentials detected. Please use the Management Portal.")
-        return
-      }
+      await login(trimmed, password)
+      navigate("/")
     } catch {
       setError("Invalid email or password")
     } finally {

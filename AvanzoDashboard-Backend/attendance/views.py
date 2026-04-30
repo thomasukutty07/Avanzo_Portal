@@ -360,6 +360,7 @@ class AttendanceViewSet(TenantFilterMixin, viewsets.ReadOnlyModelViewSet):
                 "employee_id": str(employee.id),
                 "employee_name": employee.get_full_name(),
                 "employee_code": employee.employee_id,
+                "gender": employee.gender,
                 "department": employee.department.name if employee.department else None,
             }
 
@@ -476,6 +477,7 @@ class AttendanceViewSet(TenantFilterMixin, viewsets.ReadOnlyModelViewSet):
                 "employee_id": str(emp.id),
                 "employee_name": emp.get_full_name(),
                 "employee_code": emp.employee_id,
+                "gender": emp.gender,
                 "department": emp.department.name if emp.department else None,
                 "designation": emp.designation.name if emp.designation else None,
             }

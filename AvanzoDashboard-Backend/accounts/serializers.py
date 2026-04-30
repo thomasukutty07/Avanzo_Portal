@@ -118,6 +118,7 @@ class MeSerializer(serializers.ModelSerializer):
             "status",
             "date_of_joining",
             "evaluated_talents",
+            "gender",
         ]
         read_only_fields = [
             "id",
@@ -131,6 +132,7 @@ class MeSerializer(serializers.ModelSerializer):
             "status",
             "date_of_joining",
             "evaluated_talents",
+            "gender",
         ]
 
     def get_team_lead_name(self, obj) -> str | None:
@@ -176,6 +178,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
             "status",
             "date_of_joining",
             "evaluated_talents",
+            "gender",
         ]
 
     evaluated_talents = serializers.SerializerMethodField()

@@ -1,4 +1,4 @@
-import TeamLeadChrome from "@/components/portal/teamlead/TeamLeadChrome";
+﻿
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme";
 import { ReviewTaskModal, CreateTaskModal } from "@/components/portal/teamlead/TeamLeadActionForms";
 import { projectsService } from "@/services/projects";
@@ -53,22 +53,21 @@ export default function LeadTasksPage() {
   );
 
   return (
-    <TeamLeadChrome>
-      <div className="p-4 md:p-8 space-y-10 animate-in fade-in duration-700 font-sans">
-        {/* Header */}
-        <div className="sticky top-[80px] z-30 -mx-4 md:-mx-8 px-4 md:px-8 py-6 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-slate-100 transition-all">
-          <header>
-            <h2 className="text-3xl font-black tracking-tight text-slate-900 font-headline leading-none">Task List</h2>
-            <p className="text-sm font-bold text-slate-400 mt-2 font-headline leading-none opacity-60">Manage team tasks and progress</p>
-          </header>
-          <button 
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2.5 px-6 py-4 bg-violet-600 border border-violet-500 text-white font-bold rounded-2xl hover:bg-violet-700 transition-all text-xs shadow-lg active:scale-95"
-          >
-            <Plus className="size-4" />
-            Assign New Task
-          </button>
-        </div>
+    <div className="p-4 md:p-8 space-y-10 animate-in fade-in duration-700 font-sans">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+        <header>
+          <h2 className="text-2xl font-black tracking-tight text-slate-900 font-headline leading-none">Team Tasks</h2>
+          <p className="text-xs font-bold text-slate-400 mt-2 font-headline leading-none opacity-60">Monitor and orchestrate ongoing mission parameters</p>
+        </header>
+        <button 
+          onClick={() => setShowCreateModal(true)}
+          className="flex items-center gap-2.5 px-6 py-4 bg-violet-600 border border-violet-500 text-white font-bold rounded-2xl hover:bg-violet-700 transition-all text-xs shadow-lg active:scale-95"
+        >
+          <Plus className="size-4" />
+          Assign New Task
+        </button>
+      </div>
 
         {/* Filters/Search Row */}
         <div className="flex flex-col md:flex-row gap-5">
@@ -167,7 +166,7 @@ export default function LeadTasksPage() {
             </table>
           </div>
         </div>
-      </div>
+
 
       {reviewTask && (
         <ReviewTaskModal 
@@ -182,6 +181,6 @@ export default function LeadTasksPage() {
         onOpenChange={setShowCreateModal}
         onSuccess={fetchTasks}
       />
-    </TeamLeadChrome>
+    </div>
   );
 }

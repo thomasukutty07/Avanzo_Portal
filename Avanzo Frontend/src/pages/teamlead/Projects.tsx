@@ -1,4 +1,4 @@
-import TeamLeadChrome from "@/components/portal/teamlead/TeamLeadChrome"
+﻿
 import { CreateProjectModal, EditProjectModal } from "@/components/portal/teamlead/TeamLeadActionForms"
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
 import { projectsService } from "@/services/projects"
@@ -92,29 +92,28 @@ export default function LeadProjectsPage() {
   ]
 
   return (
-    <TeamLeadChrome>
-      <div className="p-4 space-y-10 animate-in fade-in duration-700 font-sans">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
-          <header>
-            <h2 className="text-3xl font-black tracking-tight text-slate-900 font-headline leading-none">Project List</h2>
-            <p className="text-sm font-bold text-slate-400 mt-2 font-headline leading-none opacity-60">Track and manage team projects</p>
-          </header>
-          <div className="flex gap-3.5">
-             <button 
-              onClick={() => toast.info("Opening project archive...")}
-              className="px-6 py-2.5 bg-white border border-slate-100 text-slate-900 font-black rounded-xl hover:bg-slate-50 transition-all text-[10px] active:scale-95 shadow-sm"
-            >
-              Export Report
-            </button>
-            <button 
-              onClick={() => setShowCreateModal(true)}
-              className="px-6 py-2.5 bg-violet-600 text-white font-black rounded-xl hover:bg-violet-700 transition-all text-[10px] active:scale-95 shadow-md shadow-violet-600/20"
-            >
-              Create Project
-            </button>
-          </div>
+    <div className="p-4 md:p-8 space-y-10 animate-in fade-in duration-700 font-sans">
+      {/* Header Row */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+        <div>
+          <h2 className="text-2xl font-black tracking-tight text-slate-900 font-headline leading-none">Sector Objectives</h2>
+          <p className="text-xs font-bold text-slate-400 mt-2 font-headline leading-none opacity-60">Manage and orchestrate strategic project nodes</p>
         </div>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => toast.info("Opening project archive...")}
+            className="px-6 py-2.5 bg-white border border-slate-100 text-slate-900 font-black rounded-xl hover:bg-slate-50 transition-all text-[10px] active:scale-95 shadow-sm"
+          >
+            Export Report
+          </button>
+          <button 
+            onClick={() => setShowCreateModal(true)}
+            className="px-6 py-2.5 bg-violet-600 text-white font-black rounded-xl hover:bg-violet-700 transition-all text-[10px] active:scale-95 shadow-md shadow-violet-600/20"
+          >
+            Create Project
+          </button>
+        </div>
+      </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -276,7 +275,7 @@ export default function LeadProjectsPage() {
             </table>
           </div>
         </div>
-      </div>
+
       <CreateProjectModal 
         open={showCreateModal} 
         onOpenChange={setShowCreateModal} 
@@ -307,6 +306,6 @@ export default function LeadProjectsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </TeamLeadChrome>
+    </div>
   )
 }

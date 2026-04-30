@@ -23,6 +23,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      "/media": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+        secure: false,
+      },
       "/ws": {
         target: "ws://localhost:8000",
         ws: true,
@@ -42,7 +47,7 @@ export default defineConfig({
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "font-src 'self' https://fonts.gstatic.com data:",
         // Google profile photos (lh3.googleusercontent.com) used for employee avatars
-        "img-src 'self' data: blob: https://*.googleusercontent.com",
+        "img-src 'self' data: blob: https://*.googleusercontent.com https://api.dicebear.com https://ui-avatars.com",
         // Allow same-origin (proxied requests) + direct to backend (fallback)
         "connect-src 'self' http://localhost:8000 ws://localhost:8000 http://127.0.0.1:8000 ws://127.0.0.1:8000",
         // frame-ancestors is HTTP-header-only (ignored in <meta>) — keep it here

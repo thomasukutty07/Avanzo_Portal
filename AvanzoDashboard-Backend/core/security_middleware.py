@@ -67,7 +67,7 @@ class SecurityHeadersMiddleware(MiddlewareMixin):
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "font-src 'self' https://fonts.gstatic.com data:",
             # Google profile photos (lh3.googleusercontent.com) for employee avatars
-            "img-src 'self' data: blob: https://*.googleusercontent.com",
+            "img-src 'self' data: blob: https://*.googleusercontent.com https://api.dicebear.com",
             "connect-src 'self'",
             "frame-ancestors 'none'",               # Strongest clickjacking protection
             "base-uri 'self'",                      # Prevents base tag injection
