@@ -17,7 +17,6 @@ import {
   Award,
   CheckCircle2,
   Calendar,
-  FileSearch,
   ClipboardList,
   AlertCircle,
   CheckCircle,
@@ -197,7 +196,7 @@ export default function TeamPage() {
                         onClick={() => navigate(`/tasks`)} 
                         className="text-xs font-bold gap-3 px-3 py-3 cursor-pointer rounded-xl hover:bg-violet-50 hover:text-violet-600 transition-colors"
                        >
-                          <FileSearch className="size-4 text-emerald-500" />
+                          <Search className="size-4 text-emerald-500" />
                           View Active Tasks
                        </DropdownMenuItem>
 
