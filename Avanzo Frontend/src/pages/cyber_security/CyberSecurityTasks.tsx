@@ -34,28 +34,28 @@ export default function CyberSecurityTasksPage() {
   }, [])
 
   const stats = [
-    { label: "Active assignments", value: tasks.length.toString().padStart(2, '0'), sub: "Real-time queue", color: "text-violet-600", icon: Clock },
-    { label: "In-progress ops", value: tasks.filter(t => t.status === 'in_review' || t.status === 'open').length.toString().padStart(2, '0'), sub: "TDR Active", color: "text-emerald-500", icon: CheckCircle2 },
-    { label: "Pending triage", value: tasks.filter(t => !t.assigned_to).length.toString().padStart(2, '0'), sub: "New alerts", color: "text-amber-500", icon: AlertCircle },
+    { label: "Active tasks", value: tasks.length.toString().padStart(2, '0'), sub: "Upcoming", color: "text-violet-600", icon: Clock },
+    { label: "In-progress", value: tasks.filter(t => t.status === 'in_review' || t.status === 'open').length.toString().padStart(2, '0'), sub: "Active tasks", color: "text-emerald-500", icon: CheckCircle2 },
+    { label: "Pending review", value: tasks.filter(t => !t.assigned_to).length.toString().padStart(2, '0'), sub: "New tasks", color: "text-amber-500", icon: AlertCircle },
   ]
 
-  if (loading) return <div className="p-10 text-slate-400 font-bold font-headline animate-pulse text-[10px] uppercase tracking-widest">SYNCING MISSION REGISTRY...</div>
+  if (loading) return <div className="p-10 text-slate-400 font-bold font-headline animate-pulse text-[10px] uppercase tracking-widest">LOADING TASKS...</div>
   return (
     <div className="space-y-6 pb-12 font-headline bg-[#fcfcfc] min-h-screen">
       {/* Page Header */}
       <div className="sticky top-[64px] z-30 -mx-6 md:-mx-10 px-6 md:px-10 py-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-slate-100 transition-all">
           <div>
               <p className="text-[14px] font-black text-violet-600 mb-1 leading-none">
-                  Tactical operations
+                  My Work
               </p>
               <h1 className="text-4xl font-bold text-slate-900 tracking-tight leading-none">
-                  Task Registry
+                  All Tasks
               </h1>
-              <p className="text-slate-500 mt-2 text-[15px] font-normal leading-relaxed text-slate-400">Coordinate and track active security assignments.</p>
+              <p className="text-slate-500 mt-2 text-[15px] font-normal leading-relaxed text-slate-400">View and manage all your tasks.</p>
           </div>
           <div className="flex items-center gap-4">
               <Button variant="outline" className="h-11 rounded-xl border-slate-200 text-xs font-bold text-slate-600 px-6 bg-white hover:bg-slate-50">
-                  Mission filters
+                  Task filters
               </Button>
           </div>
       </div>
@@ -84,7 +84,7 @@ export default function CyberSecurityTasksPage() {
           <div className="relative max-w-md w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-slate-400" />
               <input 
-                  placeholder="Search tactics..." 
+                  placeholder="Search tasks..." 
                   className="w-full h-10 bg-slate-50 border-slate-100 rounded-xl pl-10 pr-4 text-xs font-bold text-slate-600 outline-none focus:bg-white focus:ring-4 focus:ring-violet-600/5 transition-all"
               />
           </div>
@@ -98,20 +98,20 @@ export default function CyberSecurityTasksPage() {
       {/* Task Table */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mb-12">
         <div className="px-6 py-4 border-b border-slate-50 flex items-center justify-between">
-          <h4 className="font-black text-slate-900 tracking-tight text-[16px] leading-none">Active mission registry</h4>
-          <span className="text-[11px] font-black text-slate-400 bg-slate-50 px-3 py-1.5 rounded-xl italic">Operational feed</span>
+          <h4 className="font-black text-slate-900 tracking-tight text-[16px] leading-none">Active Tasks List</h4>
+          <span className="text-[11px] font-black text-slate-400 bg-slate-50 px-3 py-1.5 rounded-xl italic">All tasks</span>
         </div>
         
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-slate-50/50 text-[11px] font-semibold text-slate-400 border-b border-slate-50 uppercase tracking-wider">
               <tr>
-                <th className="px-8 py-5">Intel-ID</th>
-                <th className="px-8 py-5">Tactical assignment</th>
-                <th className="px-8 py-5">Triage</th>
+                <th className="px-8 py-5">Task ID</th>
+                <th className="px-8 py-5">Task Title</th>
+                <th className="px-8 py-5">Type</th>
                 <th className="px-8 py-5">Status</th>
                 <th className="px-8 py-5">Assigned to</th>
-                <th className="px-6 py-5 text-right">Matrix</th>
+                <th className="px-6 py-5 text-right">More</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">

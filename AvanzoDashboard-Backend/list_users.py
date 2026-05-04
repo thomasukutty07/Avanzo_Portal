@@ -1,16 +1,20 @@
 import os
 import django
-
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
-from django.contrib.auth import get_user_model
-User = get_user_model()
+from django.db import connection
 
-print("EMAIL | FULL NAME | ACCESS ROLE | DEPARTMENT | DESIGNATION")
-print("-" * 80)
-for u in User.objects.all().select_related('access_role', 'department', 'designation'):
-    role = u.access_role.name if u.access_role else "N/A"
-    dept = u.department.name if u.department else "N/A"
-    desig = u.designation.name if u.designation else "N/A"
-    print(f"{u.email} | {u.first_name} {u.last_name} | {role} | {dept} | {desig}")
+print("--- Public Schema ---")
+with connection.cursor() as cursor:
+    cursor.execute("SET search_path TO public")
+    cursor.execute("""
+        SELECT e.email, e.access_role_id, r.name, d.name, des.name 
+        FROM employees e
+        LEFT JOIN access_roles r ON e.access_role_id = r.id
+        LEFT JOIN departments d ON e.department_id = d.id
+        LEFT JOIN designations des ON e.designation_id = des.id
+    """)
+    users = cursor.fetchall()
+    for u in users:
+        print(f"User: {u[0]}, Role: {u[2]}, Dept: {u[3]}, Desig: {u[4]}")

@@ -1,4 +1,4 @@
-﻿import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
+import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
 import { useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
 import { useAuth } from "@/context/AuthContext"
@@ -102,7 +102,7 @@ export default function LeadOverview() {
     { label: "Security Audits", value: projects.filter(p => p.service_name?.toLowerCase().includes('audit') || p.service_name?.toLowerCase().includes('vapt')).length.toString(), sub: "In Progress", color: "blue", icon: ShieldAlert },
     { label: "Risk Items", value: criticalTasks.toString(), sub: "High / Critical", color: "orange", icon: AlertTriangle },
     { label: "Completion Rate", value: `${avgCompletion}%`, sub: "Team Avg", color: "green", icon: Fingerprint },
-    { label: "Log signals", value: feed.length.toString(), sub: "Detections", color: "primary", icon: Activity },
+    { label: "Activity logs", value: feed.length.toString(), sub: "Records", color: "primary", icon: Activity },
   ]
 
   const displayStats = isCyber ? CYBER_STATS : STATS

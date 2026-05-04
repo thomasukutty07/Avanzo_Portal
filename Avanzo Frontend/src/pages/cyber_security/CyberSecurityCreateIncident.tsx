@@ -38,11 +38,11 @@ export default function CyberSecurityCreateIncidentPage() {
       }
 
       await ticketsService.createTicket(data)
-      toast.success("Tactical incident logged. Response lead notified.")
+      toast.success("Issue reported successfully.")
       navigate("/security/incidents", { replace: true })
     } catch (err: any) {
       console.error(err)
-      const msg = err.response?.data?.detail || err.response?.data?.title?.[0] || err.response?.data?.description?.[0] || "Failed to transmit tactical intelligence node."
+      const msg = err.response?.data?.detail || err.response?.data?.title?.[0] || err.response?.data?.description?.[0] || "Failed to submit issue."
       toast.error(msg)
     } finally {
       setSubmitting(false)
@@ -57,10 +57,10 @@ export default function CyberSecurityCreateIncidentPage() {
           className="group flex items-center gap-2 text-[10px] font-bold text-violet-600 tracking-widest hover:text-violet-800 transition-colors uppercase"
         >
           <ArrowLeft className="size-3 group-hover:-translate-x-1 transition-transform" />
-          Back to operations center
+          Back to Dashboard
         </Link>
-        <h1 className="mt-6 text-2xl font-bold text-slate-900 tracking-tight leading-none">Log security incident</h1>
-        <p className="text-slate-500 mt-3 text-xs font-normal text-slate-400">Report a new security vulnerability or threat.</p>
+        <h1 className="mt-6 text-2xl font-bold text-slate-900 tracking-tight leading-none">Report an Issue</h1>
+        <p className="text-slate-500 mt-3 text-xs font-normal text-slate-400">Report a problem or a technical issue.</p>
       </div>
 
       <form
@@ -70,7 +70,7 @@ export default function CyberSecurityCreateIncidentPage() {
         <div className="space-y-6">
           <div className="space-y-3">
             <label htmlFor="title" className="block text-[11px] font-semibold text-slate-400 uppercase tracking-widest">
-              Intel Headline
+              Issue Title
             </label>
             <input
               id="title"
@@ -79,15 +79,15 @@ export default function CyberSecurityCreateIncidentPage() {
               required
               disabled={submitting}
               className="w-full h-12 bg-slate-50 border border-slate-100 rounded-2xl px-6 text-[13px] font-bold text-slate-900 placeholder:text-slate-300 focus:bg-white focus:ring-4 focus:ring-violet-600/5 focus:border-violet-100 outline-none transition-all"
-              placeholder="e.g. Unidentified lateral movement in DC-01"
+              placeholder="e.g. Need to update password rules"
             />
-            <p className="text-[9px] font-medium text-slate-400 italic">Minimum 5 characters required for protocol sync.</p>
+            <p className="text-[9px] font-medium text-slate-400 italic">Minimum 5 characters required.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
               <label htmlFor="type" className="block text-[11px] font-semibold text-slate-400 uppercase tracking-widest">
-                Threat category
+                Issue Category
               </label>
               <select
                 id="type"
@@ -95,25 +95,25 @@ export default function CyberSecurityCreateIncidentPage() {
                 disabled={submitting}
                 className="w-full h-12 bg-slate-50 border border-slate-100 rounded-2xl px-6 text-[12px] font-bold text-slate-700 focus:bg-white outline-none cursor-pointer appearance-none"
               >
-                <option value="tech">External breach / Malware</option>
+                <option value="tech">External issue</option>
                 <option value="compliance">Unauthorized access</option>
-                <option value="tech">Network attack (DDoS)</option>
-                <option value="compliance">Intelligence leak</option>
+                <option value="tech">Network issue</option>
+                <option value="compliance">Policy query</option>
               </select>
             </div>
             <div className="space-y-3 opacity-50 cursor-not-allowed">
               <label className="block text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase">
-                Routing Logic
+                Assigned Team
               </label>
               <div className="w-full h-12 bg-slate-50 border border-slate-100 rounded-2xl px-6 flex items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                 AUTO-TRIAGE / ALPHA
+                 Cyber Security
               </div>
             </div>
           </div>
 
           <div className="space-y-3">
             <label htmlFor="description" className="block text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase">
-              Tactical intel & description
+              Issue Description
             </label>
             <textarea
               id="description"
@@ -121,9 +121,9 @@ export default function CyberSecurityCreateIncidentPage() {
               rows={6}
               disabled={submitting}
               className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-6 text-[12px] font-medium text-slate-600 placeholder:text-slate-300 focus:bg-white outline-none resize-none leading-relaxed"
-              placeholder="Describe the anomalies detected, affected nodes, and initial telemetry data..."
+              placeholder="Describe the issue in detail here..."
             />
-            <p className="text-[9px] font-medium text-slate-400 italic">Minimum 20 characters required for mission integrity.</p>
+            <p className="text-[9px] font-medium text-slate-400 italic">Minimum 20 characters required.</p>
           </div>
         </div>
 
@@ -138,7 +138,7 @@ export default function CyberSecurityCreateIncidentPage() {
             ) : (
               <ShieldAlert className="size-3.5 mr-3" />
             )}
-            {submitting ? "SENDING..." : "LOG INCIDENT"}
+            {submitting ? "SENDING..." : "REPORT ISSUE"}
           </Button>
           <Button
             type="button"

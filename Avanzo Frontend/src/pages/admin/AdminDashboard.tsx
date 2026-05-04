@@ -189,9 +189,9 @@ export default function AdminDashboard() {
                 <table className="w-full text-left border-collapse">
                    <thead className="bg-slate-50/50 border-b border-slate-100">
                       <tr>
-                         <th className="px-10 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Task Designation</th>
-                         <th className="px-10 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] text-center">Priority Status</th>
-                         <th className="hidden md:table-cell px-10 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] text-center">Operational Progress</th>
+                         <th className="px-10 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Task Title</th>
+                         <th className="px-10 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] text-center">Priority</th>
+                         <th className="hidden md:table-cell px-10 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] text-center">Task Progress</th>
                          <th className="px-10 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] text-right">Actions</th>
                       </tr>
                    </thead>
@@ -207,7 +207,7 @@ export default function AdminDashboard() {
                                 <div>
                                    <p className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{t.title}</p>
                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">{t.project_name || 'General Operations'}</p>
-                                </div>
+                                 </div>
                              </div>
                           </td>
                           <td className="px-10 py-6">
@@ -229,7 +229,7 @@ export default function AdminDashboard() {
                                      style={{ width: `${t.completion_pct || t.progress || 0}%` }}
                                    />
                                 </div>
-                                <span className="text-[10px] font-bold text-slate-500 tabular-nums">{t.completion_pct || t.progress || 0}% Verified</span>
+                                <span className="text-[10px] font-bold text-slate-500 tabular-nums">{t.completion_pct || t.progress || 0}% Complete</span>
                              </div>
                           </td>
                           <td className="px-10 py-6">
@@ -246,7 +246,7 @@ export default function AdminDashboard() {
                      )) : (
                        <tr>
                           <td colSpan={4} className="px-10 py-24 text-center opacity-30">
-                             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 leading-none">Node Sync Complete: No Active Tasks</p>
+                             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 leading-none">No Active Tasks</p>
                           </td>
                        </tr>
                      )}

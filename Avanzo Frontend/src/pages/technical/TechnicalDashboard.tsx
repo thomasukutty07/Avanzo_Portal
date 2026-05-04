@@ -82,7 +82,7 @@ export default function TechnicalDashboardPage() {
             icon: "⚠",
           },
           { 
-            label: "SLA compliance", 
+            label: "Tasks on track", 
             value: `${slaVal}%`, 
             sub: slaVal > 90 ? "On track" : "Needs attention", 
             color: slaVal > 90 ? "text-emerald-500" : "text-amber-500", 

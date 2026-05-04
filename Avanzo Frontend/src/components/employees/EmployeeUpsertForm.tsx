@@ -130,8 +130,8 @@ export function EmployeeUpsertForm({
         date_of_joining: dateOfJoining || null,
       }
 
+      payload.access_role = accessRoleId
       if (!isEdit) {
-        payload.access_role = accessRoleId
         payload.email = email.trim()
         payload.status = "active"
       }

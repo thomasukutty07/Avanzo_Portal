@@ -149,7 +149,7 @@ export default function EmployeeProfilePage() {
                   <nav className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                     <span>Directory</span>
                     <span className="opacity-30">/</span>
-                    <span className="text-slate-900">Personnel Dossier</span>
+                    <span className="text-slate-900">Employee Profile</span>
                   </nav>
                </div>
                
@@ -451,7 +451,7 @@ export default function EmployeeProfilePage() {
           <AlertDialogHeader className="py-6 text-center">
             <AlertDialogTitle className="text-3xl font-black text-slate-900 font-headline tracking-tight text-center w-full">Discard Unsaved Changes?</AlertDialogTitle>
             <AlertDialogDescription className="text-base font-medium text-slate-500 mt-6 leading-relaxed text-center">
-              You are currently editing this employee's personnel dossier. Navigating away will discard all unsaved modifications.
+              You are currently editing this employee's profile. Navigating away will discard all unsaved modifications.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-12 gap-4 flex flex-col sm:flex-row justify-center sm:justify-center items-center">

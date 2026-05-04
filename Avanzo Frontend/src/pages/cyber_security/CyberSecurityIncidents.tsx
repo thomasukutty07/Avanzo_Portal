@@ -39,13 +39,13 @@ export default function CyberSecurityIncidentsPage() {
   }).length
 
   const STATS = [
-    { label: "Active incidents", value: incidents.filter(i => i.status !== "resolved").length.toString().padStart(2, '0'), sub: "Requires response", icon: Clock, color: "text-red-500" },
-    { label: "Unassigned unit", value: incidents.filter(i => !i.assigned_to).length.toString().padStart(2, '0'), sub: "Requires triage", icon: Filter, color: "text-amber-500" },
-    { label: "Critical breach", value: incidents.filter(i => i.ticket_type === 'tech').length.toString().padStart(2, '0'), sub: "Active response", icon: ShieldAlert, color: "text-red-600" },
-    { label: "Defense pulses", value: recentCount.toString().padStart(2, '0'), sub: "Streak protocol", icon: Activity, color: "text-violet-600" },
+    { label: "Active issues", value: incidents.filter(i => i.status !== "resolved").length.toString().padStart(2, '0'), sub: "Action required", icon: Clock, color: "text-red-500" },
+    { label: "Unassigned issues", value: incidents.filter(i => !i.assigned_to).length.toString().padStart(2, '0'), sub: "Needs review", icon: Filter, color: "text-amber-500" },
+    { label: "Technical issues", value: incidents.filter(i => i.ticket_type === 'tech').length.toString().padStart(2, '0'), sub: "Active", icon: ShieldAlert, color: "text-red-600" },
+    { label: "Recent activity", value: recentCount.toString().padStart(2, '0'), sub: "Last 24 hours", icon: Activity, color: "text-violet-600" },
   ]
 
-  if (loading) return <div className="p-10 text-slate-400 font-bold font-headline animate-pulse text-[10px] uppercase tracking-widest">SYNCING INCIDENT MATRIX...</div>
+  if (loading) return <div className="p-10 text-slate-400 font-bold font-headline animate-pulse text-[10px] uppercase tracking-widest">LOADING ISSUES...</div>
 
   return (
     <div className="space-y-8 pb-12 font-sans bg-[#fcfcfc] min-h-screen">
@@ -53,22 +53,22 @@ export default function CyberSecurityIncidentsPage() {
       <div className="sticky top-[64px] z-30 -mx-6 md:-mx-10 px-6 md:px-10 py-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-slate-100 transition-all">
           <div>
               <p className="text-[14px] font-semibold text-violet-600 mb-1 leading-none">
-                  Response
+                  Support
               </p>
               <h1 className="text-4xl font-bold text-slate-900 tracking-tight leading-none">
-                  Incident Matrix
+                  Issues List
               </h1>
-              <p className="text-slate-500 mt-2 text-[15px] font-normal leading-normal opacity-60">Real-time overview of active cyber vulnerabilities.</p>
+              <p className="text-slate-500 mt-2 text-[15px] font-normal leading-normal opacity-60">View and manage all reported issues.</p>
           </div>
           <div className="flex items-center gap-4">
               <Button variant="outline" className="h-11 rounded-xl border-slate-200 text-xs font-semibold text-slate-600 px-6 bg-white hover:bg-slate-50">
-                  Global filters
+                  Filters
               </Button>
               <Button 
                 onClick={() => navigate("/security/incidents/create")}
                 className="h-11 rounded-xl bg-violet-600 text-white text-xs font-black px-6 shadow-lg shadow-violet-600/20 hover:bg-violet-700"
               >
-                <Plus className="mr-2 size-4.5" /> Log Incident
+                <Plus className="mr-2 size-4.5" /> Report Issue
               </Button>
           </div>
       </div>
@@ -95,9 +95,9 @@ export default function CyberSecurityIncidentsPage() {
       {/* Incident Management Table */}
       <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden mb-12">
         <div className="px-10 py-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/10">
-          <h4 className="font-black text-slate-900 tracking-tight text-[16px] leading-none">Active operation registry</h4>
+          <h4 className="font-black text-slate-900 tracking-tight text-[16px] leading-none">Active Issues List</h4>
           <button className="text-[11px] font-semibold text-violet-600 hover:text-violet-800 transition-colors flex items-center gap-2.5 bg-violet-50 px-5 py-2.5 rounded-xl border border-violet-100 shadow-sm">
-            Archive Telemetry <ExternalLink className="size-3.5" />
+            Archive <ExternalLink className="size-3.5" />
           </button>
         </div>
         
@@ -105,11 +105,11 @@ export default function CyberSecurityIncidentsPage() {
           <table className="w-full text-left">
             <thead className="bg-slate-50/50 text-[11px] font-semibold text-slate-400 border-b border-slate-50 uppercase tracking-wider">
               <tr>
-                <th className="px-8 py-5">Unit signature</th>
-                <th className="px-8 py-5">Mission briefing</th>
-                <th className="px-8 py-5">Severity matrix</th>
-                <th className="px-8 py-5">Tactical status</th>
-                <th className="px-8 py-5">Response lead</th>
+                <th className="px-8 py-5">Ticket ID</th>
+                <th className="px-8 py-5">Issue Title</th>
+                <th className="px-8 py-5">Severity</th>
+                <th className="px-8 py-5">Status</th>
+                <th className="px-8 py-5">Assigned To</th>
                 <th className="px-8 py-5 text-right">Actions</th>
               </tr>
             </thead>
@@ -151,7 +151,7 @@ export default function CyberSecurityIncidentsPage() {
                 <tr>
                     <td colSpan={6} className="px-10 py-24 text-center">
                         <ShieldAlert className="size-12 mx-auto mb-6 text-slate-100" />
-                        <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-300">REGISTRY SYNCED. NO ANOMALIES DETECTED.</p>
+                        <p className="text-[11px] font-black tracking-wider text-slate-300">No issues reported yet.</p>
                     </td>
                 </tr>
               )}

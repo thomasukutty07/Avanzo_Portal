@@ -50,30 +50,30 @@ export default function CyberSecurityDashboardPage() {
   const openIncidentsCount = incidents.filter(i => i.status === "open").length;
   const criticalCount = incidents.filter(i => i.status !== "resolved").length; 
 
-  if (loading) return <div className="p-10 text-slate-400 font-bold font-headline animate-pulse text-xs">Syncing operational center...</div>;
+  if (loading) return <div className="p-10 text-slate-400 font-bold font-headline animate-pulse text-xs">Loading dashboard...</div>;
 
   // Derive Stats from real data
   const STATS = [
     { 
-      label: "Active Threats", 
+      label: "Reported Issues", 
       value: criticalCount.toString().padStart(2, "0"), 
-      sub: "Active nodes", 
+      sub: "Active issues", 
       icon: AlertTriangle, 
       color: "text-red-500",
       bgIcon: <AlertTriangle className="absolute -right-4 -bottom-4 size-20 text-red-500/5 rotate-12" />
     },
     { 
-      label: "Open Incidents", 
+      label: "Open Tasks", 
       value: openIncidentsCount.toString().padStart(2, "0"), 
-      sub: "Requires triage", 
+      sub: "Needs attention", 
       icon: Zap, 
       color: "text-violet-600",
       bgIcon: <Zap className="absolute -right-4 -bottom-4 size-20 text-violet-600/5" />
     },
     { 
-      label: "System Risk", 
+      label: "Status", 
       value: criticalCount > 5 ? "High" : criticalCount > 2 ? "Med" : "Low", 
-      sub: criticalCount > 0 ? "Vulnerabilities detected" : "All nodes secure", 
+      sub: criticalCount > 0 ? "Issues found" : "All clear", 
       icon: ShieldCheck, 
       color: criticalCount > 5 ? "text-red-600" : criticalCount > 0 ? "text-amber-500" : "text-emerald-500",
       bgIcon: <ShieldCheck className="absolute -right-4 -bottom-4 size-20 text-emerald-500/5 -rotate-12" />
@@ -84,9 +84,9 @@ export default function CyberSecurityDashboardPage() {
   const BROADCASTS = announcements
     .slice(0, 5)
     .map(a => ({
-      severity: "Broadcast",
+      severity: "Update",
       title: a.title,
-      source: a.created_by_name || "HQ Command",
+      source: a.created_by_name || "Admin",
       time: new Date(a.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       color: "bg-violet-50 text-violet-600 border-violet-100"
     }));
@@ -99,19 +99,19 @@ export default function CyberSecurityDashboardPage() {
       <div className="sticky top-[64px] z-30 -mx-6 md:-mx-10 px-6 md:px-10 py-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-slate-100 transition-all">
         <div>
           <p className="text-[14px] font-black text-violet-600 mb-1">
-            Cyber defense operations
+            Cyber Security Portal
           </p>
           <h1 className="text-4xl font-bold text-slate-900 tracking-tight">
-            Security Intelligence
+            My Dashboard
           </h1>
-          <p className="text-slate-500 mt-2 text-[15px] font-normal leading-normal">Real-time threat monitoring and incident response center.</p>
+          <p className="text-slate-500 mt-2 text-[15px] font-normal leading-normal">View your dashboard, see tasks, and report any issues.</p>
         </div>
         <div className="flex items-center gap-3 self-start md:self-auto">
           <button
             type="button"
             className="px-4 py-2 rounded-xl border-2 border-violet-100 text-violet-700 text-[11px] font-bold hover:bg-violet-50 transition-colors"
           >
-            Audit logs
+            Activity logs
           </button>
           <button
             type="button"
@@ -119,13 +119,13 @@ export default function CyberSecurityDashboardPage() {
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 text-white text-[11px] font-bold hover:bg-violet-700 transition-all shadow-lg shadow-violet-600/20"
           >
             <Plus className="size-4" />
-            Log New Incident
+            Report an Issue
           </button>
         </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
         {STATS.map((s, i) => (
           <Card key={i} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 hover:shadow-md transition-all group relative overflow-hidden">
              {s.bgIcon}
@@ -153,9 +153,9 @@ export default function CyberSecurityDashboardPage() {
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">
               <div className="size-2 bg-violet-500 rounded-full animate-pulse shadow-[0_0_12px_rgba(139,92,246,0.4)]" />
-              <h4 className="font-bold text-slate-900 text-[18px]">Intelligence Feed</h4>
+              <h4 className="font-bold text-slate-900 text-[18px]">Announcements</h4>
             </div>
-            <span className="text-[14px] font-black text-slate-400">Live sync</span>
+            <span className="text-[14px] font-black text-slate-400">Latest updates</span>
           </div>
 
           <div className="flex-1 space-y-5 overflow-y-auto pr-2 no-scrollbar">
@@ -182,14 +182,14 @@ export default function CyberSecurityDashboardPage() {
                     <div className="size-10 rounded-full bg-slate-50 flex items-center justify-center mb-4">
                         <ShieldCheck className="size-5 text-slate-200" />
                     </div>
-                    <p className="text-xs font-bold text-slate-400">No active threats detected</p>
-                    <p className="text-[9px] text-slate-300 mt-1">Satellite nodes reporting clear status</p>
+                    <p className="text-xs font-bold text-slate-400">No active announcements</p>
+                    <p className="text-[9px] text-slate-300 mt-1">Everything looks good</p>
                 </div>
             )}
           </div>
 
           <button className="mt-6 w-full py-3.5 rounded-xl bg-slate-50 text-[11px] font-black text-slate-500 hover:bg-violet-50 hover:text-violet-700 transition-all border border-slate-100">
-            Export historical logs
+            Export logs
           </button>
         </div>
 
@@ -199,9 +199,9 @@ export default function CyberSecurityDashboardPage() {
       {/* Incident Management Table */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mb-12">
         <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-          <h4 className="font-bold text-slate-900 text-sm">Active Incident Matrix</h4>
+          <h4 className="font-bold text-slate-900 text-sm">Active Issues List</h4>
           <button className="text-[12px] font-semibold text-violet-600 hover:text-violet-800 transition-colors flex items-center gap-2">
-            Historical Data <ExternalLink className="size-3.5" />
+            View All <ExternalLink className="size-3.5" />
           </button>
         </div>
         
@@ -209,12 +209,12 @@ export default function CyberSecurityDashboardPage() {
           <table className="w-full text-left">
             <thead className="bg-slate-50/50 text-[11px] font-semibold text-slate-400 border-b border-slate-50 uppercase tracking-wider">
               <tr>
-                <th className="px-6 py-6">Incident unit</th>
-                <th className="px-6 py-6">Intelligence description</th>
-                <th className="px-6 py-6">Impact</th>
-                <th className="px-6 py-6">Operation status</th>
-                <th className="px-6 py-6">Tactical lead</th>
-                <th className="px-6 py-6 text-right">Matrix</th>
+                <th className="px-6 py-6">Ticket ID</th>
+                <th className="px-6 py-6">Issue Title</th>
+                <th className="px-6 py-6">Type</th>
+                <th className="px-6 py-6">Status</th>
+                <th className="px-6 py-6">Assigned To</th>
+                <th className="px-6 py-6 text-right">More</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -223,7 +223,7 @@ export default function CyberSecurityDashboardPage() {
                   <td className="px-6 py-8 font-black text-[15px] text-violet-700 tracking-tight">{inc.id?.slice(0, 8)}</td>
                   <td className="px-6 py-8">
                     <p className="text-[17px] font-black text-slate-900 leading-none tracking-tight">{inc.title}</p>
-                    <p className="text-[12px] text-slate-400 font-black mt-2 leading-none italic">Reference: {inc.id?.slice(0, 6).toUpperCase()}</p>
+                    <p className="text-[12px] text-slate-400 font-black mt-2 leading-none italic">Ref: {inc.id?.slice(0, 6).toUpperCase()}</p>
                   </td>
                   <td className="px-6 py-8">
                     <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black border shadow-sm ${inc.ticket_type === 'tech' ? 'text-red-600 bg-red-50 border-red-100' : 'text-orange-600 bg-orange-50 border-orange-100'}`}>
@@ -253,7 +253,7 @@ export default function CyberSecurityDashboardPage() {
               ))}
               {incidents.length === 0 && (
                   <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center text-slate-400 font-bold text-xs">No active incident registry found</td>
+                      <td colSpan={6} className="px-6 py-12 text-center text-slate-400 font-bold text-xs">No active issues found</td>
                   </tr>
               )}
             </tbody>

@@ -114,7 +114,7 @@ export default function UsersPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success("Personnel directory exported");
+    toast.success("User list exported");
   }
 
   return (
