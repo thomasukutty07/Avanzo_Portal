@@ -236,12 +236,60 @@ export default function HRLeaveRequests() {
                 {calendarDays.map((day, i) => {
                   const isCurrentMonth = isSameMonth(day, currentMonth)
                   const isToday = isSameDay(day, new Date())
-                  // Simple logic to show a red dot if someone is out on this day
-                  // We'll leave the red dot out for now, to fully remove dummy dots
+                  
+                  // Filter approved leave requests that overlap with the current day
+                  const activeLeaves = requests.filter(req => {
+                    if (req.status !== 'approved') return false
+                    const dateStr = format(day, 'yyyy-MM-dd')
+                    return dateStr >= req.start_date && dateStr <= req.end_date
+                  })
+                  const hasLeaves = activeLeaves.length > 0
+
                   return (
-                    <div key={i} className={`py-1.5 text-xs font-bold relative ${!isCurrentMonth ? 'text-slate-300' : isToday ? 'text-violet-700' : 'text-slate-600'}`}>
-                      {format(day, 'd')}
-                      {isToday && <div className="absolute inset-0 bg-violet-700/10 rounded-lg -z-10" />}
+                    <div 
+                      key={i} 
+                      className={`py-2 text-xs font-bold relative group cursor-pointer flex flex-col items-center justify-center rounded-lg transition-all hover:bg-slate-50/80 ${
+                        !isCurrentMonth ? 'text-slate-300 pointer-events-none' : isToday ? 'text-violet-700 bg-violet-50/40' : 'text-slate-600'
+                      }`}
+                    >
+                      <span>{format(day, 'd')}</span>
+                      
+                      {/* Active Approved Leave Dot */}
+                      {hasLeaves && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500 absolute bottom-1" />
+                      )}
+
+                      {/* Today border highlight */}
+                      {isToday && <div className="absolute inset-0 border border-violet-200 rounded-lg -z-10" />}
+
+                      {/* Premium Hover Popover Tooltip */}
+                      {hasLeaves && (
+                        <div className={`hidden group-hover:block absolute z-50 bottom-full mb-2 bg-slate-900 text-white text-[11px] p-4 rounded-xl shadow-xl w-60 border border-slate-800 text-left font-display backdrop-blur-md ${
+                          (i % 7) >= 4 ? 'right-0' : 'left-0'
+                        }`}>
+                          <div className="border-b border-slate-850 pb-2 mb-2 font-headline flex items-center justify-between">
+                            <span className="font-black text-[9px] uppercase tracking-wider text-slate-400">Personnel Out</span>
+                            <span className="bg-amber-500/20 text-amber-300 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">
+                              {activeLeaves.length} {activeLeaves.length === 1 ? 'Staff' : 'Staff Members'}
+                            </span>
+                          </div>
+                          <div className="space-y-2.5 max-h-40 overflow-y-auto pr-1">
+                            {activeLeaves.map((leave, idx) => (
+                              <div key={idx} className="flex flex-col gap-0.5">
+                                <span className="font-bold text-white text-xs truncate leading-tight uppercase tracking-tight">
+                                  {leave.employee_name}
+                                </span>
+                                <span className="text-[9px] text-slate-400 font-medium lowercase first-letter:uppercase">
+                                  {leave.leave_type_display || leave.leave_type} • {format(parseISO(leave.start_date), 'MMM d')} - {format(parseISO(leave.end_date), 'MMM d')}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className={`absolute top-full w-0 h-0 border-[6px] border-transparent border-t-slate-900 ${
+                            (i % 7) >= 4 ? 'right-4' : 'left-4'
+                          }`} />
+                        </div>
+                      )}
                     </div>
                   )
                 })}
