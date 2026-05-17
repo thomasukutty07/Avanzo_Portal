@@ -59,6 +59,12 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       if (task.completion_pct === 100) {
         setPhases(phases.map(p => ({ ...p, completed: true })));
       }
+      
+      const todayStr = new Date().toISOString().split('T')[0];
+      const isConfirmed = localStorage.getItem(`avanzo_task_confirmed_${task.id}_${todayStr}`) === "true";
+      const isStarted = !!localStorage.getItem(`avanzo_task_started_time_${task.id}_${todayStr}`);
+      setWorkConfirmed(isConfirmed);
+      setWorkStarted(isStarted);
     }
   }, [task]);
 
@@ -289,7 +295,12 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                      <p className="text-sm font-bold text-slate-800">Are you going to do this work today?</p>
                      <p className="text-xs text-slate-500 mt-1">Please confirm your availability for today.</p>
                    </div>
-                   <Button onClick={() => setWorkConfirmed(true)} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl shadow-sm">
+                   <Button onClick={() => {
+                      const todayStr = new Date().toISOString().split('T')[0];
+                      localStorage.setItem(`avanzo_task_confirmed_${task.id}_${todayStr}`, "true");
+                      setWorkConfirmed(true);
+                      toast.success("Availability confirmed. Ready to start!");
+                    }} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl shadow-sm">
                      Confirm OK
                    </Button>
                  </div>
@@ -299,7 +310,21 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                      <p className="text-sm font-bold text-violet-900">Work Confirmed.</p>
                      <p className="text-xs text-violet-600 mt-1">Log your exact start time now.</p>
                    </div>
-                   <Button onClick={() => { setWorkStarted(true); toast.success("Work started precisely at " + new Date().toLocaleTimeString()); }} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl shadow-sm">
+                   <Button onClick={async () => {
+                      const todayStr = new Date().toISOString().split('T')[0];
+                      const exactTime = new Date().toLocaleTimeString();
+                      localStorage.setItem(`avanzo_task_started_time_${task.id}_${todayStr}`, new Date().toISOString());
+                      localStorage.setItem(`avanzo_task_confirmed_${task.id}_${todayStr}`, "true");
+                      setWorkStarted(true);
+                      
+                      try {
+                        await projectsService.updateTaskProgress(task.id, 0); // Trigger in-progress status
+                      } catch (e) {
+                        console.error("Failed to automatically update task status:", e);
+                      }
+                      
+                      toast.success("Work started precisely at " + exactTime);
+                    }} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl shadow-sm">
                      Now I am starting this work
                    </Button>
                  </div>
