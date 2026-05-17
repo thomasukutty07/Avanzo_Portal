@@ -57,14 +57,19 @@ export default function CyberSecurityDashboardPage() {
   useEffect(() => {
     async function loadIncidents() {
       try {
-        const [incRes, annRes] = await Promise.all([
-          api.get("/api/tickets/"),
-          api.get("/api/notifications/")
-        ]);
+        let rawIncidents = [];
+        let rawAnnouncements = [];
+        try {
+          const [incRes, annRes] = await Promise.all([
+            api.get("/api/tickets/"),
+            api.get("/api/notifications/")
+          ]);
+          rawIncidents = extractResults(incRes.data);
+          rawAnnouncements = extractResults(annRes.data);
+        } catch (e) {
+          console.warn("Failed to fetch tickets/notifications, using empty list:", e);
+        }
         
-        const rawIncidents = extractResults(incRes.data);
-        const rawAnnouncements = extractResults(annRes.data);
-
         // Only show tech/compliance as "incidents" for this dashboard
         setIncidents(rawIncidents.filter((t: any) => t.ticket_type === "tech" || t.ticket_type === "compliance"));
         
@@ -216,7 +221,20 @@ export default function CyberSecurityDashboardPage() {
           </h1>
           <p className="text-slate-500 mt-2 text-[15px] font-normal leading-normal">View your dashboard, see tasks, and report any issues.</p>
         </div>
-        <div className="flex items-center gap-3 self-start md:self-auto">
+        <div className="flex items-center gap-3 self-start md:self-auto flex-wrap">
+          <button
+            type="button"
+            onClick={() => {
+              if (personalTasks.length > 0) {
+                setExtensionTaskId(personalTasks[0].id);
+              }
+              setShowExtensionModal(true);
+            }}
+            className="px-4 py-2 rounded-xl border-2 border-violet-100 text-violet-700 text-[11px] font-bold hover:bg-violet-50 transition-colors flex items-center gap-1.5"
+          >
+            <ClockAlert className="size-3.5" />
+            Request Extension
+          </button>
           <button
             type="button"
             className="px-4 py-2 rounded-xl border-2 border-violet-100 text-violet-700 text-[11px] font-bold hover:bg-violet-50 transition-colors"

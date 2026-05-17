@@ -47,17 +47,32 @@ export default function TechnicalDashboardPage() {
         setLoading(true);
         
         // Fetch projects to calculate overall progress
-        const projectsRes = await projectsService.getProjects();
-        const projectsList = Array.isArray(projectsRes) ? projectsRes : (projectsRes.results || []);
+        let projectsList = [];
+        try {
+          const projectsRes = await projectsService.getProjects();
+          projectsList = Array.isArray(projectsRes) ? projectsRes : (projectsRes.results || []);
+        } catch (e) {
+          console.warn("Failed to fetch projects, using empty list:", e);
+        }
         setProjects(projectsList);
 
         // Fetch personal tasks (assigned to me)
-        const tasksRes = await projectsService.getTasks({ assignee: user?.id });
-        const tasksList = Array.isArray(tasksRes) ? tasksRes : (tasksRes.results || []);
+        let tasksList = [];
+        try {
+          const tasksRes = await projectsService.getTasks({ assignee: user?.id });
+          tasksList = Array.isArray(tasksRes) ? tasksRes : (tasksRes.results || []);
+        } catch (e) {
+          console.warn("Failed to fetch personal tasks, using empty list:", e);
+        }
         
         // Fetch all team tasks for global sector stats
-        const allTasksRes = await projectsService.getTasks();
-        const allTasks = Array.isArray(allTasksRes) ? allTasksRes : (allTasksRes.results || []);
+        let allTasks = [];
+        try {
+          const allTasksRes = await projectsService.getTasks();
+          allTasks = Array.isArray(allTasksRes) ? allTasksRes : (allTasksRes.results || []);
+        } catch (e) {
+          console.warn("Failed to fetch all tasks, using empty list:", e);
+        }
 
         const filteredTasks = tasksList.filter((t: any) => t.status !== 'completed' && t.status !== 'resolved').slice(0, 3);
         if (filteredTasks.length === 0) {
@@ -182,7 +197,6 @@ export default function TechnicalDashboardPage() {
 
       } catch (error) {
         console.error("Dashboard data load failed:", error);
-        toast.error("Failed to load dashboard data.");
       } finally {
         setLoading(false);
       }
@@ -217,7 +231,20 @@ export default function TechnicalDashboardPage() {
           <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">Overview</h1>
           <p className="text-slate-500 mt-2 text-xs font-medium">View your projects, tasks, and overall progress.</p>
         </div>
-        <div className="flex items-center gap-4 self-start md:self-auto">
+        <div className="flex items-center gap-4 self-start md:self-auto flex-wrap">
+          <button
+            type="button"
+            onClick={() => {
+              if (personalTasks.length > 0) {
+                setExtensionTaskId(personalTasks[0].id);
+              }
+              setShowExtensionModal(true);
+            }}
+            className="px-7 py-3 rounded-xl border border-slate-100 bg-white text-slate-900 text-xs font-black hover:bg-slate-50 transition-all active:scale-95 shadow-sm flex items-center gap-2"
+          >
+            <ClockAlert className="size-4 text-violet-600" />
+            Request Extension
+          </button>
           <button
             type="button"
             onClick={() => navigate("/technical/leave")}
