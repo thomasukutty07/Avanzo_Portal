@@ -50,17 +50,16 @@ export default function TechnicalDashboardPage() {
 
         setPersonalTasks(tasksList.filter((t: any) => t.status !== 'completed' && t.status !== 'resolved').slice(0, 3));
 
-        // Daily Confirmation Check
+        // Daily Confirmation Check — find any active task whose date range covers today
         const todayStr = new Date().toISOString().split('T')[0];
         const todayTasks = tasksList.filter((task: any) => {
-          return (
-            task.status !== 'completed' &&
-            task.status !== 'resolved' &&
-            task.status !== 'closed' &&
-            task.start_date === todayStr
-          );
+          const isActive = task.status !== 'completed' && task.status !== 'resolved' && task.status !== 'closed';
+          const startOk = !task.start_date || task.start_date <= todayStr;
+          const dueOk = !task.due_date || task.due_date >= todayStr;
+          return isActive && startOk && dueOk;
         });
 
+        // Find the first task user hasn't started today
         const pendingConfirm = todayTasks.find((task: any) => {
           const startedTime = localStorage.getItem(`avanzo_task_started_time_${task.id}_${todayStr}`);
           return !startedTime;
