@@ -18,7 +18,9 @@ import {
   Send,
   Loader2,
   CheckCircle2,
-  Circle as CircleIcon
+  Circle as CircleIcon,
+  Clock,
+  ArrowRight
 } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -325,7 +327,7 @@ export default function CyberSecurityDashboardPage() {
       {/* Main Command Center */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Alerts Feed */}
-        <div className="lg:col-span-12 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm flex flex-col h-[480px]">
+        <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm flex flex-col h-[480px]">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">
               <div className="size-2 bg-violet-500 rounded-full animate-pulse shadow-[0_0_12px_rgba(139,92,246,0.4)]" />
@@ -369,7 +371,125 @@ export default function CyberSecurityDashboardPage() {
           </button>
         </div>
 
+        {/* Daily Work & Attendance Center */}
+        <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-100 shadow-sm p-6 flex flex-col justify-between relative overflow-hidden group h-[480px]">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-violet-200/20 rounded-full blur-2xl -z-10 pointer-events-none" />
+          
+          <div>
+            <div className="flex items-center gap-3 mb-6">
+              <span className="p-2.5 rounded-xl bg-violet-50 text-violet-600 border border-violet-100">
+                <Clock className="size-5" />
+              </span>
+              <div>
+                <p className="text-[9px] font-black tracking-widest text-slate-400 uppercase leading-none mb-1">Time & Attendance</p>
+                <h4 className="text-sm font-bold text-slate-900 leading-none">Daily Work Status</h4>
+              </div>
+            </div>
 
+            {(() => {
+              const todayStr = new Date().toISOString().split('T')[0];
+              const taskId = "mock-daily-task-cyber";
+              const confirmed = localStorage.getItem(`avanzo_task_confirmed_${taskId}_${todayStr}`) === "true";
+              const startedTime = localStorage.getItem(`avanzo_task_started_time_${taskId}_${todayStr}`);
+
+              return (
+                <div className="space-y-5">
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-100/80">
+                    <div className="flex items-center justify-between mb-3.5">
+                      <span className="text-[10px] font-medium text-slate-500">Attendance State</span>
+                      {startedTime ? (
+                        <span className="flex items-center gap-1 text-[8px] font-black uppercase tracking-wider text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
+                          Active Now
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-[8px] font-black uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100">
+                          Pending Start
+                        </span>
+                      )}
+                    </div>
+                    
+                    <p className="text-xs font-bold text-slate-800 mb-1">
+                      {startedTime ? "🟢 Work In Progress" : "🟡 Not Started Yet"}
+                    </p>
+                    <p className="text-[10px] text-slate-400 font-medium">
+                      {startedTime 
+                        ? `Start timestamp recorded at ${startedTime}`
+                        : "Confirm if you are starting this work today."
+                      }
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    {!startedTime ? (
+                      <button
+                        onClick={() => {
+                          const todayStr = new Date().toISOString().split('T')[0];
+                          const mockTask = {
+                            id: "mock-daily-task-cyber",
+                            title: "Scheduled Daily Maintenance & Security Review",
+                            priority: "high",
+                            project_name: "Operation Avanzo Portal",
+                            start_date: todayStr,
+                            due_date: todayStr,
+                            status: "assigned"
+                          };
+                          setConfirmTask(mockTask);
+                          setConfirmStage('prompt');
+                          setShowConfirmPopup(true);
+                        }}
+                        className="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-black transition-all shadow-md shadow-violet-600/10 active:scale-[0.98]"
+                      >
+                        Confirm Attendance / Start Work
+                      </button>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        <button
+                          onClick={() => {
+                            const todayStr = new Date().toISOString().split('T')[0];
+                            localStorage.removeItem(`avanzo_task_confirmed_${taskId}_${todayStr}`);
+                            localStorage.removeItem(`avanzo_task_started_time_${taskId}_${todayStr}`);
+                            toast.success("Daily attendance state reset!");
+                            setConfirmTask(null);
+                            setShowConfirmPopup(false);
+                            window.location.reload();
+                          }}
+                          className="w-full py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 transition-all active:scale-[0.98]"
+                        >
+                          Reset Demo State
+                        </button>
+                        <button
+                          onClick={() => {
+                            const todayStr = new Date().toISOString().split('T')[0];
+                            const mockTask = {
+                              id: "mock-daily-task-cyber",
+                              title: "Scheduled Daily Maintenance & Security Review",
+                              priority: "high",
+                              project_name: "Operation Avanzo Portal",
+                              start_date: todayStr,
+                              due_date: todayStr,
+                              status: "assigned"
+                            };
+                            setConfirmTask(mockTask);
+                            setConfirmStage('prompt');
+                            setShowConfirmPopup(true);
+                          }}
+                          className="w-full py-2.5 rounded-xl bg-violet-50 text-violet-600 hover:bg-violet-100 text-xs font-black transition-all active:scale-[0.98]"
+                        >
+                          Show Popup Again
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+          
+          <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+             <p className="text-[10px] font-bold text-slate-500">Security Note:</p>
+             <p className="text-[9px] text-slate-400 mt-1">Starting work verifies your active security clearance and records the telemetry signature for today.</p>
+          </div>
+        </div>
       </div>
 
       {/* Incident Management Table */}

@@ -443,7 +443,121 @@ export default function TechnicalDashboardPage() {
             )}
           </div>
         </div>
-        <div className="lg:col-span-4">
+        <div className="lg:col-span-4 space-y-8">
+          {/* Daily Work & Attendance Center */}
+          <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-8 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-violet-200/20 rounded-full blur-2xl -z-10 pointer-events-none" />
+            
+            <div className="flex items-center gap-3 mb-6">
+              <span className="p-2.5 rounded-2xl bg-violet-50 text-violet-600 border border-violet-100">
+                <Clock className="size-5" />
+              </span>
+              <div>
+                <p className="text-[10px] font-black tracking-widest text-slate-400 uppercase leading-none mb-1">Time & Attendance</p>
+                <h4 className="text-base font-bold text-slate-900 leading-none">Daily Work Status</h4>
+              </div>
+            </div>
+
+            {(() => {
+              const todayStr = new Date().toISOString().split('T')[0];
+              const taskId = "mock-daily-task-tech";
+              const confirmed = localStorage.getItem(`avanzo_task_confirmed_${taskId}_${todayStr}`) === "true";
+              const startedTime = localStorage.getItem(`avanzo_task_started_time_${taskId}_${todayStr}`);
+
+              return (
+                <div className="space-y-6">
+                  <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100/80">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[11px] font-medium text-slate-500">Attendance State</span>
+                      {startedTime ? (
+                        <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
+                          Active Now
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-100">
+                          Pending Start
+                        </span>
+                      )}
+                    </div>
+                    
+                    <p className="text-sm font-bold text-slate-800 mb-1">
+                      {startedTime ? "🟢 Work In Progress" : "🟡 Not Started Yet"}
+                    </p>
+                    <p className="text-[11px] text-slate-400 font-medium">
+                      {startedTime 
+                        ? `Start timestamp recorded at ${startedTime}`
+                        : "Please confirm if you are starting this work today."
+                      }
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    {!startedTime ? (
+                      <button
+                        onClick={() => {
+                          const todayStr = new Date().toISOString().split('T')[0];
+                          const mockTask = {
+                            id: "mock-daily-task-tech",
+                            title: "Scheduled Daily Maintenance & Core Codebase Refresh",
+                            priority: "high",
+                            project_name: "Avanzo Core Systems",
+                            start_date: todayStr,
+                            due_date: todayStr,
+                            status: "assigned"
+                          };
+                          setConfirmTask(mockTask);
+                          setConfirmStage('prompt');
+                          setShowConfirmPopup(true);
+                        }}
+                        className="w-full py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-black transition-all shadow-md shadow-violet-600/10 active:scale-[0.98]"
+                      >
+                        Confirm Attendance / Start Work
+                      </button>
+                    ) : (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            const todayStr = new Date().toISOString().split('T')[0];
+                            localStorage.removeItem(`avanzo_task_confirmed_${taskId}_${todayStr}`);
+                            localStorage.removeItem(`avanzo_task_started_time_${taskId}_${todayStr}`);
+                            toast.success("Daily attendance state reset!");
+                            // Force trigger confirmation Popup flow state reset
+                            setConfirmTask(null);
+                            setShowConfirmPopup(false);
+                            window.location.reload();
+                          }}
+                          className="flex-1 py-3 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 transition-all active:scale-[0.98]"
+                        >
+                          Reset Demo State
+                        </button>
+                        <button
+                          onClick={() => {
+                            const todayStr = new Date().toISOString().split('T')[0];
+                            const mockTask = {
+                              id: "mock-daily-task-tech",
+                              title: "Scheduled Daily Maintenance & Core Codebase Refresh",
+                              priority: "high",
+                              project_name: "Avanzo Core Systems",
+                              start_date: todayStr,
+                              due_date: todayStr,
+                              status: "assigned"
+                            };
+                            setConfirmTask(mockTask);
+                            setConfirmStage('prompt');
+                            setShowConfirmPopup(true);
+                          }}
+                          className="flex-1 py-3 rounded-xl bg-violet-50 text-violet-600 hover:bg-violet-100 text-xs font-black transition-all active:scale-[0.98]"
+                        >
+                          Show Popup Again
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+          
           <DashboardCalendar />
         </div>
       </div>
