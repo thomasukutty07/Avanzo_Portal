@@ -192,7 +192,7 @@ export default function SettingsLegacyPage() {
                           </button>
                         </DialogTrigger>
                         <DialogContent className="max-w-md rounded-[2.5rem] p-0 border-none font-sans shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] overflow-hidden">
-                          <div className="bg-gradient-to-br from-white to-slate-50/50 p-10">
+                          <div className="bg-gradient-to-br from-white to-slate-50 p-10">
                             <DialogHeader className="mb-10">
                               <div className="flex items-center gap-3 mb-4">
                                 <div className="size-10 bg-violet-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-violet-600/20">

@@ -141,7 +141,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
       <div className="absolute inset-0 bg-slate-900/70 animate-in fade-in duration-300" />
-      <div className="w-full max-w-xl bg-gradient-to-br from-white via-white to-violet-50/20 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] overflow-hidden flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-8 duration-500 z-10">
+      <div className="w-full max-w-xl bg-gradient-to-br from-white via-white to-violet-50 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] overflow-hidden flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-8 duration-500 z-10">
         
         {/* Simple & Elegant Header */}
         <div className="px-10 py-10 flex items-start justify-between">

@@ -682,7 +682,7 @@ export default function CyberSecurityDashboardPage() {
       {showConfirmPopup && confirmTask && createPortal(
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-6">
           <div className="absolute inset-0 bg-slate-900/70 animate-in fade-in duration-300" />
-          <div className="w-full max-w-md bg-gradient-to-br from-white via-white to-amber-50/40 rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500 z-10">
+          <div className="w-full max-w-md bg-gradient-to-br from-white via-white to-amber-50 rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500 z-10">
             
             <div className="flex items-center gap-3 mb-6">
               <span className="p-2.5 rounded-2xl bg-amber-50 text-amber-500 border border-amber-100">
@@ -773,8 +773,8 @@ export default function CyberSecurityDashboardPage() {
           <div className="absolute inset-0 bg-slate-900/70 animate-in fade-in duration-300" />
           <div className={`w-full max-w-md ${
             leaveNotification.status === 'approved' 
-              ? 'bg-gradient-to-br from-white via-white to-emerald-50/40' 
-              : 'bg-gradient-to-br from-white via-white to-red-50/40'
+              ? 'bg-gradient-to-br from-white via-white to-emerald-50' 
+              : 'bg-gradient-to-br from-white via-white to-red-50'
           } rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500 z-10`}>
 
             <div className="flex flex-col items-center text-center space-y-5">
