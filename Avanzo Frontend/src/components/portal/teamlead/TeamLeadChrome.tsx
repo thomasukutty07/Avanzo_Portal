@@ -1,4 +1,4 @@
-﻿import { NavLink, useNavigate, useLocation, Outlet } from "react-router-dom"
+import { NavLink, useNavigate, useLocation, Outlet } from "react-router-dom"
 import { LogOut, LayoutDashboard, CheckSquare, Folder, Users, Megaphone, Search, Bell, Menu, X, Clock } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { useAuth } from "@/context/AuthContext"
@@ -29,6 +29,7 @@ export default function TeamLeadChrome({ children }: { children?: React.ReactNod
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [notifications, setNotifications] = useState<any[]>([])
   const [announcementCount, setAnnouncementCount] = useState(0)
+  const [pendingTaskCount, setPendingTaskCount] = useState(0)
   
   // Prevent multiple in-flight requests during rapid navigation
   const isFetchingRef = useRef(false)
@@ -43,6 +44,19 @@ export default function TeamLeadChrome({ children }: { children?: React.ReactNod
       } catch (e: any) {
         if (e?.response?.status !== 429) {
           console.error("[Notifications] Fetch failed:", e)
+        }
+      }
+    }
+
+    async function fetchPendingTasks() {
+      try {
+        const res = await api.get("/api/projects/tasks/").catch(() => ({ data: [] }))
+        const data = Array.isArray(res.data) ? res.data : (res.data?.results || [])
+        const pending = data.filter((t: any) => t.status === 'review').length
+        setPendingTaskCount(pending)
+      } catch (e: any) {
+        if (e?.response?.status !== 429) {
+          console.error("[Pending Tasks] Fetch failed:", e)
         }
       }
     }
@@ -68,7 +82,11 @@ export default function TeamLeadChrome({ children }: { children?: React.ReactNod
 
     fetchNotifs()
     fetchAnnouncements()
-    const interval = setInterval(fetchAnnouncements, 300000) // 5 minutes polling
+    fetchPendingTasks()
+    const interval = setInterval(() => {
+      fetchAnnouncements()
+      fetchPendingTasks()
+    }, 60000) // 1 minute polling for counts
     return () => clearInterval(interval)
   }, [isAuthenticated])
 
@@ -124,6 +142,11 @@ export default function TeamLeadChrome({ children }: { children?: React.ReactNod
                   {announcementCount}
                 </span>
               )}
+              {item.label === "Team Tasks" && pendingTaskCount > 0 && (
+                <span className="bg-amber-500 text-white text-xs font-black px-1.5 py-0.5 rounded-lg shadow-sm animate-in zoom-in duration-300">
+                  {pendingTaskCount}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>
@@ -146,7 +169,7 @@ export default function TeamLeadChrome({ children }: { children?: React.ReactNod
       {/* Main Workspace Frame */}
       <div className="flex flex-1 flex-col min-w-0">
         {/* Header */}
-        <header className="sticky top-0 z-30 flex h-20 shrink-0 items-center justify-between bg-white/80 border-b border-slate-100 px-6 md:px-8 backdrop-blur-md">
+        <header className="flex h-20 shrink-0 items-center justify-between bg-white/80 border-b border-slate-100 px-6 md:px-8 backdrop-blur-md">
           <div className="flex items-center gap-5 flex-1 max-w-2xl">
             <button 
               onClick={() => setIsSidebarOpen(true)}

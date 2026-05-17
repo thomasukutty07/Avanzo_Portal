@@ -49,7 +49,7 @@ export default function TechnicalProjectsPage() {
   return (
     <div className="space-y-10 pb-12 font-sans bg-[#fcfcfc] min-h-screen animate-in fade-in duration-700 p-4 md:p-8">
       {/* Page Header */}
-      <div className="sticky top-0 z-30 -mx-4 md:-mx-8 px-4 md:px-8 py-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-8 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-transparent transition-all">
+      <div className="-mx-4 md:-mx-8 px-4 md:px-8 py-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-8 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-transparent transition-all">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-violet-100 rounded-2xl text-violet-600 shadow-sm">
             <FolderGit2 className="size-6" />

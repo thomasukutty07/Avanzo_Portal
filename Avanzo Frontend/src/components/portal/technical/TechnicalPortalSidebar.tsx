@@ -17,17 +17,37 @@ export function TechnicalPortalSidebar({
   onNavClick?: () => void,
   isCollapsed?: boolean
 }) {
-  const { logout } = useAuth()
+  const { logout, user } = useAuth()
   const navigate = useNavigate()
   const [announcementCount, setAnnouncementCount] = useState(0)
+  const [activeTaskCount, setActiveTaskCount] = useState(0)
+  const [activeProjectCount, setActiveProjectCount] = useState(0)
 
   useEffect(() => {
+    if (!user) return
+
     const fetchStats = async () => {
       try {
-        const res = await api.get("/api/notifications/broadcasts/")
-        const data = res.data
-        const items = Array.isArray(data) ? data : (data.results || [])
-        setAnnouncementCount(items.length)
+        const [broadcastRes, tasksRes, projectsRes] = await Promise.all([
+          api.get("/api/notifications/broadcasts/").catch(() => ({ data: [] })),
+          api.get("/api/projects/tasks/").catch(() => ({ data: [] })),
+          api.get("/api/projects/projects/").catch(() => ({ data: [] }))
+        ])
+
+        const broadcasts = Array.isArray(broadcastRes.data) ? broadcastRes.data : (broadcastRes.data?.results || [])
+        setAnnouncementCount(broadcasts.length)
+
+        const tasksList = Array.isArray(tasksRes.data) ? tasksRes.data : (tasksRes.data?.results || [])
+        const myTasks = tasksList.filter((t: any) => 
+          (t.assignee === user.id || t.assignee_id === user.id) && 
+          t.status !== 'completed' && 
+          t.status !== 'resolved'
+        )
+        setActiveTaskCount(myTasks.length)
+
+        const projectsList = Array.isArray(projectsRes.data) ? projectsRes.data : (projectsRes.data?.results || [])
+        const activeProjects = projectsList.filter((p: any) => (p.completion_percentage || p.progress || 0) < 100)
+        setActiveProjectCount(activeProjects.length)
       } catch (e) {
         console.error(e)
       }
@@ -35,7 +55,7 @@ export function TechnicalPortalSidebar({
     fetchStats()
     const interval = setInterval(fetchStats, 60000)
     return () => clearInterval(interval)
-  }, [])
+  }, [user])
 
   return (
     <aside className="flex h-full w-full shrink-0 flex-col bg-white border-r border-slate-100 font-display overflow-hidden">
@@ -65,6 +85,16 @@ export function TechnicalPortalSidebar({
             {!isCollapsed && label === "Announcements" && announcementCount > 0 && (
               <span className="bg-violet-600 text-white text-[11px] font-black px-2 py-0.5 rounded-lg shadow-sm animate-in zoom-in duration-300">
                 {announcementCount}
+              </span>
+            )}
+            {!isCollapsed && label === "Technical tasks" && activeTaskCount > 0 && (
+              <span className="bg-amber-500 text-white text-[11px] font-black px-2 py-0.5 rounded-lg shadow-sm animate-in zoom-in duration-300">
+                {activeTaskCount}
+              </span>
+            )}
+            {!isCollapsed && (label.toLowerCase() === "active projects" || label.toLowerCase() === "active project") && activeProjectCount > 0 && (
+              <span className="bg-amber-500 text-white text-[11px] font-black px-2 py-0.5 rounded-lg shadow-sm animate-in zoom-in duration-300">
+                {activeProjectCount}
               </span>
             )}
           </NavLink>

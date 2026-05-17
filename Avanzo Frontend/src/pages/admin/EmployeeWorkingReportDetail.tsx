@@ -568,7 +568,7 @@ export default function EmployeeWorkingReportDetail() {
         <div className="p-6 md:p-10 space-y-10">
 
         {/* ── Header ── */}
-        <div className="sticky top-0 z-30 -mx-6 md:-mx-10 px-6 md:px-10 py-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-[#fcfcfc]/90 backdrop-blur-md border-b border-slate-100">
+        <div className="-mx-6 md:-mx-10 px-6 md:px-10 py-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-[#fcfcfc]/90 backdrop-blur-md border-b border-slate-100">
           <div className="flex flex-col gap-2">
             <button
               onClick={() => navigate("/reports")}

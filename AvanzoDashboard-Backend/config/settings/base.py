@@ -171,7 +171,7 @@ REST_FRAMEWORK = {
         "sustained": "10000/hour",
         "login": "20/minute",
         "registration": "10/hour",
-        "password_reset": "10/900s",   # 10 per 15 minutes
+        "password_reset": "10/minute",   # 10 per minute
         "token_refresh": "100/minute",
         "report_export": "20/hour",
     },

@@ -14,7 +14,7 @@ from rest_framework_simplejwt.tokens import BlacklistedToken, OutstandingToken, 
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from core.permissions import IsAdminOrHR, IsTeamLeadOrAbove
-from core.throttling import LoginRateThrottle, RegistrationRateThrottle, TokenRefreshRateThrottle
+from core.throttling import LoginRateThrottle, RegistrationRateThrottle, TokenRefreshRateThrottle, PasswordResetRateThrottle
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +25,8 @@ from .serializers import (
     EmployeeSerializer,
     MeSerializer,
     TenantRegistrationSerializer,
+    PasswordResetRequestSerializer,
+    PasswordResetConfirmSerializer,
 )
 from .services import TenantOrchestrator
 
@@ -270,3 +272,81 @@ class AccessRoleViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AccessRole.objects.all()
     serializer_class = AccessRoleSerializer
     permission_classes = [IsAuthenticated]
+
+
+import random
+from django.core.cache import cache
+
+class PasswordResetRequestView(APIView):
+    """
+    First step of password reset: requests a 6-digit code sent to the email.
+    In development, we return the code directly in the response for convenience.
+    """
+    permission_classes = [AllowAny]
+    throttle_classes = [PasswordResetRateThrottle]
+
+    @extend_schema(
+        summary="Request a password reset code",
+        request=PasswordResetRequestSerializer,
+        responses={200: OpenApiResponse(description="Reset code generated.")},
+        tags=["Authentication"],
+    )
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data["email"]
+
+        # Generate a random 6-digit code
+        code = f"{random.randint(100000, 999999)}"
+        # Store in cache for 10 minutes
+        cache.set(f"password_reset_{email}", code, timeout=600)
+
+        # Log it in the console for the developer
+        logger.info(f"Password reset requested for {email}. Reset code is: {code}")
+
+        # Return the code in response to make it easy for local development and demos
+        return Response(
+            {
+                "message": "A reset code has been generated. For testing, it has been sent back in this response.",
+                "code": code,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class PasswordResetConfirmView(APIView):
+    """
+    Second step of password reset: verifies the code and updates the password.
+    """
+    permission_classes = [AllowAny]
+    throttle_classes = [PasswordResetRateThrottle]
+
+    @extend_schema(
+        summary="Confirm password reset with code",
+        request=PasswordResetConfirmSerializer,
+        responses={200: OpenApiResponse(description="Password reset successfully.")},
+        tags=["Authentication"],
+    )
+    def post(self, request):
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data["email"]
+        new_password = serializer.validated_data["new_password"]
+
+        try:
+            employee = Employee.objects.get(email=email)
+            employee.set_password(new_password)
+            employee.save()
+
+            # Clear code from cache
+            cache.delete(f"password_reset_{email}")
+
+            return Response(
+                {"message": "Your password has been successfully reset. Please log in with your new password."},
+                status=status.HTTP_200_OK,
+            )
+        except Employee.DoesNotExist:
+            return Response(
+                {"detail": "No active employee account found with this email."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )

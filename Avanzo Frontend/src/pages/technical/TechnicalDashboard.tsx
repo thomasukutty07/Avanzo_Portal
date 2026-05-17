@@ -8,6 +8,7 @@ import { projectsService } from "@/services/projects";
 import { useAuth } from "@/context/AuthContext";
 
 import { TicketModal } from "@/components/portal/technical/SupportModals";
+import { DashboardCalendar } from "@/components/portal/shared/DashboardCalendar";
 
 export default function TechnicalDashboardPage() {
   const navigate = useNavigate()
@@ -120,7 +121,7 @@ export default function TechnicalDashboardPage() {
   return (
     <div className="space-y-10 pb-12 font-sans bg-[#fcfcfc] min-h-screen animate-in fade-in duration-700 p-4 md:p-8">
       {/* Page Header */}
-      <div className="sticky top-0 z-30 -mx-4 md:-mx-8 px-4 md:px-8 py-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-8 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-transparent transition-all">
+      <div className="-mx-4 md:-mx-8 px-4 md:px-8 py-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-8 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-transparent transition-all">
         <div>
           <p className="text-[12px] font-black tracking-[0.2em] text-violet-600 mb-2 leading-none uppercase">
             Dashboard
@@ -221,10 +222,10 @@ export default function TechnicalDashboardPage() {
         </div>
       </div>
 
-      {/* Bottom Grid: Task List + Node Integrity */}
+      {/* Bottom Grid: Task List + Calendar */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Personal Task List */}
-        <div className="lg:col-span-12 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden hover:shadow-xl transition-all duration-700">
+        <div className="lg:col-span-8 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden hover:shadow-xl transition-all duration-700">
           <div className="flex items-center justify-between px-10 py-8 border-b border-slate-50 bg-slate-50/10">
             <h3 className="font-black text-xl text-slate-900 tracking-tight">Assigned tasks</h3>
             <button
@@ -278,6 +279,9 @@ export default function TechnicalDashboardPage() {
                 </div>
             )}
           </div>
+        </div>
+        <div className="lg:col-span-4">
+          <DashboardCalendar />
         </div>
       </div>
 

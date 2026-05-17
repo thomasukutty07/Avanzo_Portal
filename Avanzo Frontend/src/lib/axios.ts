@@ -56,7 +56,8 @@ api.interceptors.request.use(
     const isAuthEndpoint =
       config.url?.includes("/api/auth/login/") ||
       config.url?.includes("/api/auth/refresh/") ||
-      config.url?.includes("/api/auth/register/")
+      config.url?.includes("/api/auth/register/") ||
+      config.url?.includes("/api/auth/password-reset/")
 
     if (isAuthEndpoint) return config
 

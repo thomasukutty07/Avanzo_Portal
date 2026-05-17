@@ -40,6 +40,8 @@ export interface User {
   date_of_joining?: string | null
   self_declared_talents?: number[]
   evaluated_talents?: number[]
+  firm?: string | null // UUID of the Firm
+  firm_name?: string // Display name of the Firm
 }
 
 export interface Role {
@@ -55,6 +57,12 @@ export interface Department {
   is_active: boolean
   created_at: string
   updated_at?: string // ← NEW: from schema
+}
+
+export interface Firm {
+  id: string
+  name: string
+  is_active?: boolean
 }
 
 export interface Designation {

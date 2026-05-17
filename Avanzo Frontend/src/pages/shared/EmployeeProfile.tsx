@@ -135,7 +135,7 @@ export default function EmployeeProfilePage() {
     <Layout>
       <div className="bg-[#fcfcfc] min-h-screen animate-in fade-in duration-700">
         {/* Navigation & Action Bar */}
-        <div className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-30">
+        <div className="bg-white/80 backdrop-blur-md border-b border-slate-100 ">
           <div className="w-full px-4 md:px-6 py-6">
             <div className="flex items-center justify-between">
                <div className="flex items-center gap-3">

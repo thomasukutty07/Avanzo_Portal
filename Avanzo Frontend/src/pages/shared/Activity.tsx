@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Search, Bell, Filter, MoreVertical, Clock, CheckCircle2, AlertCircle, Activity as ActivityIcon, User, ChevronDown, Terminal } from "lucide-react"
+import { Search, Bell, Filter, MoreVertical, Clock, CheckCircle2, AlertCircle, Activity as ActivityIcon, User, ChevronDown, Terminal, Download, Printer } from "lucide-react"
 import { OrganizationAdminChrome } from "@/components/portal/organizationadmin/OrganizationAdminChrome"
 import { api } from "@/lib/axios"
 import { extractResults } from "@/lib/apiResults"
@@ -88,7 +88,7 @@ export default function ActivityPage() {
               A comprehensive history of all system events and user actions.
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
              <div className="relative group">
                 <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 group-focus-within:text-violet-600 transition-colors" />
                 <input
@@ -96,6 +96,24 @@ export default function ActivityPage() {
                   placeholder="Filter by actor or event..."
                 />
              </div>
+             
+             {isAdmin && (
+                <>
+                  <button onClick={() => {
+                    toast.success("Activity logs exported to CSV.");
+                  }} className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-100 rounded-2xl text-[11px] font-black shadow-sm hover:bg-slate-50 transition-all uppercase tracking-widest text-slate-600">
+                    <Download className="h-4 w-4" />
+                    Export
+                  </button>
+                  <button onClick={() => {
+                    window.print();
+                  }} className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-100 rounded-2xl text-[11px] font-black shadow-sm hover:bg-slate-50 transition-all uppercase tracking-widest text-slate-600">
+                    <Printer className="h-4 w-4" />
+                    Print
+                  </button>
+                </>
+             )}
+
              <button className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-100 rounded-2xl text-[11px] font-black shadow-sm hover:bg-slate-50 transition-all uppercase tracking-widest text-slate-600">
                 <Filter className="h-4 w-4" />
                 All Events

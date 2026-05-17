@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
+import { extractResults } from "@/lib/apiResults"
 import { 
   UserPlus, 
   Download, 
@@ -52,6 +53,8 @@ export default function UsersPage() {
   const [page, setPage] = useState(1)
   const [totalCount, setTotalCount] = useState(0)
   const [userToRevoke, setUserToRevoke] = useState<any | null>(null)
+  const [firms, setFirms] = useState<any[]>([])
+  const [selectedFirm, setSelectedFirm] = useState<string>("all")
   
   const navigate = useNavigate()
   const PAGE_SIZE = 50 
@@ -60,14 +63,21 @@ export default function UsersPage() {
   async function loadUsers() {
     try {
       setIsLoading(true)
-      const res = await api.get(`/api/auth/employees/?page=${page}`)
+      const [res, fRes] = await Promise.all([
+        api.get(`/api/auth/employees/?page=${page}`),
+        api.get('/api/organization/firms/').catch(() => ({ data: [] }))
+      ])
       const data = res.data
       const apiUsers = Array.isArray(data) ? data : (data.results || [])
       const count = Array.isArray(data) ? data.length : (data.count || 0)
       setTotalCount(count)
+      setFirms(extractResults(fRes.data))
 
       const mappedUsers = apiUsers
-        .filter((u: any) => (u.access_role_name || u.role) !== "Admin")
+        .filter((u: any) => {
+          const role = (u.access_role_name || u.role || '').toLowerCase();
+          return role !== "admin" && !u.is_superuser && u.email !== "admin@avanzo.com";
+        })
         .map((u: any, idx: number) => {
           const colors = [
             "bg-indigo-500",
@@ -81,6 +91,8 @@ export default function UsersPage() {
             email: u.email,
             role: u.access_role_name || u.role || 'Personnel',
             dept: u.department_name || 'General',
+            firm: u.firm_name || 'N/A',
+            firmId: u.firm,
             status: (u.status || 'ACTIVE').toUpperCase(),
             lastLogin: u.last_login ? new Date(u.last_login).toLocaleDateString() : 'N/A',
             initial: `${u.first_name?.[0] || ''}${u.last_name?.[0] || ''}`,
@@ -123,8 +135,8 @@ export default function UsersPage() {
         {/* Header Section */}
         <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">System Personnel</h1>
-            <p className="text-slate-500 mt-1 text-sm font-medium">Administrate user access and organizational roles.</p>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Employees</h1>
+            <p className="text-slate-500 mt-1 text-sm font-medium">Manage employees and their roles.</p>
           </div>
           <div className="flex items-center gap-3">
              <button 
@@ -172,6 +184,17 @@ export default function UsersPage() {
                     <SelectItem value="all">All Roles</SelectItem>
                  </SelectContent>
               </Select>
+              <Select value={selectedFirm} onValueChange={setSelectedFirm}>
+                 <SelectTrigger className="w-full md:w-44 rounded-xl border-slate-200 bg-white font-semibold text-xs text-slate-500">
+                    <SelectValue placeholder="Firm" />
+                 </SelectTrigger>
+                 <SelectContent className="rounded-xl shadow-xl">
+                    <SelectItem value="all">All Firms</SelectItem>
+                    {firms.map((f: any) => (
+                      <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                    ))}
+                 </SelectContent>
+              </Select>
            </div>
         </div>
 
@@ -186,15 +209,19 @@ export default function UsersPage() {
               <table className="w-full text-left">
                 <thead className="bg-slate-50/50 border-b border-slate-100 font-semibold text-slate-500 text-[10px] uppercase tracking-wider">
                   <tr>
-                    <th className="px-8 py-5">Personnel Detail</th>
-                    <th className="px-8 py-5">Assigned Role</th>
+                    <th className="px-8 py-5">Employee</th>
+                    <th className="px-8 py-5">Role</th>
                     <th className="px-8 py-5">Department</th>
+                    <th className="px-8 py-5">Firm</th>
                     <th className="px-8 py-5">Status</th>
                     <th className="px-8 py-5 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {users.filter(u => u.name.toLowerCase().includes(searchQuery.toLowerCase())).map((user) => (
+                  {users
+                    .filter(u => selectedFirm === "all" || u.firmId === selectedFirm)
+                    .filter(u => u.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                    .map((user) => (
                     <tr 
                       key={user.id} 
                       onClick={() => navigate(`/employees/${user.id}`)}
@@ -220,6 +247,7 @@ export default function UsersPage() {
                          </span>
                       </td>
                       <td className="px-8 py-6 text-xs font-bold text-slate-900">{user.dept}</td>
+                      <td className="px-8 py-6 text-xs font-bold text-slate-900">{user.firm}</td>
                       <td className="px-8 py-6">
                          <Badge className={`rounded-xl px-3 py-1 text-[9px] font-bold border-none shadow-none uppercase tracking-wide ${user.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
                             {user.status}
@@ -233,26 +261,26 @@ export default function UsersPage() {
                             </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-52 rounded-xl p-2 shadow-xl border-slate-100">
-                             <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-3 py-2">Account Actions</DropdownMenuLabel>
+                             <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-3 py-2">Manage</DropdownMenuLabel>
                              <DropdownMenuSeparator />
                              <DropdownMenuItem 
                                 onClick={() => navigate(`/employees/${user.id}`)}
                                 className="rounded-xl px-3 py-2 text-xs font-semibold flex items-center gap-2 cursor-pointer transition-colors"
                              >
-                                <Eye size={14} className="text-slate-400" /> View Entry
+                                <Eye size={14} className="text-slate-400" /> View Profile
                              </DropdownMenuItem>
                              <DropdownMenuItem 
                                 onClick={() => navigate(`/employees/${user.id}`)}
                                 className="rounded-xl px-3 py-2 text-xs font-semibold flex items-center gap-2 cursor-pointer transition-colors"
                              >
-                                <Edit2 size={14} className="text-slate-400" /> Edit Permissions
+                                <Edit2 size={14} className="text-slate-400" /> Edit
                              </DropdownMenuItem>
                              <DropdownMenuSeparator />
                              <DropdownMenuItem 
                                 onClick={() => setUserToRevoke(user)}
                                 className="rounded-xl px-3 py-2 text-xs font-semibold text-red-600 flex items-center gap-2 cursor-pointer hover:bg-red-50 transition-colors"
                              >
-                                <UserX size={14} className="text-red-600" /> Terminate Access
+                                <UserX size={14} className="text-red-600" /> Remove
                              </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

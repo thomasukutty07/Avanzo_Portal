@@ -21,6 +21,7 @@ export type EmployeeRow = {
   date_of_birth?: string | null
   status: string
   date_of_joining?: string | null
+  firm?: string | null
 }
 
 type Props = {
@@ -42,6 +43,7 @@ export function EmployeeUpsertForm({
   const [roles, setRoles] = useState<Role[]>([])
   const [departments, setDepartments] = useState<Department[]>([])
   const [designations, setDesignations] = useState<Designation[]>([])
+  const [firms, setFirms] = useState<{ id: string; name: string }[]>([])
   const [loadingMeta, setLoadingMeta] = useState(true)
   const [submitting, setSubmitting] = useState(false)
 
@@ -57,6 +59,7 @@ export function EmployeeUpsertForm({
   const [gender, setGender] = useState("")
   const [dateOfBirth, setDateOfBirth] = useState("")
   const [dateOfJoining, setDateOfJoining] = useState("")
+  const [firmId, setFirmId] = useState("")
 
   useEffect(() => {
     if (initialData) {
@@ -71,6 +74,7 @@ export function EmployeeUpsertForm({
       setGender(initialData.gender || "")
       setDateOfBirth(initialData.date_of_birth || "")
       setDateOfJoining(initialData.date_of_joining || "")
+      setFirmId(initialData.firm || "")
     }
   }, [initialData])
 
@@ -78,14 +82,16 @@ export function EmployeeUpsertForm({
     const load = async () => {
       setLoadingMeta(true)
       try {
-        const [r, d, g] = await Promise.all([
+        const [r, d, g, f] = await Promise.all([
           api.get("/api/auth/roles/"),
           api.get("/api/organization/departments/"),
           api.get("/api/organization/designations/"),
+          api.get("/api/organization/firms/").catch(() => ({ data: [] })),
         ])
         setRoles(extractResults<Role>(r.data))
         setDepartments(extractResults<Department>(d.data))
         setDesignations(extractResults<Designation>(g.data))
+        setFirms(extractResults<{ id: string; name: string }>(f.data))
       } catch {
         toast.error("Failed to load form data (check API / login).")
       } finally {
@@ -128,6 +134,10 @@ export function EmployeeUpsertForm({
         gender: gender || null,
         date_of_birth: dateOfBirth || null,
         date_of_joining: dateOfJoining || null,
+      }
+
+      if (firmId) {
+        payload.firm = firmId;
       }
 
       payload.access_role = accessRoleId
@@ -194,6 +204,7 @@ export function EmployeeUpsertForm({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <SelectField icon={Building2} label="Department" value={departmentId} onChange={setDepartmentId} options={departments.map(d => ({ value: d.id, label: d.name }))} placeholder="Select department" />
             <SelectField icon={Briefcase} label="Designation" value={designationId} onChange={setDesignationId} options={designations.map(d => ({ value: d.id, label: d.name }))} placeholder="Select designation" />
+            <SelectField icon={Building2} label="Firm" value={firmId} onChange={setFirmId} options={firms.map(f => ({ value: f.id, label: f.name }))} placeholder="Select firm" />
             <SelectField icon={Shield} label="Access Role" value={accessRoleId} onChange={setAccessRoleId} options={roleChoices.map(r => ({ value: r.id, label: r.name }))} placeholder="Select role" />
             <Field icon={CreditCard} label="Employee ID" placeholder="AVZ-001" value={employeeId} onChange={setEmployeeId} />
           </div>

@@ -73,7 +73,7 @@ export function OrganizationAdminChrome({ children }: { children: React.ReactNod
                alt="Avanzo" 
                className="w-32 h-auto object-contain"
              />
-             <p className="text-[9px] font-black uppercase tracking-[0.2em] leading-none text-violet-600 italic">Global: Admin Command</p>
+             <p className="text-[9px] font-black uppercase tracking-[0.2em] leading-none text-violet-600 italic">Admin Dashboard</p>
           </div>
           <button onClick={() => setIsSidebarOpen(false)} className="rounded-xl p-2 text-slate-400 hover:bg-slate-50 md:hidden">
             <X className="h-5 w-5" />
@@ -120,7 +120,7 @@ export function OrganizationAdminChrome({ children }: { children: React.ReactNod
 
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col md:pl-72">
-        <header className="flex h-20 shrink-0 items-center justify-between border-b border-slate-50 bg-white/80 backdrop-blur-md px-8 sticky top-0 z-40">
+        <header className="flex h-20 shrink-0 items-center justify-between border-b border-slate-50 bg-white/80 backdrop-blur-md px-8 ">
           <div className="flex items-center gap-4 flex-1 max-w-xl">
             <button 
               onClick={() => setIsSidebarOpen(true)}

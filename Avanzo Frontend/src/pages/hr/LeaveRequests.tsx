@@ -125,7 +125,7 @@ export default function HRLeaveRequests() {
               <div className="font-headline text-slate-700">
                 <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">{stat.label}</p>
                 <p className="text-2xl font-black text-slate-900 leading-none mt-2 uppercase tracking-tight">{stat.value}</p>
-                <p className="text-[10px] text-slate-300 font-black uppercase tracking-tighter mt-1">{stat.sub}</p>
+                <p className="text-[10px] text-slate-500 font-black uppercase tracking-tighter mt-1">{stat.sub}</p>
               </div>
             </div>
           ))}
@@ -145,11 +145,11 @@ export default function HRLeaveRequests() {
 
               {loading ? (
                  <div className="bg-white p-12 rounded-xl border border-dashed border-slate-200 flex items-center justify-center">
-                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest animate-pulse">Synchronizing Leave Operations...</p>
+                    <p className="text-sm font-bold text-slate-500 uppercase tracking-widest animate-pulse">Synchronizing Leave Operations...</p>
                  </div>
               ) : requests.length === 0 ? (
                  <div className="bg-white p-12 rounded-xl border border-dashed border-slate-200 flex items-center justify-center">
-                    <p className="text-sm font-bold text-slate-300 uppercase tracking-widest">No active requests found.</p>
+                    <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">No active requests found.</p>
                  </div>
               ) : requests.map((req) => (
                 <div key={req.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all font-display">
@@ -161,7 +161,7 @@ export default function HRLeaveRequests() {
                       <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
                         <div className="font-headline">
                           <h4 className="font-black text-slate-900 text-[15px] leading-tight tracking-tight">{req.employee_name}</h4>
-                          <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Employee ID: {req.id.split('-')[0]}</p>
+                          <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1">Employee ID: {req.id.split('-')[0]}</p>
                         </div>
                         <span className={`text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-xl shrink-0 font-headline border ${
                            req.status === 'tl_approved' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
@@ -200,12 +200,12 @@ export default function HRLeaveRequests() {
                         onClick={() => handleAction(req.id, 'approve', req.employee_name)}
                         className={`px-10 py-3 rounded-xl text-[11px] font-black shadow-lg transition-all flex items-center justify-center gap-3 active:scale-95 uppercase tracking-widest ${
                            req.status === 'pending' 
-                           ? 'bg-amber-100/50 hover:bg-amber-100 text-amber-700 shadow-none border border-amber-200' 
+                           ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-500/20' 
                            : 'bg-violet-600 hover:bg-violet-700 text-white shadow-violet-600/20'
                         }`}
                       >
                         <Check className="h-4 w-4 stroke-[3px]" /> 
-                        {req.status === 'pending' ? 'Force Approve' : 'Approve Request'}
+                        {req.status === 'pending' ? 'Approve' : 'Approve Request'}
                       </button>
                     </div>
                   )}
@@ -257,7 +257,7 @@ export default function HRLeaveRequests() {
                     </div>
                   </div>
                 )) : (
-                  <p className="text-[10px] font-bold text-slate-300 italic uppercase">All personnel reporting active.</p>
+                  <p className="text-[10px] font-bold text-slate-500 italic uppercase">All personnel reporting active.</p>
                 )}
               </div>
             </div>
@@ -279,7 +279,7 @@ export default function HRLeaveRequests() {
                   </div>
                 );
               }) : (
-                <p className="text-[10px] font-bold text-slate-300 italic uppercase">No distribution matrix data.</p>
+                <p className="text-[10px] font-bold text-slate-500 italic uppercase">No distribution matrix data.</p>
               )}
             </div>
           </div>

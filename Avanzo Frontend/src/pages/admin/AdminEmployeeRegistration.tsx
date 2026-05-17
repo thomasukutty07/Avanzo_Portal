@@ -29,6 +29,7 @@ interface RegistrationFormData {
   joiningDate: string;
   password: string;
   accessRole: string;
+  firm: string;
 }
 
 export default function AdminEmployeeRegistrationPage() {
@@ -42,19 +43,22 @@ export default function AdminEmployeeRegistrationPage() {
   const [departments, setDepartments] = useState<any[]>([])
   const [designations, setDesignations] = useState<any[]>([])
   const [roles, setRoles] = useState<any[]>([])
+  const [firms, setFirms] = useState<any[]>([])
   const [loadingForm, setLoadingForm] = useState(false)
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [r, d, g] = await Promise.all([
+        const [r, d, g, f] = await Promise.all([
           api.get("/api/auth/roles/"),
           api.get("/api/organization/departments/"),
           api.get("/api/organization/designations/"),
+          api.get("/api/organization/firms/").catch(() => ({ data: [] }))
         ])
         setRoles(extractResults(r.data))
         setDepartments(extractResults(d.data))
         setDesignations(extractResults(g.data))
+        setFirms(extractResults(f.data))
       } catch (e) {
         console.error(e)
       }
@@ -83,7 +87,8 @@ export default function AdminEmployeeRegistrationPage() {
       designation: "",
       joiningDate: "",
       password: "",
-      accessRole: ""
+      accessRole: "",
+      firm: ""
     }
   })
 
@@ -171,7 +176,7 @@ export default function AdminEmployeeRegistrationPage() {
   const handleSubmit = async () => {
     try {
       setLoadingForm(true)
-      await api.post("/api/auth/employees/", {
+      const payload: any = {
         email: formData.email,
         password: formData.password,
         first_name: formData.firstName,
@@ -185,7 +190,13 @@ export default function AdminEmployeeRegistrationPage() {
         designation: formData.designation || null,
         status: "active",
         date_of_joining: formData.joiningDate || null
-      })
+      }
+      
+      if (formData.firm) {
+        payload.firm = formData.firm;
+      }
+
+      await api.post("/api/auth/employees/", payload)
       toast.success("Employee registered successfully!", {
         description: `${formData.firstName} ${formData.lastName} has been added to the system.`
       })
@@ -345,7 +356,25 @@ export default function AdminEmployeeRegistrationPage() {
                                 </div>
                                 {errors.designation && <FormError msg={errors.designation} />}
                             </div>
-
+                            <div className="space-y-2 md:col-span-2">
+                                <div className="flex justify-between items-center ml-1">
+                                    <label className="text-[13px] font-bold text-slate-700">Firm</label>
+                                </div>
+                                <div className="relative">
+                                  <select 
+                                    className={`w-full h-11 bg-slate-50 border-transparent rounded-xl px-4 py-2 text-sm font-medium focus:ring-2 focus:ring-violet-600/20 focus:bg-white focus:border-violet-100 transition-all outline-none appearance-none cursor-pointer ${errors.firm ? 'ring-2 ring-red-500/20 border-red-200 bg-red-50/10' : ''}`}
+                                    value={formData.firm}
+                                    onChange={(e) => updateForm('firm', e.target.value)}
+                                  >
+                                      <option value="">Select Firm</option>
+                                      {firms.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                                  </select>
+                                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="size-4"><path d="m6 9 6 6 6-6"/></svg>
+                                  </div>
+                                </div>
+                                {errors.firm && <FormError msg={errors.firm} />}
+                            </div>
                         </div>
                     )}
 
@@ -405,6 +434,7 @@ export default function AdminEmployeeRegistrationPage() {
                                     <ReviewItem label="DOB" value={formData.dob} />
                                     <ReviewItem label="Phone" value={formData.phone} />
                                     <ReviewItem label="Role" value={roles.find(r => r.id === formData.accessRole)?.name || formData.accessRole} />
+                                    <ReviewItem label="Firm" value={firms.find(f => f.id === formData.firm)?.name || formData.firm} />
                                     <ReviewItem label="Email" value={formData.email} />
                                     <ReviewItem label="Employee ID" value={formData.employeeId} />
                                     <ReviewItem label="Joining Date" value={formData.joiningDate} />

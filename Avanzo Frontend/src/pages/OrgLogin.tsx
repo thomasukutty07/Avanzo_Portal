@@ -1,11 +1,12 @@
 import { useState } from "react"
 import type { FormEvent } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { Loader2, Briefcase, Lock, Eye, EyeOff, Check, ArrowRight } from "lucide-react"
+import { Loader2, Briefcase, Lock, Eye, EyeOff, Check, ArrowRight, ArrowLeft, Mail, Key, ShieldCheck, X } from "lucide-react"
 
 import { useAuth } from "@/context/AuthContext"
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
 import AvanzoLogo from "@/assets/Avanzo Logo corrected and final-png.png"
+import { api } from "@/lib/axios"
 
 
 export default function OrgLogin() {
@@ -17,6 +18,18 @@ export default function OrgLogin() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+
+  // Forgot password states
+  const [showForgotModal, setShowForgotModal] = useState(false)
+  const [forgotStep, setForgotStep] = useState<1 | 2>(1)
+  const [forgotEmail, setForgotEmail] = useState("")
+  const [forgotCode, setForgotCode] = useState("")
+  const [forgotNewPassword, setForgotNewPassword] = useState("")
+  const [showForgotNewPassword, setShowForgotNewPassword] = useState(false)
+  const [forgotError, setForgotError] = useState<string | null>(null)
+  const [forgotLoading, setForgotLoading] = useState(false)
+  const [forgotSuccess, setForgotSuccess] = useState(false)
+  const [demoCode, setDemoCode] = useState<string | null>(null)
 
 
 
@@ -41,6 +54,109 @@ export default function OrgLogin() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const handleForgotRequest = async (e: FormEvent) => {
+    e.preventDefault()
+    const trimmed = forgotEmail.trim()
+    if (!trimmed) {
+      setForgotError("Please enter your email address")
+      return
+    }
+    setForgotError(null)
+    setForgotLoading(true)
+    setDemoCode(null)
+    try {
+      const response = await api.post("/api/auth/password-reset/", { email: trimmed })
+      if (response.data && response.data.code) {
+        setDemoCode(response.data.code)
+        setForgotCode(response.data.code)
+      }
+      setForgotStep(2)
+    } catch (err: any) {
+      let msg = "Failed to initiate password reset."
+      if (err.response?.data) {
+        const data = err.response.data
+        if (data.error && typeof data.error === "object") {
+          const errorObj = data.error
+          msg = errorObj.message || msg
+          if (errorObj.details && typeof errorObj.details === "object") {
+            const firstDetailKey = Object.keys(errorObj.details)[0]
+            if (firstDetailKey) {
+              const detailVal = errorObj.details[firstDetailKey]
+              msg = Array.isArray(detailVal) ? detailVal[0] : (typeof detailVal === "string" ? detailVal : msg)
+            }
+          }
+        } else if (typeof data === "object") {
+          const firstKey = Object.keys(data)[0]
+          if (firstKey) {
+            const val = data[firstKey]
+            msg = Array.isArray(val) ? val[0] : (typeof val === "string" ? val : JSON.stringify(val))
+          }
+        } else if (typeof data === "string") {
+          msg = data
+        }
+      }
+      setForgotError(msg)
+    } finally {
+      setForgotLoading(false)
+    }
+  }
+
+  const handleForgotConfirm = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!forgotCode.trim() || !forgotNewPassword) {
+      setForgotError("Please enter the verification code and your new password")
+      return
+    }
+    setForgotError(null)
+    setForgotLoading(true)
+    try {
+      await api.post("/api/auth/password-reset/confirm/", {
+        email: forgotEmail.trim(),
+        code: forgotCode.trim(),
+        new_password: forgotNewPassword,
+      })
+      setForgotSuccess(true)
+    } catch (err: any) {
+      let msg = "Reset confirmation failed. Check your code or password strength."
+      if (err.response?.data) {
+        const data = err.response.data
+        if (data.error && typeof data.error === "object") {
+          const errorObj = data.error
+          msg = errorObj.message || msg
+          if (errorObj.details && typeof errorObj.details === "object") {
+            const firstDetailKey = Object.keys(errorObj.details)[0]
+            if (firstDetailKey) {
+              const detailVal = errorObj.details[firstDetailKey]
+              msg = Array.isArray(detailVal) ? detailVal[0] : (typeof detailVal === "string" ? detailVal : msg)
+            }
+          }
+        } else if (typeof data === "object") {
+          const firstKey = Object.keys(data)[0]
+          if (firstKey) {
+            const val = data[firstKey]
+            msg = Array.isArray(val) ? val[0] : (typeof val === "string" ? val : JSON.stringify(val))
+          }
+        } else if (typeof data === "string") {
+          msg = data
+        }
+      }
+      setForgotError(msg)
+    } finally {
+      setForgotLoading(false)
+    }
+  }
+
+  const closeForgotModal = () => {
+    setShowForgotModal(false)
+    setForgotStep(1)
+    setForgotEmail("")
+    setForgotCode("")
+    setForgotNewPassword("")
+    setForgotError(null)
+    setForgotSuccess(false)
+    setDemoCode(null)
   }
 
   return (
@@ -85,6 +201,19 @@ export default function OrgLogin() {
             @keyframes fadeSlideIn {
               from { opacity: 0; transform: translateY(20px); }
               to { opacity: 1; transform: translateY(0); }
+            }
+            @keyframes fadeIn {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+            @keyframes scaleUp {
+              from { opacity: 0; transform: scale(0.95); }
+              to { opacity: 1; transform: scale(1); }
+            }
+            @keyframes shake {
+              0%, 100% { transform: translateX(0); }
+              25% { transform: translateX(-4px); }
+              75% { transform: translateX(4px); }
             }
           `}</style>
           <div className="w-full max-w-md space-y-10"
@@ -167,12 +296,13 @@ export default function OrgLogin() {
                     Keep me signed in
                   </span>
                 </label>
-                <a
-                  className="text-sm font-semibold text-[#4800b2] transition-colors hover:text-[#6200ee]"
-                  href="#"
+                <button
+                  type="button"
+                  onClick={() => setShowForgotModal(true)}
+                  className="text-sm font-semibold text-[#4800b2] transition-colors hover:text-[#6200ee] bg-transparent border-none p-0 cursor-pointer"
                 >
                   Forgot Password?
-                </a>
+                </button>
               </div>
               <div className="space-y-4 pt-4">
                 <button
@@ -244,6 +374,206 @@ export default function OrgLogin() {
           </div>
         </section>
       </main>
+
+      {/* Premium Forgot Password Modal */}
+      {showForgotModal && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" style={{ animation: "fadeIn 0.25s ease-out" }}>
+          <div 
+            className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white p-8 shadow-[0_24px_48px_-12px_rgba(72,0,178,0.16)] border border-[#cbc3d9]/30 transition-all duration-300 transform scale-100"
+            style={{ animation: "scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)" }}
+          >
+            {/* Close Button */}
+            <button 
+              type="button"
+              onClick={closeForgotModal} 
+              className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full text-[#7a7488] hover:bg-[#f3f4f5] hover:text-[#4800b2] transition-all"
+            >
+              <X size={18} />
+            </button>
+
+            {forgotSuccess ? (
+              // Success Step
+              <div className="text-center py-6 space-y-6">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-500 animate-bounce">
+                  <ShieldCheck size={36} strokeWidth={2} />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="font-headline text-2xl font-bold text-[#191c1d]">
+                    Password Reset Complete
+                  </h3>
+                  <p className="text-sm font-medium text-[#494456] leading-relaxed">
+                    Your password has been successfully updated. You can now sign in with your new credentials.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeForgotModal}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#4800b2] to-[#6200ee] px-6 py-4 font-bold text-white shadow-md transition-all hover:opacity-95 active:scale-[0.98]"
+                >
+                  <span>Return to Sign In</span>
+                </button>
+              </div>
+            ) : (
+              // Active Form Step
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <h3 className="font-headline text-2xl font-bold tracking-tight text-[#191c1d]">
+                    {forgotStep === 1 ? "Forgot Password" : "Reset Password"}
+                  </h3>
+                  <p className="text-sm font-medium text-[#494456]">
+                    {forgotStep === 1 
+                      ? "Enter your email to receive a password reset verification code."
+                      : "Enter the code generated for your email and set a new password."}
+                  </p>
+                </div>
+
+                {forgotError && (
+                  <div className="rounded-lg bg-red-50 border border-red-100 p-3.5 text-xs font-semibold text-red-600" style={{ animation: "shake 0.4s ease-in-out" }}>
+                    {forgotError}
+                  </div>
+                )}
+
+                {forgotStep === 1 ? (
+                  // Step 1: Email Form
+                  <form onSubmit={handleForgotRequest} className="space-y-6">
+                    <div className="group">
+                      <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-[#494456]" htmlFor="forgotEmail">
+                        Email Address
+                      </label>
+                      <div className="relative">
+                        <Mail className="absolute bottom-3 left-0 size-5 text-[#7a7488] transition-colors group-focus-within:text-[#4800b2]" />
+                        <input
+                          id="forgotEmail"
+                          type="email"
+                          required
+                          value={forgotEmail}
+                          onChange={(e) => setForgotEmail(e.target.value)}
+                          placeholder="admin@enterprise.com"
+                          className="w-full border-0 border-b border-[#cbc3d9]/30 bg-transparent pt-2 pb-3 pl-8 text-[#191c1d] placeholder:text-[#7a7488]/40 focus:border-[#4800b2] focus:ring-0 transition-colors"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={forgotLoading}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#4800b2] to-[#6200ee] px-6 py-4 font-bold text-white shadow-md transition-all hover:opacity-95 active:scale-[0.98] disabled:opacity-55"
+                    >
+                      {forgotLoading ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <>
+                          <span>Request Reset Code</span>
+                          <ArrowRight size={18} strokeWidth={3} />
+                        </>
+                      )}
+                    </button>
+                  </form>
+                ) : (
+                  // Step 2: Code and Password Confirm Form
+                  <form onSubmit={handleForgotConfirm} className="space-y-6">
+                    {demoCode && (
+                      <div className="rounded-xl bg-[#e8ddff]/40 border border-[#cbc3d9]/30 p-4 space-y-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#4800b2]">Development Mode Assist</span>
+                        <p className="text-xs text-[#191c1d] leading-relaxed">
+                          A password reset code has been generated for testing: <strong className="text-sm font-black text-[#4800b2] font-mono tracking-widest">{demoCode}</strong>
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="space-y-4">
+                      <div className="group opacity-70">
+                        <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-[#494456]">
+                          Email Address
+                        </label>
+                        <div className="relative">
+                          <Mail className="absolute bottom-3 left-0 size-5 text-[#7a7488]" />
+                          <input
+                            type="email"
+                            disabled
+                            value={forgotEmail}
+                            className="w-full border-0 border-b border-[#cbc3d9]/30 bg-transparent pt-2 pb-3 pl-8 text-[#191c1d] focus:ring-0"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="group">
+                        <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-[#494456]" htmlFor="forgotCode">
+                          Verification Code
+                        </label>
+                        <div className="relative">
+                          <Key className="absolute bottom-3 left-0 size-5 text-[#7a7488] transition-colors group-focus-within:text-[#4800b2]" />
+                          <input
+                            id="forgotCode"
+                            type="text"
+                            required
+                            maxLength={6}
+                            value={forgotCode}
+                            onChange={(e) => setForgotCode(e.target.value)}
+                            placeholder="123456"
+                            className="w-full border-0 border-b border-[#cbc3d9]/30 bg-transparent pt-2 pb-3 pl-8 text-[#191c1d] placeholder:text-[#7a7488]/40 focus:border-[#4800b2] focus:ring-0 font-mono tracking-widest font-bold"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="group">
+                        <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-[#494456]" htmlFor="forgotNewPassword">
+                          New Password
+                        </label>
+                        <div className="relative">
+                          <Lock className="absolute bottom-3 left-0 size-5 text-[#7a7488] transition-colors group-focus-within:text-[#4800b2]" />
+                          <input
+                            id="forgotNewPassword"
+                            type={showForgotNewPassword ? "text" : "password"}
+                            required
+                            value={forgotNewPassword}
+                            onChange={(e) => setForgotNewPassword(e.target.value)}
+                            placeholder="••••••••"
+                            className="w-full border-0 border-b border-[#cbc3d9]/30 bg-transparent pt-2 pb-3 pl-8 pr-10 text-[#191c1d] placeholder:text-[#7a7488]/40 focus:border-[#4800b2] focus:ring-0"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowForgotNewPassword(!showForgotNewPassword)}
+                            className="absolute bottom-3 right-0 flex items-center justify-center text-[#7a7488] transition-colors hover:text-[#4800b2]"
+                          >
+                            {showForgotNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-3 pt-2">
+                      <button
+                        type="submit"
+                        disabled={forgotLoading}
+                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#4800b2] to-[#6200ee] px-6 py-4 font-bold text-white shadow-md transition-all hover:opacity-95 active:scale-[0.98] disabled:opacity-55"
+                      >
+                        {forgotLoading ? (
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                        ) : (
+                          <>
+                            <span>Reset Password</span>
+                            <ArrowRight size={18} strokeWidth={3} />
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setForgotStep(1)}
+                        className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#cbc3d9]/20 bg-transparent py-3 text-sm font-semibold text-[#494456] transition-all hover:bg-[#f3f4f5] hover:text-[#191c1d]"
+                      >
+                        <ArrowLeft size={16} />
+                        <span>Back to Email</span>
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
     </div>
   )

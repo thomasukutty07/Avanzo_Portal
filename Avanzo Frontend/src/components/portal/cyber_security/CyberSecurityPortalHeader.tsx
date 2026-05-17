@@ -22,7 +22,7 @@ export function CyberSecurityPortalHeader({ onMenuClick, onToggleSidebar }: Cybe
   const role = user?.designation_name ?? user?.role ?? "Security Admin"
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-100 bg-white/95 backdrop-blur-sm px-4 md:px-6 font-headline">
+    <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-100 bg-white/95 backdrop-blur-sm px-4 md:px-6 font-headline">
       {/* Left: mobile menu + search */}
       <div className="flex flex-1 items-center gap-3">
         {/* Mobile hamburger */}

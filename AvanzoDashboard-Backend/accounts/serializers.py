@@ -225,3 +225,41 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
         validate_password(value)
         return value
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        email = value.lower().strip()
+        if not Employee.objects.filter(email=email).exists():
+            raise serializers.ValidationError("No active employee account found with this email.")
+        return email
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    code = serializers.CharField(max_length=6)
+    new_password = serializers.CharField(write_only=True)
+
+    def validate_email(self, value):
+        return value.lower().strip()
+
+    def validate_new_password(self, value):
+        validate_password(value)
+        return value
+
+    def validate(self, attrs):
+        email = attrs.get("email")
+        code = attrs.get("code")
+
+        from django.core.cache import cache
+        cached_code = cache.get(f"password_reset_{email}")
+
+        if not cached_code:
+            raise serializers.ValidationError({"code": "Reset code has expired or is invalid."})
+
+        if str(cached_code) != str(code):
+            raise serializers.ValidationError({"code": "Incorrect reset code."})
+
+        return attrs

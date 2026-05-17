@@ -17,6 +17,8 @@ type Task = {
   priority: Priority
   dueDate: string
   dotColor: string
+  parent_task?: string
+  children?: Task[]
 }
 
 const PRIORITY_STYLES: Record<string, string> = {
@@ -89,10 +91,27 @@ export default function TechnicalTasksPage() {
                 priority,
                 dueDate: t.due_date ? new Date(t.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : "No Date",
                 dotColor: dotColors[priority],
+                parent_task: t.parent_task || null,
             }
         });
 
-        setTasks(mappedTasks);
+        const rootTasks: Task[] = [];
+        const taskMap: Record<string, Task> = {};
+
+        mappedTasks.forEach((t) => {
+            taskMap[t.id] = t;
+            t.children = [];
+        });
+
+        mappedTasks.forEach((t) => {
+            if (t.parent_task && taskMap[t.parent_task]) {
+                taskMap[t.parent_task].children!.push(t);
+            } else {
+                rootTasks.push(t);
+            }
+        });
+
+        setTasks(rootTasks);
     } catch (error) {
         console.error("Failed to fetch tasks:", error);
     }
@@ -125,7 +144,7 @@ export default function TechnicalTasksPage() {
   return (
     <div className="space-y-6 pb-12 font-display bg-[#fcfcfc] min-h-screen">
       {/* Header */}
-      <div className="sticky top-0 z-30 -mx-4 md:-mx-8 px-4 md:px-8 py-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-8 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-transparent transition-all">
+      <div className="-mx-4 md:-mx-8 px-4 md:px-8 py-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-8 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-transparent transition-all">
         <div>
           <p className="text-[10px] font-black tracking-[0.2em] text-violet-600 mb-1">
             Technical management
@@ -157,61 +176,7 @@ export default function TechnicalTasksPage() {
                 <tbody className="divide-y divide-slate-50">
                     {tasks.length > 0 ? (
                         tasks.map((task: Task) => (
-                            <tr key={task.id} onClick={() => handleTaskClick(task)} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
-                                <td className="px-6 py-4">
-                                    <div className="flex items-start gap-4">
-                                        <div className="mt-1.5 shrink-0">
-                                            <div className={`size-1.5 rounded-full ${task.dotColor}`} />
-                                        </div>
-                                        <div>
-                                            <p className="font-bold text-slate-900 text-[13px]">{task.title}</p>
-                                            <p className="text-[11px] font-semibold text-slate-400 mt-1">⤑ {task.taskId}</p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <span className={`px-2.5 py-1 text-[10px] font-bold rounded bg-violet-100 text-violet-700`}>
-                                        {task.project}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-1.5">
-                                        {task.status === "In Progress" || task.status === "Rework" ? (
-                                            <>
-                                                <div className={`size-3 rounded-full border-[3px] ${task.status === 'Rework' ? 'border-red-500' : 'border-amber-500'} overflow-hidden`}></div>
-                                                <span className={`text-[11px] font-bold ${task.status === 'Rework' ? 'text-red-500' : 'text-amber-500'}`}>{task.status}</span>
-                                            </>
-                                        ) : task.status === "To Do" ? (
-                                            <>
-                                                <div className="size-3 rounded-full border-2 border-slate-300"></div>
-                                                <span className="text-[11px] font-bold text-slate-500">{task.status}</span>
-                                            </>
-                                        ) : task.status === "Closed" ? (
-                                            <>
-                                                <div className="size-3 rounded-full bg-emerald-500"></div>
-                                                <span className="text-[11px] font-bold text-emerald-600">Closed</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <div className="size-3 flex items-center justify-center text-violet-500">
-                                                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2.5C4.5 2.5 1.5 5 0.5 8C1.5 11 4.5 13.5 8 13.5C11.5 13.5 14.5 11 15.5 8C14.5 5 11.5 2.5 8 2.5ZM8 11.5C6.1 11.5 4.5 9.9 4.5 8C4.5 6.1 6.1 4.5 8 4.5C9.9 4.5 11.5 6.1 11.5 8C11.5 9.9 9.9 11.5 8 11.5ZM8 6C6.9 6 6 6.9 6 8C6 9.1 6.9 10 8 10C9.1 10 10 9.1 10 8C10 6.9 9.1 6 8 6Z"/></svg>
-                                                </div>
-                                                <span className="text-[11px] font-bold text-violet-600">Review</span>
-                                            </>
-                                        )}
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <span className={`px-2 py-0.5 rounded text-[9px] font-black tracking-widest ${PRIORITY_STYLES[task.priority]}`}>
-                                        {task.priority.charAt(0).toUpperCase() + task.priority.slice(1).toLowerCase()}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <span className={`text-[12px] font-bold ${task.dueDate === 'Today' ? 'text-red-500' : 'text-slate-600'}`}>
-                                        {task.dueDate}
-                                    </span>
-                                </td>
-                            </tr>
+                            <TaskRow key={task.id} task={task} level={0} onClick={handleTaskClick} />
                         ))
                     ) : (
                         <tr>
@@ -257,4 +222,69 @@ export default function TechnicalTasksPage() {
       />
     </div>
   )
+}
+
+function TaskRow({ task, level, onClick }: { task: Task, level: number, onClick: (t: Task) => void }) {
+    return (
+        <>
+            <tr onClick={() => onClick(task)} className={`hover:bg-slate-50/50 transition-colors group cursor-pointer border-b border-slate-50 ${level > 0 ? "bg-slate-50/20" : ""}`}>
+                <td className="px-6 py-4" style={{ paddingLeft: `${1.5 + level * 2}rem` }}>
+                    <div className="flex items-start gap-4">
+                        <div className="mt-1.5 shrink-0">
+                            <div className={`size-1.5 rounded-full ${task.dotColor}`} />
+                        </div>
+                        <div>
+                            <p className="font-bold text-slate-900 text-[13px]">{task.title}</p>
+                            <p className="text-[11px] font-semibold text-slate-400 mt-1">⤑ {task.taskId}</p>
+                        </div>
+                    </div>
+                </td>
+                <td className="px-6 py-4">
+                    <span className={`px-2.5 py-1 text-[10px] font-bold rounded bg-violet-100 text-violet-700`}>
+                        {task.project}
+                    </span>
+                </td>
+                <td className="px-6 py-4">
+                    <div className="flex items-center gap-1.5">
+                        {task.status === "In Progress" || task.status === "Rework" ? (
+                            <>
+                                <div className={`size-3 rounded-full border-[3px] ${task.status === 'Rework' ? 'border-red-500' : 'border-amber-500'} overflow-hidden`}></div>
+                                <span className={`text-[11px] font-bold ${task.status === 'Rework' ? 'text-red-500' : 'text-amber-500'}`}>{task.status}</span>
+                            </>
+                        ) : task.status === "To Do" ? (
+                            <>
+                                <div className="size-3 rounded-full border-2 border-slate-300"></div>
+                                <span className="text-[11px] font-bold text-slate-500">{task.status}</span>
+                            </>
+                        ) : task.status === "Closed" ? (
+                            <>
+                                <div className="size-3 rounded-full bg-emerald-500"></div>
+                                <span className="text-[11px] font-bold text-emerald-600">Closed</span>
+                            </>
+                        ) : (
+                            <>
+                                <div className="size-3 flex items-center justify-center text-violet-500">
+                                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2.5C4.5 2.5 1.5 5 0.5 8C1.5 11 4.5 13.5 8 13.5C11.5 13.5 14.5 11 15.5 8C14.5 5 11.5 2.5 8 2.5ZM8 11.5C6.1 11.5 4.5 9.9 4.5 8C4.5 6.1 6.1 4.5 8 4.5C9.9 4.5 11.5 6.1 11.5 8C11.5 9.9 9.9 11.5 8 11.5ZM8 6C6.9 6 6 6.9 6 8C6 9.1 6.9 10 8 10C9.1 10 10 9.1 10 8C10 6.9 9.1 6 8 6Z"/></svg>
+                                </div>
+                                <span className="text-[11px] font-bold text-violet-600">Review</span>
+                            </>
+                        )}
+                    </div>
+                </td>
+                <td className="px-6 py-4">
+                    <span className={`px-2 py-0.5 rounded text-[9px] font-black tracking-widest ${PRIORITY_STYLES[task.priority]}`}>
+                        {task.priority.charAt(0).toUpperCase() + task.priority.slice(1).toLowerCase()}
+                    </span>
+                </td>
+                <td className="px-6 py-4">
+                    <span className={`text-[12px] font-bold ${task.dueDate === 'Today' ? 'text-red-500' : 'text-slate-600'}`}>
+                        {task.dueDate}
+                    </span>
+                </td>
+            </tr>
+            {task.children?.map(child => (
+                <TaskRow key={child.id} task={child} level={level + 1} onClick={onClick} />
+            ))}
+        </>
+    )
 }

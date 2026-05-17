@@ -1,7 +1,8 @@
-﻿
+
 import { CreateProjectModal, EditProjectModal } from "@/components/portal/teamlead/TeamLeadActionForms"
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme"
 import { projectsService } from "@/services/projects"
+import { api } from "@/lib/axios"
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
@@ -42,6 +43,8 @@ export default function LeadProjectsPage() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [selectedProject, setSelectedProject] = useState<any>(null)
   const [projectToDelete, setProjectToDelete] = useState<{id: string, title: string} | null>(null)
+  const [firms, setFirms] = useState<any[]>([])
+  const [selectedFirm, setSelectedFirm] = useState<string>("all")
 
   useEffect(() => {
     fetchProjects()
@@ -50,8 +53,12 @@ export default function LeadProjectsPage() {
   const fetchProjects = async () => {
     try {
       setLoading(true)
-      const data = await projectsService.getProjects()
+      const [data, fRes] = await Promise.all([
+        projectsService.getProjects(),
+        api.get('/api/organization/firms/').catch(() => ({ data: [] }))
+      ])
       setProjects(Array.isArray(data) ? data : (data.results || []))
+      setFirms(Array.isArray(fRes.data) ? fRes.data : (fRes.data?.results || []))
     } catch (error) {
       toast.error("Sector synchronization failed.")
       setProjects([])
@@ -76,8 +83,9 @@ export default function LeadProjectsPage() {
   }
 
   const filteredProjects = projects.filter(p => 
-    (p.title?.toLowerCase() || "").includes(searchQuery.toLowerCase()) || 
-    (p.client_name?.toLowerCase() || "").includes(searchQuery.toLowerCase())
+    (selectedFirm === "all" || p.firm === selectedFirm) &&
+    ((p.title?.toLowerCase() || "").includes(searchQuery.toLowerCase()) || 
+    (p.client_name?.toLowerCase() || "").includes(searchQuery.toLowerCase()))
   )
 
   const activeProjects = projects.filter(p => p.status === 'active').length
@@ -150,10 +158,27 @@ export default function LeadProjectsPage() {
               className="w-full bg-white border border-slate-100 rounded-2xl pl-12 pr-4 py-4 text-sm font-bold text-slate-900 focus:ring-4 focus:ring-violet-600/5 focus:border-violet-200 transition-all placeholder:text-slate-200 outline-none shadow-sm shadow-slate-200/10 tracking-tight"
             />
           </div>
-          <button className="flex items-center gap-2.5 px-7 py-4 bg-white border border-slate-100 text-slate-900 font-bold rounded-2xl hover:bg-slate-50 transition-all text-xs shadow-sm shadow-slate-200/10 active:scale-95 group tracking-tight">
-            <Filter className="size-4 text-violet-600 group-hover:rotate-180 transition-transform" />
-            Settings
-          </button>
+          <div className="flex items-center gap-4 w-full md:w-auto">
+            <div className="relative group w-full md:w-48">
+              <select 
+                value={selectedFirm}
+                onChange={(e) => setSelectedFirm(e.target.value)}
+                className="w-full bg-white border border-slate-100 rounded-2xl px-4 py-4 text-xs font-bold text-slate-500 focus:ring-4 focus:ring-violet-600/5 focus:border-violet-200 transition-all outline-none shadow-sm shadow-slate-200/10 tracking-tight appearance-none cursor-pointer"
+              >
+                <option value="all">All Firms</option>
+                {firms.map((f: any) => (
+                  <option key={f.id} value={f.id}>{f.name}</option>
+                ))}
+              </select>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300">
+                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="size-4"><path d="m6 9 6 6 6-6" /></svg>
+              </div>
+            </div>
+            <button className="flex items-center gap-2.5 px-7 py-4 bg-white border border-slate-100 text-slate-900 font-bold rounded-2xl hover:bg-slate-50 transition-all text-xs shadow-sm shadow-slate-200/10 active:scale-95 group tracking-tight whitespace-nowrap">
+              <Filter className="size-4 text-violet-600 group-hover:rotate-180 transition-transform" />
+              Settings
+            </button>
+          </div>
         </div>
 
         {/* Projects Table */}
@@ -171,6 +196,7 @@ export default function LeadProjectsPage() {
               <thead className="bg-slate-50/50 text-slate-400 text-xs font-black uppercase tracking-[0.15em]">
                 <tr>
                   <th className="px-8 py-5">Project Name</th>
+                  <th className="px-8 py-5">Firm</th>
                   <th className="px-8 py-5">Progress</th>
                   <th className="px-8 py-5">Priority level</th>
                   <th className="px-8 py-5">Target Date</th>
@@ -180,14 +206,14 @@ export default function LeadProjectsPage() {
               <tbody className="divide-y divide-slate-50">
                 {loading ? (
                    <tr>
-                     <td colSpan={5} className="px-8 py-24 text-center text-[11px] font-black uppercase tracking-widest text-slate-300">
+                     <td colSpan={6} className="px-8 py-24 text-center text-[11px] font-black uppercase tracking-widest text-slate-300">
                         <Loader2 className="size-10 animate-spin text-violet-600 mx-auto mb-6" />
                         Loading projects...
                      </td>
                    </tr>
                 ) : filteredProjects.length === 0 ? (
                    <tr>
-                     <td colSpan={5} className="px-8 py-24 text-center opacity-30 text-[11px] font-black uppercase tracking-widest text-slate-300">
+                     <td colSpan={6} className="px-8 py-24 text-center opacity-30 text-[11px] font-black uppercase tracking-widest text-slate-300">
                         <Award className="size-12 mx-auto mb-6 text-slate-200" />
                         No projects found
                      </td>
@@ -220,6 +246,7 @@ export default function LeadProjectsPage() {
                           </div>
                        </div>
                     </td>
+                    <td className="px-8 py-7 text-xs font-bold text-slate-900">{p.firm_name || 'N/A'}</td>
                     <td className="px-8 py-7">
                        <div className="flex flex-col gap-2.5 min-w-[120px]">
                           <div className="w-full bg-slate-50 rounded-full h-1.5 overflow-hidden border border-slate-100 shadow-inner group-hover:border-violet-100 transition-colors">

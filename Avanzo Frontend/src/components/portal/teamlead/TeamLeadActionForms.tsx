@@ -874,6 +874,7 @@ export function CreateTaskModal({
   const [loading, setLoading] = useState(false)
   const [projects, setProjects] = useState<any[]>([])
   const [employees, setEmployees] = useState<any[]>([])
+  const [tasks, setTasks] = useState<any[]>([])
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -881,6 +882,8 @@ export function CreateTaskModal({
     assignee: "",
     priority: "medium",
     task_type: "General",
+    work_mode: "hybrid",
+    parent_task: "",
     start_date: new Date().toISOString().split('T')[0],
     due_date: "",
   })
@@ -888,13 +891,21 @@ export function CreateTaskModal({
   useEffect(() => {
     if (open) {
       setFormData(prev => ({ ...prev, project: initialProjectId || "" }))
-      Promise.all([
-        projectsService.getProjects(),
-        accountsService.getEmployees()
-      ]).then(([projData, empData]) => {
-        setProjects(extractResults(projData))
-        setEmployees(extractResults(empData))
-      })
+      const fetchData = async () => {
+        try {
+          const [projs, emps, tsks] = await Promise.all([
+            projectsService.getProjects(),
+            accountsService.getEmployees(),
+            projectsService.getTasks()
+          ])
+          setProjects(Array.isArray(projs) ? projs : (projs.results || []))
+          setEmployees(Array.isArray(emps) ? emps : (emps.results || []))
+          setTasks(Array.isArray(tsks) ? tsks : (tsks.results || []))
+        } catch (err) {
+          console.error("Failed to load modal data", err)
+        }
+      }
+      fetchData()
     }
   }, [open, initialProjectId])
 
@@ -917,6 +928,8 @@ export function CreateTaskModal({
         assignee: "",
         priority: "medium",
         task_type: "General",
+        work_mode: "hybrid",
+        parent_task: "",
         start_date: new Date().toISOString().split('T')[0],
         due_date: "",
       })
@@ -1022,6 +1035,31 @@ export function CreateTaskModal({
                     <option value="UI/UX">UI/UX Design</option>
                     <option value="DevOps">DevOps / Cloud</option>
                     <option value="Security">Security Audit</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-slate-700">Work Mode</Label>
+                  <select
+                    className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium focus:ring-2 focus:ring-violet-500/10 outline-none transition-all appearance-none cursor-pointer"
+                    value={formData.work_mode}
+                    onChange={e => setFormData({ ...formData, work_mode: e.target.value })}
+                  >
+                    <option value="onsite">Onsite</option>
+                    <option value="remote">Remote</option>
+                    <option value="hybrid">Hybrid</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-slate-700">Parent Task (Optional)</Label>
+                  <select
+                    className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-medium focus:ring-2 focus:ring-violet-500/10 outline-none transition-all appearance-none cursor-pointer"
+                    value={formData.parent_task}
+                    onChange={e => setFormData({ ...formData, parent_task: e.target.value })}
+                  >
+                    <option value="">None (Root Task)</option>
+                    {tasks.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}
                   </select>
                 </div>
 

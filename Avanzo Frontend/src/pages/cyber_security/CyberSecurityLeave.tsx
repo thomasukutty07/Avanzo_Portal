@@ -39,17 +39,49 @@ export default function CyberSecurityLeavePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.leave_type || !formData.start_date || !formData.end_date) {
-      toast.error("Please fill all required operational fields.")
+      toast.error("Please fill all required fields.")
       return
     }
     setSubmitting(true)
     try {
-      await leavesService.createLeaveRequest(formData)
-      toast.success("Absence protocol initiated. Awaiting command approval.")
+      let mappedType = formData.leave_type;
+      if (formData.leave_type === 'annual') mappedType = 'earned';
+      if (formData.leave_type === 'personal') mappedType = 'casual';
+
+      await leavesService.createLeaveRequest({
+        ...formData,
+        leave_type: mappedType
+      })
+      toast.success("Leave request submitted successfully.")
       setFormData({ leave_type: "", start_date: "", end_date: "", reason: "" })
       fetchRequests()
     } catch (e: any) {
-      toast.error(e.response?.data?.error || "Strategic failure: Connection error.")
+      const apiErr = e.response?.data;
+      let msg = "Strategic failure: Connection error.";
+      
+      if (apiErr) {
+        if (apiErr.error && typeof apiErr.error === 'string') {
+          msg = apiErr.error;
+        } else if (apiErr.error && typeof apiErr.error.message === 'string') {
+          msg = apiErr.error.message;
+        } else if (typeof apiErr.message === 'string') {
+          msg = apiErr.message;
+        } else if (apiErr.non_field_errors && Array.isArray(apiErr.non_field_errors) && apiErr.non_field_errors.length > 0) {
+          const err = apiErr.non_field_errors[0];
+          msg = typeof err === 'string' ? err : (err.message || JSON.stringify(err));
+        } else if (apiErr.leave_type && Array.isArray(apiErr.leave_type) && apiErr.leave_type.length > 0) {
+          const err = apiErr.leave_type[0];
+          msg = typeof err === 'string' ? err : (err.message || JSON.stringify(err));
+        } else if (apiErr.detail) {
+          msg = typeof apiErr.detail === 'string' ? apiErr.detail : JSON.stringify(apiErr.detail);
+        } else if (apiErr.code && typeof apiErr.code === 'string') {
+          msg = apiErr.code;
+        } else if (typeof apiErr === 'string') {
+          msg = apiErr;
+        }
+      }
+      
+      toast.error(msg)
     } finally {
       setSubmitting(false)
     }
@@ -65,10 +97,10 @@ export default function CyberSecurityLeavePage() {
       <div className="sticky top-[64px] z-30 -mx-6 md:-mx-10 px-6 md:px-10 py-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-slate-100 transition-all">
         <div>
           <p className="text-[14px] font-black text-violet-600 leading-none mb-1">
-            Personnel • Absence protocol
+            Dashboard • Leave
           </p>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-none">Leave registry</h1>
-          <p className="text-slate-500 mt-2 text-[15px] font-medium leading-normal italic">Manage personnel absence and track operational leave balance.</p>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-none">Leave Management</h1>
+          <p className="text-slate-500 mt-2 text-[15px] font-medium leading-normal">Submit and track your leave requests.</p>
         </div>
       </div>
 
@@ -189,13 +221,13 @@ export default function CyberSecurityLeavePage() {
                     <tr key={i} className="group hover:bg-slate-50/50 transition-colors cursor-pointer">
                       <td className="px-6 py-7">
                         <p className="text-[15px] font-black text-slate-900 group-hover:text-violet-700 transition-colors tracking-tight leading-none">{req.leave_type_display || req.leave_type}</p>
-                        <p className="text-[12px] font-black text-slate-400 mt-2 leading-none italic">{req.reason ? `Auth-Note: ${req.reason}` : "General leave protocol"}</p>
+                        <p className="text-[12px] font-black text-slate-400 mt-2 leading-none italic">{req.reason ? req.reason : "No reason provided"}</p>
                       </td>
                       <td className="px-6 py-7">
                         <p className="text-[15px] font-black text-slate-600 leading-none">
                           {format(parseISO(req.start_date), 'MMM dd')} - {format(parseISO(req.end_date), 'MMM dd')}
                         </p>
-                        <p className="text-[12px] font-black text-slate-300 mt-2 leading-none italic tracking-tight">MISSION DURATION</p>
+                        <p className="text-[12px] font-black text-slate-300 mt-2 leading-none italic tracking-tight">Duration</p>
                       </td>
                       <td className="px-6 py-7">
                         <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg border text-[11px] font-black uppercase tracking-widest ${
@@ -213,7 +245,7 @@ export default function CyberSecurityLeavePage() {
                   ))}
                   {requests.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="px-6 py-12 text-center text-slate-300 font-bold text-xs uppercase tracking-widest animate-pulse">NO RECORDED ABSENCES IN REGISTRY</td>
+                      <td colSpan={4} className="px-6 py-12 text-center text-slate-400 font-bold text-xs uppercase tracking-widest">NO LEAVE REQUESTS FOUND</td>
                     </tr>
                   )}
                 </tbody>

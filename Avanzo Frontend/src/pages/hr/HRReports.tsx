@@ -27,7 +27,11 @@ export default function HRReports() {
         const [eRes] = await Promise.all([
           api.get("/api/auth/employees/")
         ])
-        setEmployees(extractResults(eRes.data))
+        const filteredEmployees = extractResults(eRes.data).filter((u: any) => {
+          const role = (u.access_role_name || u.role || '').toLowerCase();
+          return role !== "admin" && !u.is_superuser && u.email !== "admin@avanzo.com";
+        })
+        setEmployees(filteredEmployees)
       } catch (e) {
         console.error("Failed to fetch HR analytics", e)
       } finally {

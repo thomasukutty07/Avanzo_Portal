@@ -132,7 +132,26 @@ export default function TechnicalLeavePage() {
     } catch (error: any) {
       console.error("Failed to submit leave:", error.response?.data || error);
       const apiErr = error.response?.data;
-      const msg = apiErr?.non_field_errors?.[0] || apiErr?.leave_type?.[0] || "Failed to submit application. Please try again.";
+      
+      let msg = "Failed to submit application. Please try again.";
+      if (apiErr) {
+        if (typeof apiErr.message === 'string') {
+          msg = apiErr.message;
+        } else if (apiErr.non_field_errors && Array.isArray(apiErr.non_field_errors) && apiErr.non_field_errors.length > 0) {
+          const err = apiErr.non_field_errors[0];
+          msg = typeof err === 'string' ? err : (err.message || JSON.stringify(err));
+        } else if (apiErr.leave_type && Array.isArray(apiErr.leave_type) && apiErr.leave_type.length > 0) {
+          const err = apiErr.leave_type[0];
+          msg = typeof err === 'string' ? err : (err.message || JSON.stringify(err));
+        } else if (apiErr.detail) {
+          msg = typeof apiErr.detail === 'string' ? apiErr.detail : JSON.stringify(apiErr.detail);
+        } else if (apiErr.code && typeof apiErr.code === 'string') {
+          msg = apiErr.code;
+        } else if (typeof apiErr === 'string') {
+          msg = apiErr;
+        }
+      }
+      
       toast.error(msg);
     } finally {
       setSubmitting(false);

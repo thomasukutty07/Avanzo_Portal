@@ -159,7 +159,7 @@ export default function DepartmentsPage() {
       <div className="p-6 md:p-10 space-y-8 animate-in fade-in duration-500 min-h-screen font-display bg-[#fcfcfc] text-slate-900">
 
         {/* Top Header */}
-        <header className="sticky top-0 z-30 -mx-6 md:-mx-10 px-6 md:px-10 py-8 mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-transparent transition-all">
+        <header className="-mx-6 md:-mx-10 px-6 md:px-10 py-8 mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-transparent transition-all">
           <div>
             <h1 className="text-[32px] font-black tracking-tight text-slate-900 leading-tight">Departments</h1>
             <p className="text-slate-500 mt-2 text-sm font-medium">Manage and view your company departments.</p>

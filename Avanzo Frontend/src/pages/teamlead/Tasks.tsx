@@ -1,4 +1,4 @@
-﻿
+
 import { useDesignPortalLightTheme } from "@/hooks/useDesignPortalLightTheme";
 import { ReviewTaskModal, CreateTaskModal } from "@/components/portal/teamlead/TeamLeadActionForms";
 import { projectsService } from "@/services/projects";
@@ -51,6 +51,22 @@ export default function LeadTasksPage() {
     t.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
     t.project_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const rootTasks: any[] = [];
+  const taskMap: Record<string, any> = {};
+
+  filteredTasks.forEach((t: any) => {
+    taskMap[t.id] = t;
+    t.children = [];
+  });
+
+  filteredTasks.forEach((t: any) => {
+    if (t.parent_task && taskMap[t.parent_task]) {
+      taskMap[t.parent_task].children.push(t);
+    } else {
+      rootTasks.push(t);
+    }
+  });
 
   return (
     <div className="p-4 md:p-8 space-y-10 animate-in fade-in duration-700 font-sans">
@@ -115,52 +131,8 @@ export default function LeadTasksPage() {
                         No tasks found
                      </td>
                    </tr>
-                ) : filteredTasks.map((task: any, i) => (
-                  <tr key={i} className="group hover:bg-slate-50/30 transition-all cursor-pointer" onClick={() => { if (task.status === 'review') setReviewTask(task); }}>
-                    <td className="px-8 py-7">
-                       <div className="flex flex-col gap-1 min-w-[240px]">
-                         <span className="font-bold text-base text-slate-900 group-hover:text-violet-600 transition-colors capitalize leading-none">{task.title}</span>
-                         <span className="text-xs font-bold text-slate-300 mt-1 opacity-80 leading-none">{task.project_name || 'General Task'}</span>
-                       </div>
-                    </td>
-                    <td className="px-8 py-7">
-                       <span className="inline-flex px-3 py-1 bg-slate-50 text-xs font-bold text-slate-400 rounded-lg border border-slate-100 shadow-sm">
-                         {task.task_type || 'General'}
-                       </span>
-                    </td>
-                    <td className="px-8 py-7">
-                      <span className={`px-4 py-2 text-xs font-bold rounded-xl border transition-all capitalize ${
-                        task.priority === 'urgent' || task.priority === 'high' ? 'bg-red-50 text-red-600 border-red-100 shadow-sm shadow-red-500/5' :
-                        task.priority === 'tactical' || task.priority === 'medium' ? 'bg-amber-50 text-amber-600 border-amber-100 shadow-sm' :
-                        'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-sm'
-                      }`}>
-                        {task.priority || 'Normal'}
-                      </span>
-                    </td>
-                    <td className="px-8 py-7 text-xs font-bold text-slate-400 tabular-nums opacity-80">
-                       <div className="flex items-center gap-2">
-                         <Calendar className="size-3.5" />
-                         {task.due_date || 'Tbd'}
-                       </div>
-                    </td>
-                    <td className="px-8 py-7 text-right">
-                       <div className="flex items-center justify-end gap-3">
-                          <div className={`inline-flex items-center gap-2.5 bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm group-hover:border-violet-100 transition-colors`}>
-                            <span className={`size-2.5 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.1)] ${
-                              task.status === 'closed' ? 'bg-emerald-500' :
-                              task.status === 'progress' ? 'bg-blue-500 animate-pulse' :
-                              task.status === 'review' ? 'bg-amber-500 animate-pulse' :
-                              task.status === 'rework' ? 'bg-red-500' :
-                              'bg-slate-300'
-                            }`}></span>
-                            <span className="text-xs font-bold text-slate-800 capitalize">{task.status?.replace('_', ' ') || 'Open'}</span>
-                          </div>
-                          <button className="p-2.5 text-slate-300 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all shadow-sm">
-                             <MoreHorizontal className="size-5" />
-                          </button>
-                       </div>
-                    </td>
-                  </tr>
+                ) : rootTasks.map((task: any, i) => (
+                  <TaskRow key={i} task={task} level={0} setReviewTask={setReviewTask} />
                 ))}
               </tbody>
             </table>
@@ -182,5 +154,63 @@ export default function LeadTasksPage() {
         onSuccess={fetchTasks}
       />
     </div>
+  );
+}
+
+function TaskRow({ task, level, setReviewTask }: { task: any, level: number, setReviewTask: any }) {
+  return (
+    <>
+      <tr className={`group hover:bg-slate-50/30 transition-all cursor-pointer border-b border-slate-50 ${level > 0 ? "bg-slate-50/20" : ""}`} onClick={() => { if (task.status === 'review') setReviewTask(task); }}>
+        <td className="px-8 py-7" style={{ paddingLeft: `${2 + level * 2}rem` }}>
+            <div className="flex flex-col gap-1 min-w-[240px]">
+              <div className="flex items-center gap-2">
+                {level > 0 && <span className="text-slate-300">↳</span>}
+                <span className="font-bold text-base text-slate-900 group-hover:text-violet-600 transition-colors capitalize leading-none">{task.title}</span>
+              </div>
+              <span className="text-xs font-bold text-slate-300 mt-1 opacity-80 leading-none" style={{ paddingLeft: level > 0 ? "1.5rem" : "0" }}>{task.project_name || 'General Task'}</span>
+            </div>
+        </td>
+        <td className="px-8 py-7">
+            <span className="inline-flex px-3 py-1 bg-slate-50 text-xs font-bold text-slate-400 rounded-lg border border-slate-100 shadow-sm">
+              {task.task_type || 'General'}
+            </span>
+        </td>
+        <td className="px-8 py-7">
+          <span className={`px-4 py-2 text-xs font-bold rounded-xl border transition-all capitalize ${
+            task.priority === 'urgent' || task.priority === 'high' ? 'bg-red-50 text-red-600 border-red-100 shadow-sm shadow-red-500/5' :
+            task.priority === 'tactical' || task.priority === 'medium' ? 'bg-amber-50 text-amber-600 border-amber-100 shadow-sm' :
+            'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-sm'
+          }`}>
+            {task.priority || 'Normal'}
+          </span>
+        </td>
+        <td className="px-8 py-7 text-xs font-bold text-slate-400 tabular-nums opacity-80">
+            <div className="flex items-center gap-2">
+              <Calendar className="size-3.5" />
+              {task.due_date || 'Tbd'}
+            </div>
+        </td>
+        <td className="px-8 py-7 text-right">
+            <div className="flex items-center justify-end gap-3">
+              <div className={`inline-flex items-center gap-2.5 bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm group-hover:border-violet-100 transition-colors`}>
+                <span className={`size-2.5 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.1)] ${
+                  task.status === 'closed' ? 'bg-emerald-500' :
+                  task.status === 'progress' ? 'bg-blue-500 animate-pulse' :
+                  task.status === 'review' ? 'bg-amber-500 animate-pulse' :
+                  task.status === 'rework' ? 'bg-red-500' :
+                  'bg-slate-300'
+                }`}></span>
+                <span className="text-xs font-bold text-slate-800 capitalize">{task.status?.replace('_', ' ') || 'Open'}</span>
+              </div>
+              <button className="p-2.5 text-slate-300 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all shadow-sm">
+                  <MoreHorizontal className="size-5" />
+              </button>
+            </div>
+        </td>
+      </tr>
+      {task.children?.map((child: any) => (
+        <TaskRow key={child.id} task={child} level={level + 1} setReviewTask={setReviewTask} />
+      ))}
+    </>
   );
 }

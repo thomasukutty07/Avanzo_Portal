@@ -11,17 +11,40 @@ const active =
   "flex items-center gap-3 rounded-xl bg-violet-600 px-4 py-3 text-[13px] font-bold text-white shadow-md shadow-violet-600/20 transition-all duration-200 font-headline"
 
 export function CyberSecurityPortalSidebar({ onNavClick }: { onNavClick?: () => void }) {
-  const { logout } = useAuth()
+  const { logout, user } = useAuth()
   const navigate = useNavigate()
   const [announcementCount, setAnnouncementCount] = useState(0)
+  const [activeTaskCount, setActiveTaskCount] = useState(0)
+  const [activeIncidentCount, setActiveIncidentCount] = useState(0)
 
   useEffect(() => {
+    if (!user) return
+
     const fetchStats = async () => {
       try {
-        const res = await api.get("/api/notifications/broadcasts/")
-        const data = res.data
-        const items = Array.isArray(data) ? data : (data.results || [])
-        setAnnouncementCount(items.length)
+        const [broadcastRes, tasksRes, ticketsRes] = await Promise.all([
+          api.get("/api/notifications/broadcasts/").catch(() => ({ data: [] })),
+          api.get("/api/projects/tasks/").catch(() => ({ data: [] })),
+          api.get("/api/tickets/").catch(() => ({ data: [] }))
+        ])
+
+        const broadcasts = Array.isArray(broadcastRes.data) ? broadcastRes.data : (broadcastRes.data?.results || [])
+        setAnnouncementCount(broadcasts.length)
+
+        const tasksList = Array.isArray(tasksRes.data) ? tasksRes.data : (tasksRes.data?.results || [])
+        const myTasks = tasksList.filter((t: any) => 
+          (t.assignee === user.id || t.assignee_id === user.id) && 
+          t.status !== 'completed' && 
+          t.status !== 'resolved'
+        )
+        setActiveTaskCount(myTasks.length)
+
+        const ticketsList = Array.isArray(ticketsRes.data) ? ticketsRes.data : (ticketsRes.data?.results || [])
+        const activeIncidents = ticketsList.filter((t: any) => 
+          t.status !== 'resolved' && 
+          (t.ticket_type === 'tech' || t.ticket_type === 'compliance')
+        )
+        setActiveIncidentCount(activeIncidents.length)
       } catch (e) {
         console.error(e)
       }
@@ -29,7 +52,7 @@ export function CyberSecurityPortalSidebar({ onNavClick }: { onNavClick?: () => 
     fetchStats()
     const interval = setInterval(fetchStats, 60000)
     return () => clearInterval(interval)
-  }, [])
+  }, [user])
 
   return (
     <aside className="flex h-full w-72 shrink-0 flex-col border-r border-slate-100 bg-white shadow-[1px_0_0_0_rgba(0,0,0,0.02)]">
@@ -59,6 +82,16 @@ export function CyberSecurityPortalSidebar({ onNavClick }: { onNavClick?: () => 
             {label === "Announcements" && announcementCount > 0 && (
               <span className="bg-violet-600 text-white text-[10px] font-black px-2 py-0.5 rounded-lg shadow-sm animate-in zoom-in duration-300">
                 {announcementCount}
+              </span>
+            )}
+            {(label.toLowerCase() === "my task" || label.toLowerCase() === "my tasks") && activeTaskCount > 0 && (
+              <span className="bg-amber-500 text-white text-[10px] font-black px-2 py-0.5 rounded-lg shadow-sm animate-in zoom-in duration-300">
+                {activeTaskCount}
+              </span>
+            )}
+            {label.toLowerCase() === "incidents" && activeIncidentCount > 0 && (
+              <span className="bg-amber-500 text-white text-[10px] font-black px-2 py-0.5 rounded-lg shadow-sm animate-in zoom-in duration-300">
+                {activeIncidentCount}
               </span>
             )}
           </NavLink>

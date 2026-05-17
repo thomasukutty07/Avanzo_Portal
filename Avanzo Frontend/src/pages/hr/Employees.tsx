@@ -68,7 +68,12 @@ export default function Employees() {
       const count = Array.isArray(data) ? data.length : (data.count || 0)
       setTotalCount(count)
 
-      const mappedUsers = apiUsers.map((u: any, idx: number) => {
+      const mappedUsers = apiUsers
+        .filter((u: any) => {
+          const role = (u.access_role_name || u.role || '').toLowerCase();
+          return role !== "admin" && !u.is_superuser && u.email !== "admin@avanzo.com";
+        })
+        .map((u: any, idx: number) => {
          const colors = [
            "bg-indigo-500",
            "bg-orange-500",
@@ -121,8 +126,8 @@ export default function Employees() {
         {/* Header Section */}
         <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Personnel Directory</h1>
-            <p className="text-slate-500 mt-1 text-sm font-medium">Manage organization staff and role assignments.</p>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Employees</h1>
+            <p className="text-slate-500 mt-1 text-sm font-medium">Manage employees and their roles.</p>
           </div>
           <div className="flex items-center gap-3">
              <button 
@@ -135,7 +140,7 @@ export default function Employees() {
                onClick={() => navigate('/employee-registration')}
                className="flex items-center gap-2 px-8 py-2.5 bg-violet-600 text-white rounded-xl text-xs font-semibold hover:bg-violet-700 transition-all shadow-sm shadow-violet-200"
              >
-                <UserPlus size={14} /> Register Staff
+                <UserPlus size={14} /> Add Employee
              </button>
           </div>
         </header>
@@ -184,8 +189,8 @@ export default function Employees() {
               <table className="w-full text-left">
                 <thead className="bg-slate-50/50 border-b border-slate-100 font-semibold text-slate-500 text-[10px] uppercase tracking-wider">
                   <tr>
-                    <th className="px-8 py-5">Personnel Detail</th>
-                    <th className="px-8 py-5">Assigned Role</th>
+                    <th className="px-8 py-5">Employee</th>
+                    <th className="px-8 py-5">Role</th>
                     <th className="px-8 py-5">Department</th>
                     <th className="px-8 py-5">Status</th>
                     <th className="px-8 py-5 text-right">Actions</th>
@@ -231,7 +236,7 @@ export default function Employees() {
                             </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-52 rounded-xl p-2 shadow-xl border-slate-100">
-                             <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-3 py-2">Personnel Management</DropdownMenuLabel>
+                             <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-3 py-2">Manage</DropdownMenuLabel>
                              <DropdownMenuSeparator />
                              <DropdownMenuItem 
                                 onClick={() => navigate(`/employees/${user.id}`)}
@@ -243,14 +248,14 @@ export default function Employees() {
                                 onClick={() => navigate(`/employees/${user.id}`)}
                                 className="rounded-xl px-3 py-2 text-xs font-semibold flex items-center gap-2 cursor-pointer transition-colors"
                              >
-                                <Edit2 size={14} className="text-slate-400" /> Edit Metadata
+                                <Edit2 size={14} className="text-slate-400" /> Edit
                              </DropdownMenuItem>
                              <DropdownMenuSeparator />
                              <DropdownMenuItem 
                                 onClick={() => setUserToRevoke(user)}
                                 className="rounded-xl px-3 py-2 text-xs font-semibold text-red-600 flex items-center gap-2 cursor-pointer hover:bg-red-50 transition-colors"
                              >
-                                <UserX size={14} className="text-red-600" /> Terminate Access
+                                <UserX size={14} className="text-red-600" /> Remove
                              </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

@@ -126,7 +126,7 @@ export const AttendanceClockWidget: React.FC<AttendanceClockWidgetProps> = ({ on
         <div className="fixed inset-0 top-0 left-0 w-screen h-screen z-[9999] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-xl animate-in fade-in duration-300">
           <div className="relative w-full max-w-lg max-h-[92vh] bg-white rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] overflow-hidden border border-slate-100 flex flex-col animate-in zoom-in-95 duration-300">
             {/* Modal Header */}
-            <div className="px-8 py-7 border-b border-slate-50 flex items-center justify-between font-headline bg-white sticky top-0 z-10 transition-colors">
+            <div className="px-8 py-7 border-b border-slate-50 flex items-center justify-between font-headline bg-white transition-colors">
               <div>
                 <h3 className="text-xl font-bold text-slate-900 tracking-tight">
                   {currentLog?.has_clocked_in ? "Check Out" : "Daily Attendance"}

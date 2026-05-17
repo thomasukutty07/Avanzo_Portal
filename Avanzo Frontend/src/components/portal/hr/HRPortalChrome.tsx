@@ -14,21 +14,29 @@ export function HRPortalChrome({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate()
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [announcementCount, setAnnouncementCount] = useState(0)
+  const [pendingLeaveCount, setPendingLeaveCount] = useState(0)
   const style = purplePortalPalette as React.CSSProperties
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await api.get("/api/notifications/broadcasts/")
-        const data = res.data
-        const items = Array.isArray(data) ? data : (data.results || [])
-        setAnnouncementCount(items.length)
+        const [broadcastRes, leaveRes] = await Promise.all([
+          api.get("/api/notifications/broadcasts/").catch(() => ({ data: [] })),
+          api.get("/api/leaves/requests/").catch(() => ({ data: [] }))
+        ])
+
+        const broadcasts = Array.isArray(broadcastRes.data) ? broadcastRes.data : (broadcastRes.data?.results || [])
+        setAnnouncementCount(broadcasts.length)
+
+        const leaves = Array.isArray(leaveRes.data) ? leaveRes.data : (leaveRes.data?.results || [])
+        const pending = leaves.filter((l: any) => l.status === 'pending' || l.status === 'tl_approved').length
+        setPendingLeaveCount(pending)
       } catch (e) {
         console.error(e)
       }
     }
     fetchStats()
-    const interval = setInterval(fetchStats, 300000) // 5 minutes polling to avoid 429 errors
+    const interval = setInterval(fetchStats, 60000) // 1 minute polling for counts
     return () => clearInterval(interval)
   }, [])
 
@@ -65,7 +73,7 @@ export function HRPortalChrome({ children }: { children: React.ReactNode }) {
               alt="Avanzo" 
               className="w-32 h-auto object-contain"
             />
-            <p className="text-[9px] font-black uppercase tracking-[0.2em] leading-none text-violet-600 italic">Personnel: HR Admin Hub</p>
+            <p className="text-[9px] font-black uppercase tracking-[0.2em] leading-none text-violet-600 italic">HR Dashboard</p>
           </div>
           <button onClick={() => setIsSidebarOpen(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-50 md:hidden">
             <X className="h-5 w-5" />
@@ -86,6 +94,11 @@ export function HRPortalChrome({ children }: { children: React.ReactNode }) {
               {label === "Announcements" && announcementCount > 0 && (
                 <span className="bg-violet-600 text-white text-[10px] font-black px-2 py-0.5 rounded-lg shadow-sm animate-in zoom-in duration-300">
                   {announcementCount}
+                </span>
+              )}
+              {label === "Leave Management" && pendingLeaveCount > 0 && (
+                <span className="bg-amber-500 text-white text-[10px] font-black px-2 py-0.5 rounded-lg shadow-sm animate-in zoom-in duration-300">
+                  {pendingLeaveCount}
                 </span>
               )}
             </NavLink>
@@ -121,7 +134,7 @@ export function HRPortalChrome({ children }: { children: React.ReactNode }) {
 
       {/* Content Area */}
       <div className={`flex h-screen min-w-0 flex-1 flex-col overflow-y-auto transition-all duration-300 ${isSidebarOpen ? 'md:pl-72' : ''}`}>
-        <header className="flex h-16 shrink-0 items-center justify-between bg-white/90 backdrop-blur-md border-b border-slate-100 px-6 md:px-8 sticky top-0 z-20 shadow-sm shadow-slate-100/80">
+        <header className="flex h-16 shrink-0 items-center justify-between bg-white/90 backdrop-blur-md border-b border-slate-100 px-6 md:px-8 shadow-sm shadow-slate-100/80">
           <div className="flex items-center gap-6 flex-1 max-w-2xl">
             <button 
               onClick={() => setIsSidebarOpen(true)}

@@ -36,7 +36,10 @@ export default function HROverview() {
           api.get("/api/attendance/pulse/"),
         ])
 
-        const allEmployees = extractResults<User>(eRes.data)
+        const allEmployees = extractResults<User>(eRes.data).filter((u: any) => {
+          const role = (u.access_role_name || u.role || '').toLowerCase();
+          return role !== "admin" && !u.is_superuser && u.email !== "admin@avanzo.com";
+        })
         const leaves = extractResults<LeaveRequest>(lRes.data)
         const attendance = aRes.data; 
         const attendanceRate = attendance.attendance_rate || 0;
@@ -86,7 +89,7 @@ export default function HROverview() {
     <HRPortalChrome>
       <div className="space-y-12 font-display bg-[#fcfcfc] min-h-screen animate-in fade-in duration-700">
         {/* Page Header */}
-        <div className="sticky top-0 z-30 -mx-6 md:-mx-10 px-6 md:px-10 py-8 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-8 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-transparent transition-all">
+        <div className="-mx-6 md:-mx-10 px-6 md:px-10 py-8 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-8 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-transparent transition-all">
             <div>
                 <p className="text-[10px] font-black text-violet-600 mb-1 leading-none">
                     HR Dashboard

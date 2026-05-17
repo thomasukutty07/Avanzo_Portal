@@ -169,7 +169,7 @@ export default function AdminInsightsPage() {
       <div className="min-h-screen bg-[#fcfcfc] font-display text-slate-900">
 
         {/* ── Sticky Page Header ───────────────────────────── */}
-        <div className="sticky top-0 z-30 bg-[#fcfcfc]/90 backdrop-blur-md border-b border-slate-100 px-6 md:px-10 py-5 flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
+        <div className="bg-[#fcfcfc]/90 backdrop-blur-md border-b border-slate-100 px-6 md:px-10 py-5 flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-black tracking-tight text-slate-900 font-headline leading-tight">
               Organisation Insights

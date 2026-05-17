@@ -221,7 +221,7 @@ export default function EmployeeWorkingReportList() {
       <div className="p-6 md:p-10 space-y-10 animate-in fade-in duration-500 min-h-screen font-display bg-[#fcfcfc] text-slate-900">
 
         {/* Header */}
-        <div className="sticky top-0 z-30 -mx-6 md:-mx-10 px-6 md:px-10 py-6 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-transparent transition-all">
+        <div className="-mx-6 md:-mx-10 px-6 md:px-10 py-6 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-transparent transition-all">
           <div>
             <div className="flex items-center gap-3 mb-2">
               <ShieldCheck className="h-6 w-6 text-violet-600" />
