@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
+import { toast } from "sonner"
 import { api } from "@/lib/axios"
 import { extractResults } from "@/lib/apiResults"
 import {
@@ -8,16 +9,26 @@ import {
   ShieldCheck,
   Zap,
   Plus,
-  ExternalLink
+  ExternalLink,
+  Calendar
 } from "lucide-react"
 import { Card } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { projectsService } from "@/services/projects"
+import { useAuth } from "@/context/AuthContext"
 
 
 export default function CyberSecurityDashboardPage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [incidents, setIncidents] = useState<any[]>([])
   const [announcements, setAnnouncements] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Daily confirmation popup states
+  const [showConfirmPopup, setShowConfirmPopup] = useState(false)
+  const [confirmTask, setConfirmTask] = useState<any | null>(null)
+  const [confirmStage, setConfirmStage] = useState<'prompt' | 'start'>('prompt')
 
   useEffect(() => {
     async function loadIncidents() {
@@ -38,6 +49,32 @@ export default function CyberSecurityDashboardPage() {
           a.created_by_role === "Admin" || a.created_by_role === "HR"
         ));
 
+        // Daily Work Start Confirmation Check
+        if (user?.id) {
+          try {
+            const tasksRes = await projectsService.getTasks({ assignee: user.id });
+            const tasksList = Array.isArray(tasksRes) ? tasksRes : (tasksRes.results || []);
+            const todayStr = new Date().toISOString().split('T')[0];
+            const todayTasks = tasksList.filter((task: any) => {
+              const isActive = task.status !== 'completed' && task.status !== 'resolved' && task.status !== 'closed';
+              const startOk = !task.start_date || task.start_date <= todayStr;
+              const dueOk = !task.due_date || task.due_date >= todayStr;
+              return isActive && startOk && dueOk;
+            });
+            const pendingConfirm = todayTasks.find((task: any) => {
+              return !localStorage.getItem(`avanzo_task_started_time_${task.id}_${todayStr}`);
+            });
+            if (pendingConfirm) {
+              setConfirmTask(pendingConfirm);
+              const confirmed = localStorage.getItem(`avanzo_task_confirmed_${pendingConfirm.id}_${todayStr}`) === "true";
+              setConfirmStage(confirmed ? 'start' : 'prompt');
+              setShowConfirmPopup(true);
+            }
+          } catch (taskErr) {
+            console.error("Task confirmation check failed:", taskErr);
+          }
+        }
+
         setLoading(false);
       } catch (e) {
         console.error(e);
@@ -45,7 +82,7 @@ export default function CyberSecurityDashboardPage() {
       }
     }
     loadIncidents();
-  }, []);
+  }, [user]);
 
   const openIncidentsCount = incidents.filter(i => i.status === "open").length;
   const criticalCount = incidents.filter(i => i.status !== "resolved").length; 
@@ -265,6 +302,95 @@ export default function CyberSecurityDashboardPage() {
       <div className="flex items-center justify-center py-6 text-[8px] font-black text-slate-400 border-t border-slate-50 px-4">
         <span className="opacity-50">© 2024 Avanzo Cyber Group. All Rights Reserved.</span>
       </div>
+
+      {/* Daily Work Start Confirmation Popup */}
+      {showConfirmPopup && confirmTask && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-slate-900/50 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-amber-200/30 rounded-full blur-3xl -z-10 pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-violet-200/30 rounded-full blur-3xl -z-10 pointer-events-none" />
+            
+            <div className="flex items-center gap-3 mb-6">
+              <span className="p-2.5 rounded-2xl bg-amber-50 text-amber-500 border border-amber-100">
+                <Calendar className="size-5" />
+              </span>
+              <div>
+                <p className="text-[10px] font-black tracking-widest text-slate-400 uppercase leading-none mb-1">Today's Schedule</p>
+                <h4 className="text-base font-bold text-slate-900 leading-none">Daily Work Start</h4>
+              </div>
+            </div>
+
+            <div className="space-y-4 mb-8">
+              <div className="p-6 rounded-2xl bg-slate-50 border border-slate-100/80">
+                <span className="px-2 py-0.5 rounded-md bg-violet-50 text-violet-600 text-[9px] font-black uppercase tracking-widest border border-violet-100">
+                  {confirmTask.priority || "Medium"}
+                </span>
+                <h3 className="text-lg font-black text-slate-900 tracking-tight mt-2.5 mb-1.5 leading-snug">
+                  {confirmTask.title}
+                </h3>
+                <p className="text-xs font-semibold text-slate-400">
+                  Part of {confirmTask.project_name || "Avanzo Project"}
+                </p>
+              </div>
+
+              {confirmStage === 'prompt' ? (
+                <p className="text-sm font-bold text-slate-700 leading-relaxed">
+                  Today, are you going to do this work?
+                </p>
+              ) : (
+                <p className="text-sm font-bold text-violet-700 leading-relaxed">
+                  Ready to begin! Please log your exact starting timestamp below.
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowConfirmPopup(false)}
+                className="flex-1 rounded-2xl h-13 border-slate-200 bg-white text-xs font-black text-slate-500 hover:bg-slate-50 transition-all"
+              >
+                Later
+              </Button>
+              
+              {confirmStage === 'prompt' ? (
+                <Button
+                  onClick={() => {
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    localStorage.setItem(`avanzo_task_confirmed_${confirmTask.id}_${todayStr}`, "true");
+                    setConfirmStage('start');
+                    toast.success("Availability confirmed. Now start your work!");
+                  }}
+                  className="flex-[1.5] rounded-2xl h-13 bg-violet-600 hover:bg-violet-700 text-white text-xs font-black shadow-lg shadow-violet-600/20 transition-all flex items-center justify-center gap-2"
+                >
+                  OK
+                </Button>
+              ) : (
+                <Button
+                  onClick={async () => {
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    const exactTime = new Date().toLocaleTimeString();
+                    localStorage.setItem(`avanzo_task_started_time_${confirmTask.id}_${todayStr}`, new Date().toISOString());
+                    localStorage.setItem(`avanzo_task_confirmed_${confirmTask.id}_${todayStr}`, "true");
+
+                    try {
+                      await projectsService.updateTaskProgress(confirmTask.id, 0);
+                    } catch (e) {
+                      console.error("Failed to automatically update task status:", e);
+                    }
+
+                    toast.success(`Work started precisely at ${exactTime}! Time logged.`);
+                    setShowConfirmPopup(false);
+                  }}
+                  className="flex-[1.5] rounded-2xl h-13 bg-amber-500 hover:bg-amber-600 text-white text-xs font-black shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2"
+                >
+                  Now I am starting this work
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
