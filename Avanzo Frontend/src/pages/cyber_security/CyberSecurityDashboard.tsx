@@ -214,7 +214,7 @@ export default function CyberSecurityDashboardPage() {
   return (
     <div className="space-y-6 pb-12 font-headline bg-[#fcfcfc] min-h-screen">
       {/* Page Header */}
-      <div className="z-30 -mx-6 md:-mx-10 px-6 md:px-10 py-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-slate-100 transition-all">
+      <div className="z-30 -mx-6 md:-mx-10 px-6 md:px-10 py-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#fcfcfc] border-b border-slate-100 transition-all">
         <div>
           <p className="text-[14px] font-black text-violet-600 mb-1">
             Cyber Security Portal
@@ -576,11 +576,8 @@ export default function CyberSecurityDashboardPage() {
       {/* Deadline Extension Modal */}
       {showExtensionModal && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
-          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-md" />
-          <div className="w-full max-w-md bg-white rounded-[2rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500 z-10">
-            {/* Ambient glow */}
-            <div className="absolute top-0 right-0 w-48 h-48 bg-blue-200/30 rounded-full blur-3xl -z-10 pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-violet-200/20 rounded-full blur-3xl -z-10 pointer-events-none" />
+          <div className="absolute inset-0 bg-slate-900/70 animate-in fade-in duration-300" />
+          <div className="w-full max-w-md bg-gradient-to-br from-white via-white to-blue-50 rounded-[2rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500 z-10">
             
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
@@ -684,10 +681,8 @@ export default function CyberSecurityDashboardPage() {
       {/* Daily Work Start Confirmation Popup */}
       {showConfirmPopup && confirmTask && createPortal(
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-6">
-          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-md" />
-          <div className="w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500 z-10">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-amber-200/30 rounded-full blur-3xl -z-10 pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-violet-200/30 rounded-full blur-3xl -z-10 pointer-events-none" />
+          <div className="absolute inset-0 bg-slate-900/70 animate-in fade-in duration-300" />
+          <div className="w-full max-w-md bg-gradient-to-br from-white via-white to-amber-50/40 rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500 z-10">
             
             <div className="flex items-center gap-3 mb-6">
               <span className="p-2.5 rounded-2xl bg-amber-50 text-amber-500 border border-amber-100">
@@ -775,19 +770,12 @@ export default function CyberSecurityDashboardPage() {
       {/* Leave Status Notification Popup */}
       {showLeaveNotification && leaveNotification && createPortal(
         <div className="fixed inset-0 z-[130] flex items-center justify-center p-6">
-          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-md" />
-          <div className="w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500 z-10">
-            {leaveNotification.status === 'approved' ? (
-              <>
-                <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-200/40 rounded-full blur-3xl -z-10 pointer-events-none" />
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-green-200/30 rounded-full blur-3xl -z-10 pointer-events-none" />
-              </>
-            ) : (
-              <>
-                <div className="absolute top-0 right-0 w-48 h-48 bg-red-200/40 rounded-full blur-3xl -z-10 pointer-events-none" />
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-orange-200/30 rounded-full blur-3xl -z-10 pointer-events-none" />
-              </>
-            )}
+          <div className="absolute inset-0 bg-slate-900/70 animate-in fade-in duration-300" />
+          <div className={`w-full max-w-md ${
+            leaveNotification.status === 'approved' 
+              ? 'bg-gradient-to-br from-white via-white to-emerald-50/40' 
+              : 'bg-gradient-to-br from-white via-white to-red-50/40'
+          } rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500 z-10`}>
 
             <div className="flex flex-col items-center text-center space-y-5">
               <div className={`size-20 rounded-full flex items-center justify-center ${

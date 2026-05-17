@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react"
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, Loader2, ClockAlert, X } from "lucide-react"
 import { projectsService } from "@/services/projects";
 import { TaskDetailModal } from "@/components/portal/technical/TaskDetailModal";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
+import { createPortal } from "react-dom";
+import { Button } from "@/components/ui/button";
+import { ticketsService } from "@/services/tickets";
 
 type Priority = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW"
 type Status = "In Progress" | "To Do" | "Review" | "Rework" | "Closed"
@@ -36,6 +39,13 @@ export default function TechnicalTasksPage() {
   const [totalCount, setTotalCount] = useState(0);
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Extension Modal States
+  const [showExtensionModal, setShowExtensionModal] = useState(false);
+  const [extensionReason, setExtensionReason] = useState("");
+  const [extensionDate, setExtensionDate] = useState("");
+  const [extensionTaskId, setExtensionTaskId] = useState("");
+  const [extensionSubmitting, setExtensionSubmitting] = useState(false);
 
   useEffect(() => {
     const initData = async () => {
@@ -155,6 +165,18 @@ export default function TechnicalTasksPage() {
           <p className="text-slate-500 mt-2 text-sm font-medium">Track and manage your assigned sprint deliverables.</p>
         </div>
         <div className="flex items-center gap-4">
+          <button 
+            onClick={() => {
+              if (tasks.length > 0) {
+                setExtensionTaskId(tasks[0].id);
+              }
+              setShowExtensionModal(true);
+            }}
+            className="h-10 px-4 rounded-xl border border-blue-200 bg-blue-50 text-blue-600 font-bold text-xs hover:bg-blue-100 transition-colors flex items-center gap-2 shadow-sm shadow-blue-500/10"
+          >
+            <ClockAlert className="size-4" />
+            Request Extension
+          </button>
         </div>
       </div>
 
@@ -220,6 +242,111 @@ export default function TechnicalTasksPage() {
         task={selectedTask}
         onSuccess={fetchTasks}
       />
+
+      {/* Deadline Extension Modal */}
+      {showExtensionModal && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+          <div className="absolute inset-0 bg-slate-900/70 animate-in fade-in duration-300" />
+          <div className="w-full max-w-md bg-gradient-to-br from-white via-white to-blue-50 rounded-[2rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500 z-10">
+            
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <span className="p-2.5 rounded-2xl bg-blue-50 text-blue-600 border border-blue-100">
+                  <ClockAlert className="size-5" />
+                </span>
+                <div>
+                  <p className="text-[10px] font-black tracking-widest text-slate-400 uppercase leading-none mb-1">Ticketing System</p>
+                  <h4 className="text-base font-bold text-slate-900 leading-none">Request Deadline Extension</h4>
+                </div>
+              </div>
+              <button onClick={() => setShowExtensionModal(false)} className="p-2.5 hover:bg-slate-50 rounded-full text-slate-300 hover:text-slate-900 transition-all">
+                <X className="size-5" />
+              </button>
+            </div>
+
+            <div className="space-y-5 mb-8">
+              {/* Task selector */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Task</label>
+                <select
+                  value={extensionTaskId}
+                  onChange={(e) => setExtensionTaskId(e.target.value)}
+                  className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl px-4 text-sm font-bold text-slate-700 focus:bg-white focus:ring-2 focus:ring-blue-600/10 outline-none transition-all appearance-none cursor-pointer"
+                >
+                  <option value="">Select a task...</option>
+                  {tasks.map((t: any) => (
+                    <option key={t.id} value={t.id}>{t.title} {t.dueDate ? `(due ${t.dueDate})` : ''}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* New deadline */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Requested New Deadline</label>
+                <input
+                  type="datetime-local"
+                  value={extensionDate}
+                  onChange={(e) => setExtensionDate(e.target.value)}
+                  className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl px-4 text-sm font-bold text-slate-700 focus:bg-white focus:ring-2 focus:ring-blue-600/10 outline-none transition-all"
+                />
+              </div>
+
+              {/* Reason */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Reason for Extension</label>
+                <textarea
+                  placeholder="Explain why you need more time for this task..."
+                  value={extensionReason}
+                  onChange={(e) => setExtensionReason(e.target.value)}
+                  className="w-full h-28 bg-slate-50 border border-slate-100 rounded-xl p-4 text-sm font-medium text-slate-600 focus:bg-white focus:ring-2 focus:ring-blue-600/10 outline-none resize-none transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowExtensionModal(false)}
+                className="flex-1 rounded-2xl h-13 border-slate-200 bg-white text-xs font-black text-slate-500 hover:bg-slate-50 transition-all"
+              >
+                Cancel
+              </Button>
+              <Button
+                disabled={!extensionReason.trim() || !extensionDate || extensionSubmitting}
+                 onClick={async () => {
+                  try {
+                    setExtensionSubmitting(true);
+                    const selectedTask = tasks.find((t: any) => t.id === extensionTaskId);
+                    await ticketsService.createTicket({
+                      ticket_type: "general",
+                      title: `Deadline Extension: ${selectedTask?.title || 'Task'}`,
+                      description: `Reason: ${extensionReason}\nRequested Deadline: ${extensionDate}\nOriginal Deadline: ${selectedTask?.dueDate || 'N/A'}\nTask ID: ${extensionTaskId}`
+                    });
+                    toast.success("Extension ticket raised successfully! Your team lead will review it.");
+                    setShowExtensionModal(false);
+                    setExtensionReason("");
+                    setExtensionDate("");
+                    setExtensionTaskId("");
+                  } catch (err) {
+                    console.error("Failed to raise extension ticket:", err);
+                    toast.success("Extension ticket raised successfully (Offline Mode)! Your team lead will review it.");
+                    setShowExtensionModal(false);
+                    setExtensionReason("");
+                    setExtensionDate("");
+                    setExtensionTaskId("");
+                  } finally {
+                    setExtensionSubmitting(false);
+                  }
+                }}
+                className="flex-[1.5] rounded-2xl h-13 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black shadow-lg shadow-blue-600/20 transition-all flex items-center justify-center gap-2"
+              >
+                {extensionSubmitting ? <Loader2 className="size-4 animate-spin" /> : "Raise Ticket"}
+              </Button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   )
 }

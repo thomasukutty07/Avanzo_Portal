@@ -139,8 +139,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="w-full max-w-xl bg-white rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] overflow-hidden flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-8 duration-500">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+      <div className="absolute inset-0 bg-slate-900/70 animate-in fade-in duration-300" />
+      <div className="w-full max-w-xl bg-gradient-to-br from-white via-white to-violet-50/20 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] overflow-hidden flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-8 duration-500 z-10">
         
         {/* Simple & Elegant Header */}
         <div className="px-10 py-10 flex items-start justify-between">
@@ -462,8 +463,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       </div>
 
       {showRejectModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-md bg-white rounded-[2rem] p-8 shadow-2xl">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-6">
+          <div className="absolute inset-0 bg-slate-900/70 animate-in fade-in duration-200" />
+          <div className="w-full max-w-md bg-gradient-to-br from-white via-white to-red-50 rounded-[2rem] p-8 shadow-2xl relative z-10 animate-in slide-in-from-bottom-6 duration-300">
             <h3 className="text-xl font-bold text-slate-900 mb-2">Reject Task</h3>
             <p className="text-xs text-slate-500 mb-6">Please provide a reason for rejecting this assignment.</p>
             
@@ -498,8 +500,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       )}
 
       {showStruggleModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-md bg-white rounded-[2rem] p-8 shadow-2xl">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-6">
+          <div className="absolute inset-0 bg-slate-900/70 animate-in fade-in duration-200" />
+          <div className="w-full max-w-md bg-gradient-to-br from-white via-white to-amber-50 rounded-[2rem] p-8 shadow-2xl relative z-10 animate-in slide-in-from-bottom-6 duration-300">
             <h3 className="text-xl font-bold text-slate-900 mb-2">Report a Struggle</h3>
             <p className="text-xs text-slate-500 mb-6">Encountered an issue? Describe it below and optionally upload a document or screenshot.</p>
             
@@ -543,8 +546,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       )}
 
       {showExtensionModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-md bg-white rounded-[2rem] p-8 shadow-2xl">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-6">
+          <div className="absolute inset-0 bg-slate-900/70 animate-in fade-in duration-200" />
+          <div className="w-full max-w-md bg-gradient-to-br from-white via-white to-blue-50 rounded-[2rem] p-8 shadow-2xl relative z-10 animate-in slide-in-from-bottom-6 duration-300">
             <h3 className="text-xl font-bold text-slate-900 mb-2">Request Deadline Extension</h3>
             <p className="text-xs text-slate-500 mb-6">Submit a ticket to request more time for this task.</p>
             
