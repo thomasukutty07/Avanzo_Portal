@@ -573,8 +573,9 @@ export default function TechnicalDashboardPage() {
 
       {/* Deadline Extension Modal */}
       {showExtensionModal && createPortal(
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/50 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="w-full max-w-md bg-white rounded-[2rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-md" />
+          <div className="w-full max-w-md bg-white rounded-[2rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500 z-10">
             {/* Ambient glow */}
             <div className="absolute top-0 right-0 w-48 h-48 bg-blue-200/30 rounded-full blur-3xl -z-10 pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-violet-200/20 rounded-full blur-3xl -z-10 pointer-events-none" />
@@ -695,8 +696,9 @@ export default function TechnicalDashboardPage() {
 
       {/* Daily Work Start Confirmation Popup overlay */}
       {showConfirmPopup && confirmTask && createPortal(
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-slate-900/50 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-6">
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-md" />
+          <div className="w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500 z-10">
             {/* Ambient background accent glow */}
             <div className="absolute top-0 right-0 w-48 h-48 bg-amber-200/30 rounded-full blur-3xl -z-10 pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-violet-200/30 rounded-full blur-3xl -z-10 pointer-events-none" />
@@ -791,8 +793,9 @@ export default function TechnicalDashboardPage() {
 
       {/* Leave Status Notification Popup */}
       {showLeaveNotification && leaveNotification && createPortal(
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-slate-900/50 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-6">
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-md" />
+          <div className="w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500 z-10">
             {/* Ambient glow based on status */}
             {leaveNotification.status === 'approved' ? (
               <>
