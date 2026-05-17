@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { MoreVertical, Plus, Shield, ExternalLink, Loader2, Clock, Calendar, CheckCircle2, Circle, AlertCircle, Palmtree, ClockAlert, X, Send } from "lucide-react"
@@ -461,7 +462,6 @@ export default function TechnicalDashboardPage() {
             {(() => {
               const todayStr = new Date().toISOString().split('T')[0];
               const taskId = "mock-daily-task-tech";
-              const confirmed = localStorage.getItem(`avanzo_task_confirmed_${taskId}_${todayStr}`) === "true";
               const startedTime = localStorage.getItem(`avanzo_task_started_time_${taskId}_${todayStr}`);
 
               return (
@@ -562,14 +562,17 @@ export default function TechnicalDashboardPage() {
         </div>
       </div>
 
-      <TicketModal 
-        isOpen={isTicketModalOpen} 
-        onClose={() => setIsTicketModalOpen(false)} 
-        onSuccess={() => toast.success("Record updated successfully.")}
-      />
+      {createPortal(
+        <TicketModal 
+          isOpen={isTicketModalOpen} 
+          onClose={() => setIsTicketModalOpen(false)} 
+          onSuccess={() => toast.success("Record updated successfully.")}
+        />,
+        document.body
+      )}
 
       {/* Deadline Extension Modal */}
-      {showExtensionModal && (
+      {showExtensionModal && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/50 backdrop-blur-md animate-in fade-in duration-300">
           <div className="w-full max-w-md bg-white rounded-[2rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500">
             {/* Ambient glow */}
@@ -671,23 +674,27 @@ export default function TechnicalDashboardPage() {
               </Button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      <TaskDetailModal
-        isOpen={isTaskModalOpen}
-        onClose={() => setIsTaskModalOpen(false)}
-        task={selectedTask}
-        onSuccess={async () => {
-          // Refresh list
-          const tasksRes = await projectsService.getTasks({ assignee: user?.id });
-          const tasksList = Array.isArray(tasksRes) ? tasksRes : (tasksRes.results || []);
-          setPersonalTasks(tasksList.filter((t: any) => t.status !== 'completed' && t.status !== 'resolved').slice(0, 3));
-        }}
-      />
+      {createPortal(
+        <TaskDetailModal
+          isOpen={isTaskModalOpen}
+          onClose={() => setIsTaskModalOpen(false)}
+          task={selectedTask}
+          onSuccess={async () => {
+            // Refresh list
+            const tasksRes = await projectsService.getTasks({ assignee: user?.id });
+            const tasksList = Array.isArray(tasksRes) ? tasksRes : (tasksRes.results || []);
+            setPersonalTasks(tasksList.filter((t: any) => t.status !== 'completed' && t.status !== 'resolved').slice(0, 3));
+          }}
+        />,
+        document.body
+      )}
 
       {/* Daily Work Start Confirmation Popup overlay */}
-      {showConfirmPopup && confirmTask && (
+      {showConfirmPopup && confirmTask && createPortal(
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-slate-900/50 backdrop-blur-md animate-in fade-in duration-300">
           <div className="w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500">
             {/* Ambient background accent glow */}
@@ -778,11 +785,12 @@ export default function TechnicalDashboardPage() {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Leave Status Notification Popup */}
-      {showLeaveNotification && leaveNotification && (
+      {showLeaveNotification && leaveNotification && createPortal(
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-slate-900/50 backdrop-blur-md animate-in fade-in duration-300">
           <div className="w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500">
             {/* Ambient glow based on status */}
@@ -863,7 +871,8 @@ export default function TechnicalDashboardPage() {
               </Button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

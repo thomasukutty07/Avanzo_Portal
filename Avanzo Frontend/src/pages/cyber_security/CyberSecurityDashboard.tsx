@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { api } from "@/lib/axios"
@@ -59,8 +60,8 @@ export default function CyberSecurityDashboardPage() {
   useEffect(() => {
     async function loadIncidents() {
       try {
-        let rawIncidents = [];
-        let rawAnnouncements = [];
+        let rawIncidents: any[] = [];
+        let rawAnnouncements: any[] = [];
         try {
           const [incRes, annRes] = await Promise.all([
             api.get("/api/tickets/"),
@@ -389,7 +390,6 @@ export default function CyberSecurityDashboardPage() {
             {(() => {
               const todayStr = new Date().toISOString().split('T')[0];
               const taskId = "mock-daily-task-cyber";
-              const confirmed = localStorage.getItem(`avanzo_task_confirmed_${taskId}_${todayStr}`) === "true";
               const startedTime = localStorage.getItem(`avanzo_task_started_time_${taskId}_${todayStr}`);
 
               return (
@@ -563,15 +563,18 @@ export default function CyberSecurityDashboardPage() {
       </div>
 
       {/* Ticket Modal */}
-      <TicketModal
-        isOpen={isTicketModalOpen}
-        onClose={() => setIsTicketModalOpen(false)}
-        defaultType="compliance"
-        onSuccess={() => toast.success("Ticket registered successfully.")}
-      />
+      {createPortal(
+        <TicketModal
+          isOpen={isTicketModalOpen}
+          onClose={() => setIsTicketModalOpen(false)}
+          defaultType="compliance"
+          onSuccess={() => toast.success("Ticket registered successfully.")}
+        />,
+        document.body
+      )}
 
       {/* Deadline Extension Modal */}
-      {showExtensionModal && (
+      {showExtensionModal && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/50 backdrop-blur-md animate-in fade-in duration-300">
           <div className="w-full max-w-md bg-white rounded-[2rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500">
             {/* Ambient glow */}
@@ -673,11 +676,12 @@ export default function CyberSecurityDashboardPage() {
               </Button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Daily Work Start Confirmation Popup */}
-      {showConfirmPopup && confirmTask && (
+      {showConfirmPopup && confirmTask && createPortal(
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-slate-900/50 backdrop-blur-md animate-in fade-in duration-300">
           <div className="w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500">
             <div className="absolute top-0 right-0 w-48 h-48 bg-amber-200/30 rounded-full blur-3xl -z-10 pointer-events-none" />
@@ -762,11 +766,12 @@ export default function CyberSecurityDashboardPage() {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Leave Status Notification Popup */}
-      {showLeaveNotification && leaveNotification && (
+      {showLeaveNotification && leaveNotification && createPortal(
         <div className="fixed inset-0 z-[130] flex items-center justify-center p-6 bg-slate-900/50 backdrop-blur-md animate-in fade-in duration-300">
           <div className="w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500">
             {leaveNotification.status === 'approved' ? (
@@ -842,25 +847,9 @@ export default function CyberSecurityDashboardPage() {
               </Button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
-  )
-}
-
-function ArrowRight(props: any) {
-  return (
-    <svg 
-      {...props}
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="3.5" 
-      strokeLinecap="round" 
-      strokeLinejoin="round"
-    >
-      <path d="M5 12h14" />
-      <path d="m12 5 7 7-7 7" />
-    </svg>
   )
 }
