@@ -12,6 +12,8 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { leavesService } from "@/services/leaves";
+import { ticketsService } from "@/services/tickets";
+import { projectsService } from "@/services/projects";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { format, parseISO, differenceInDays } from "date-fns";
@@ -39,6 +41,8 @@ export default function TechnicalLeavePage() {
   const [endDate, setEndDate] = useState("");
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+
 
   useEffect(() => {
     fetchLeaveData();
@@ -101,6 +105,7 @@ export default function TechnicalLeavePage() {
       setLoading(false);
     }
   };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -203,6 +208,8 @@ export default function TechnicalLeavePage() {
           </Card>
         ))}
       </div>
+
+
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Apply Form */}

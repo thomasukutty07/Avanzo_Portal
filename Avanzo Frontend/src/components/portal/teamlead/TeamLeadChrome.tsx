@@ -1,5 +1,5 @@
 import { NavLink, useNavigate, useLocation, Outlet } from "react-router-dom"
-import { LogOut, LayoutDashboard, CheckSquare, Folder, Users, Megaphone, Search, Bell, Menu, X, Clock } from "lucide-react"
+import { LogOut, LayoutDashboard, CheckSquare, Folder, Users, Megaphone, Search, Bell, Menu, X, Clock, Palmtree } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { toast } from "sonner"
@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { to: "/tasks", label: "Team Tasks", icon: CheckSquare },
   { to: "/projects", label: "Projects", icon: Folder },
   { to: "/team", label: "Team Members", icon: Users, end: true },
+  { to: "/lead-leave", label: "Leave Request", icon: Palmtree },
   { to: "/team-announcements", label: "Announcements", icon: Megaphone },
 ]
 

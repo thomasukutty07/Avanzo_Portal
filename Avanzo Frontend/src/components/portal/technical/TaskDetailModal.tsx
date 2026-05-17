@@ -12,8 +12,11 @@ import {
   MessageSquareWarning,
   CheckCircle2,
   Circle,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { projectsService } from "@/services/projects";
+import { ticketsService } from "@/services/tickets";
 import { api } from "@/lib/axios";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -51,6 +54,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     { id: 2, name: "Drafting / Development", completed: false },
     { id: 3, name: "Internal Review", completed: false }
   ]);
+  const [newPhaseName, setNewPhaseName] = useState("");
   const [docUploaded, setDocUploaded] = useState(false);
 
   React.useEffect(() => {
@@ -242,14 +246,14 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
               
               <div className="space-y-3">
                 {phases.map(phase => (
-                  <div key={phase.id} className="flex items-center justify-between p-4 rounded-2xl border border-slate-100 bg-white shadow-sm hover:border-violet-100 transition-all">
+                  <div key={phase.id} className="flex items-center justify-between p-4 rounded-2xl border border-slate-100 bg-white shadow-sm hover:border-violet-100 transition-all group/phase">
                     <div className="flex items-center gap-3">
                       <button 
                         onClick={() => {
                           const newPhases = phases.map(p => p.id === phase.id ? { ...p, completed: !p.completed } : p);
                           setPhases(newPhases);
                           const completedCount = newPhases.filter(p => p.completed).length;
-                          setProgress(Math.round((completedCount / newPhases.length) * 100));
+                          setProgress(newPhases.length === 0 ? 0 : Math.round((completedCount / newPhases.length) * 100));
                         }}
                         className="text-slate-400 hover:text-violet-600 transition-colors"
                       >
@@ -259,8 +263,55 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                         {phase.name}
                       </span>
                     </div>
+                    <button 
+                      onClick={() => {
+                        const newPhases = phases.filter(p => p.id !== phase.id);
+                        setPhases(newPhases);
+                        const completedCount = newPhases.filter(p => p.completed).length;
+                        setProgress(newPhases.length === 0 ? 0 : Math.round((completedCount / newPhases.length) * 100));
+                      }}
+                      className="text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover/phase:opacity-100 p-1"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
                   </div>
                 ))}
+
+                {/* Add New Phase UI */}
+                <div className="flex items-center gap-2 mt-4 bg-slate-50 p-2 rounded-2xl border border-slate-100">
+                  <input
+                    type="text"
+                    value={newPhaseName}
+                    onChange={(e) => setNewPhaseName(e.target.value)}
+                    placeholder="Add a new phase/step..."
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && newPhaseName.trim() !== '') {
+                        e.preventDefault();
+                        const newPhase = { id: Date.now(), name: newPhaseName.trim(), completed: false };
+                        const newPhases = [...phases, newPhase];
+                        setPhases(newPhases);
+                        setNewPhaseName("");
+                        const completedCount = newPhases.filter(p => p.completed).length;
+                        setProgress(Math.round((completedCount / newPhases.length) * 100));
+                      }
+                    }}
+                    className="flex-1 bg-transparent border-none text-sm font-bold text-slate-700 placeholder:text-slate-400 focus:ring-0 px-3 outline-none"
+                  />
+                  <button
+                    onClick={() => {
+                      if (newPhaseName.trim() === '') return;
+                      const newPhase = { id: Date.now(), name: newPhaseName.trim(), completed: false };
+                      const newPhases = [...phases, newPhase];
+                      setPhases(newPhases);
+                      setNewPhaseName("");
+                      const completedCount = newPhases.filter(p => p.completed).length;
+                      setProgress(Math.round((completedCount / newPhases.length) * 100));
+                    }}
+                    className="p-2 rounded-xl bg-white text-violet-600 shadow-sm border border-slate-100 hover:bg-violet-600 hover:text-white transition-colors"
+                  >
+                    <Plus className="size-4" />
+                  </button>
+                </div>
               </div>
 
               {progress === 100 && (
@@ -470,7 +521,20 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
               <Button variant="outline" onClick={() => setShowStruggleModal(false)} className="flex-1 rounded-xl h-11">
                 Cancel
               </Button>
-              <Button onClick={() => { setShowStruggleModal(false); toast.success("Struggle report submitted to Admin."); }} className="flex-[1.5] rounded-xl h-11 bg-amber-500 hover:bg-amber-600 text-white">
+              <Button onClick={async () => {
+                try {
+                  await ticketsService.createTicket({
+                    ticket_type: "tech",
+                    title: `Struggle Report: ${task.title}`,
+                    description: `Task: ${task.title}\nTask ID: ${task.id}\nProject: ${task.project_name || 'N/A'}\n\nIssue: Struggle reported via task execution workflow.`
+                  });
+                  toast.success("Struggle report submitted to Admin.");
+                } catch (e) {
+                  console.error("Failed to submit struggle report:", e);
+                  toast.error("Failed to submit struggle report.");
+                }
+                setShowStruggleModal(false);
+              }} className="flex-[1.5] rounded-xl h-11 bg-amber-500 hover:bg-amber-600 text-white">
                 Submit Report
               </Button>
             </div>
@@ -510,7 +574,22 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 Cancel
               </Button>
               <Button 
-                onClick={() => { setShowExtensionModal(false); toast.success("Extension ticket raised."); setTicketReason(""); setTicketDate(""); }} 
+                onClick={async () => {
+                  try {
+                    await ticketsService.createTicket({
+                      ticket_type: "general",
+                      title: `Deadline Extension: ${task.title}`,
+                      description: `Reason: ${ticketReason}\nRequested Deadline: ${ticketDate}\nOriginal Deadline: ${task.due_date || 'N/A'}\nTask ID: ${task.id}\nProject: ${task.project_name || 'N/A'}`
+                    });
+                    toast.success("Extension ticket raised successfully!");
+                  } catch (e) {
+                    console.error("Failed to raise extension ticket:", e);
+                    toast.error("Failed to raise extension ticket.");
+                  }
+                  setShowExtensionModal(false);
+                  setTicketReason("");
+                  setTicketDate("");
+                }} 
                 disabled={!ticketReason.trim() || !ticketDate}
                 className="flex-[1.5] rounded-xl h-11 bg-blue-600 hover:bg-blue-700 text-white"
               >

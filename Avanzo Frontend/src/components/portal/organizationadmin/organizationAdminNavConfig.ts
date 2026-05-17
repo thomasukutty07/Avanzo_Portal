@@ -13,6 +13,7 @@ export const ORGANIZATION_ADMIN_NAV = [
   { to: "/users", label: "Employee Management", icon: ClipboardList },
   { to: "/admin/register-employee", label: "Employee Registration", icon: UserPlus },
   { to: "/departments", label: "Departments", icon: CalendarDays },
+  { to: "/firms", label: "Firms", icon: CalendarDays },
   { to: "/admin-announcements", label: "Announcements", icon: Megaphone },
   { to: "/reports", label: "Reports", icon: BarChart3 },
   { to: "/admin/insights", label: "Insights", icon: Lightbulb },

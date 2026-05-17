@@ -20,6 +20,7 @@ const OrgLogin = lazy(() => import("@/pages/OrgLogin"))
 const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard"))
 const UsersPage = lazy(() => import("@/pages/admin/Users"))
 const DepartmentsPage = lazy(() => import("@/pages/admin/Departments"))
+const FirmsPage = lazy(() => import("@/pages/admin/Firms"))
 const ReportsPage = lazy(() => import("@/pages/admin/EmployeeWorkingReportList"))
 const EmployeeWorkingReportDetail = lazy(() => import("@/pages/admin/EmployeeWorkingReportDetail"))
 const AdminNotificationsPage = lazy(() => import("@/pages/admin/AdminNotifications"))
@@ -60,6 +61,7 @@ const TeamLeadCreateAnnouncementPage = lazy(() =>
 const LeadProjectDetailsPage = lazy(() => import("@/pages/teamlead/ProjectDetails"))
 const TeamMemberDetailPage = lazy(() => import("@/pages/teamlead/TeamMemberDetail"))
 const TeamReportsPage = lazy(() => import("@/pages/teamlead/TeamReports"))
+const TeamLeadLeavePage = lazy(() => import("@/pages/teamlead/TeamLeadLeave"))
 
 const TechnicalDashboardPage = lazy(() =>
   import("@/pages/technical/TechnicalDashboard")
@@ -189,6 +191,7 @@ export default function App() {
           <Route element={<RequireRole roles={["Admin"]} />}>
             <Route path="/users" element={<UsersPage />} />
             <Route path="/departments" element={<DepartmentsPage />} />
+            <Route path="/firms" element={<FirmsPage />} />
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/reports/working/:id" element={<EmployeeWorkingReportDetail />} />
             <Route
@@ -235,6 +238,7 @@ export default function App() {
               <Route path="/team" element={<TeamPage />} />
               <Route path="/team/:id" element={<TeamMemberDetailPage />} />
               <Route path="/team-reports" element={<TeamReportsPage />} />
+              <Route path="/lead-leave" element={<TeamLeadLeavePage />} />
               <Route
                 path="/team-announcements"
                 element={<TeamAnnouncementsPage />}

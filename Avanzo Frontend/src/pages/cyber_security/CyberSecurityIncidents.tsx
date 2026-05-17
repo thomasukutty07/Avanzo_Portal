@@ -50,7 +50,7 @@ export default function CyberSecurityIncidentsPage() {
   return (
     <div className="space-y-8 pb-12 font-sans bg-[#fcfcfc] min-h-screen">
       {/* Page Header */}
-      <div className="sticky top-[64px] z-30 -mx-6 md:-mx-10 px-6 md:px-10 py-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-slate-100 transition-all">
+      <div className="z-30 -mx-6 md:-mx-10 px-6 md:px-10 py-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-slate-100 transition-all">
           <div>
               <p className="text-[14px] font-semibold text-violet-600 mb-1 leading-none">
                   Support

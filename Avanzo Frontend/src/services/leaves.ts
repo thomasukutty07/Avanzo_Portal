@@ -37,4 +37,8 @@ export const leavesService = {
     const response = await api.get("/api/leaves/requests/who_is_out/");
     return response.data;
   },
+  getMyLeaveRequests: async () => {
+    const response = await api.get("/api/leaves/requests/", { params: { mine: true } });
+    return response.data;
+  },
 };

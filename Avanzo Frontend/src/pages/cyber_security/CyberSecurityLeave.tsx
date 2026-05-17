@@ -1,19 +1,24 @@
 import { useState, useEffect } from "react"
 import { leavesService } from "@/services/leaves"
+import { ticketsService } from "@/services/tickets"
+import { projectsService } from "@/services/projects"
 import { toast } from "sonner"
 import { format, parseISO } from "date-fns"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/context/AuthContext"
 import { 
   Plus, 
   Umbrella,
   Stethoscope,
   User,
+  Loader2
 } from "lucide-react"
 
 // Live data will be fetched via useEffect
 
 export default function CyberSecurityLeavePage() {
+  const { user } = useAuth()
   const [requests, setRequests] = useState<any[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({
@@ -23,9 +28,11 @@ export default function CyberSecurityLeavePage() {
     reason: ""
   })
 
+
+
   useEffect(() => {
     fetchRequests()
-  }, [])
+  }, [user])
 
   const fetchRequests = async () => {
     try {
@@ -35,6 +42,8 @@ export default function CyberSecurityLeavePage() {
       console.error(e)
     }
   }
+
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -94,7 +103,7 @@ export default function CyberSecurityLeavePage() {
   ]
   return (
     <div className="space-y-8 pt-4 pb-12 font-headline bg-[#fcfcfc] min-h-screen">
-      <div className="sticky top-[64px] z-30 -mx-6 md:-mx-10 px-6 md:px-10 py-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-slate-100 transition-all">
+      <div className="z-30 -mx-6 md:-mx-10 px-6 md:px-10 py-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-slate-100 transition-all">
         <div>
           <p className="text-[14px] font-black text-violet-600 leading-none mb-1">
             Dashboard • Leave
@@ -129,6 +138,8 @@ export default function CyberSecurityLeavePage() {
           </Card>
         ))}
       </div>
+
+
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Apply Form */}
@@ -254,6 +265,7 @@ export default function CyberSecurityLeavePage() {
           </Card>
         </div>
       </div>
+
     </div>
   )
 }

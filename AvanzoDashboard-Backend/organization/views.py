@@ -1,8 +1,8 @@
 from rest_framework import viewsets
 from core.mixins import TenantFilterMixin
 from core.permissions import IsAdminOrHRReadOnly
-from .models import Department, Designation
-from .serializers import DepartmentSerializer, DesignationSerializer
+from .models import Department, Designation, Firm
+from .serializers import DepartmentSerializer, DesignationSerializer, FirmSerializer
 
 class DepartmentViewSet(TenantFilterMixin, viewsets.ModelViewSet):
     """
@@ -20,4 +20,12 @@ class DesignationViewSet(TenantFilterMixin, viewsets.ModelViewSet):
     """
     queryset = Designation.objects.all()
     serializer_class = DesignationSerializer
+    permission_classes = [IsAdminOrHRReadOnly]
+
+class FirmViewSet(viewsets.ModelViewSet):
+    """
+    CRUD API for Firms.
+    """
+    queryset = Firm.objects.all()
+    serializer_class = FirmSerializer
     permission_classes = [IsAdminOrHRReadOnly]

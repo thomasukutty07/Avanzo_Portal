@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
-import { MoreVertical, Plus, Shield, ExternalLink, Loader2, Clock, Calendar, CheckCircle2, Circle } from "lucide-react"
+import { MoreVertical, Plus, Shield, ExternalLink, Loader2, Clock, Calendar, CheckCircle2, Circle, AlertCircle, Palmtree, ClockAlert, X, Send } from "lucide-react"
 
 import { projectsService } from "@/services/projects";
+import { ticketsService } from "@/services/tickets";
+import { leavesService } from "@/services/leaves";
 import { useAuth } from "@/context/AuthContext";
 import { TicketModal } from "@/components/portal/technical/SupportModals";
 import { DashboardCalendar } from "@/components/portal/shared/DashboardCalendar";
@@ -20,6 +22,11 @@ export default function TechnicalDashboardPage() {
 
   const [stats, setStats] = useState<any[]>([]);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
+  const [showExtensionModal, setShowExtensionModal] = useState(false);
+  const [extensionReason, setExtensionReason] = useState("");
+  const [extensionDate, setExtensionDate] = useState("");
+  const [extensionTaskId, setExtensionTaskId] = useState("");
+  const [extensionSubmitting, setExtensionSubmitting] = useState(false);
   
   // Task detail modal states
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
@@ -29,6 +36,10 @@ export default function TechnicalDashboardPage() {
   const [showConfirmPopup, setShowConfirmPopup] = useState(false);
   const [confirmTask, setConfirmTask] = useState<any | null>(null);
   const [confirmStage, setConfirmStage] = useState<'prompt' | 'start'>('prompt');
+
+  // Leave status notification
+  const [leaveNotification, setLeaveNotification] = useState<any | null>(null);
+  const [showLeaveNotification, setShowLeaveNotification] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -70,6 +81,28 @@ export default function TechnicalDashboardPage() {
           const confirmed = localStorage.getItem(`avanzo_task_confirmed_${pendingConfirm.id}_${todayStr}`) === "true";
           setConfirmStage(confirmed ? 'start' : 'prompt');
           setShowConfirmPopup(true);
+        }
+
+        // Check leave request statuses for notifications
+        try {
+          const leavesRes = await leavesService.getMyLeaveRequests();
+          const leavesList = Array.isArray(leavesRes) ? leavesRes : (leavesRes.results || []);
+          const now = new Date();
+          const recentDecided = leavesList.find((lr: any) => {
+            if (lr.status !== 'approved' && lr.status !== 'rejected') return false;
+            const seenKey = `avanzo_leave_seen_${lr.id}_${lr.status}`;
+            if (localStorage.getItem(seenKey)) return false;
+            // Only show if decided within the last 48 hours
+            const updatedAt = new Date(lr.updated_at || lr.created_at);
+            const hoursSince = (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60);
+            return hoursSince < 48;
+          });
+          if (recentDecided) {
+            setLeaveNotification(recentDecided);
+            setShowLeaveNotification(true);
+          }
+        } catch (leaveErr) {
+          console.error("Leave status check failed:", leaveErr);
         }
 
 
@@ -210,6 +243,54 @@ export default function TechnicalDashboardPage() {
         ))}
       </div>
 
+      {/* Quick Actions Panel */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <button
+          type="button"
+          onClick={() => setIsTicketModalOpen(true)}
+          className="group relative bg-white rounded-2xl border border-slate-100 shadow-sm p-6 hover:shadow-xl hover:-translate-y-1 transition-all overflow-hidden text-left"
+        >
+          <div className="absolute top-0 right-0 w-32 h-32 bg-violet-100/30 rounded-full blur-3xl -z-0 pointer-events-none group-hover:bg-violet-200/40 transition-colors" />
+          <div className="relative z-10">
+            <div className="size-12 rounded-2xl bg-violet-50 border border-violet-100 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-sm">
+              <AlertCircle className="size-5 text-violet-600" />
+            </div>
+            <h4 className="text-sm font-black text-slate-900 tracking-tight mb-1">Raise Ticket</h4>
+            <p className="text-[11px] font-medium text-slate-400 leading-snug">Report a technical issue, capacity limit, or general support request.</p>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setShowExtensionModal(true)}
+          className="group relative bg-white rounded-2xl border border-slate-100 shadow-sm p-6 hover:shadow-xl hover:-translate-y-1 transition-all overflow-hidden text-left"
+        >
+          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100/30 rounded-full blur-3xl -z-0 pointer-events-none group-hover:bg-blue-200/40 transition-colors" />
+          <div className="relative z-10">
+            <div className="size-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-sm">
+              <ClockAlert className="size-5 text-blue-600" />
+            </div>
+            <h4 className="text-sm font-black text-slate-900 tracking-tight mb-1">Request Extension</h4>
+            <p className="text-[11px] font-medium text-slate-400 leading-snug">Need more time? Submit a deadline extension ticket for review.</p>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => navigate("/technical/leave")}
+          className="group relative bg-white rounded-2xl border border-slate-100 shadow-sm p-6 hover:shadow-xl hover:-translate-y-1 transition-all overflow-hidden text-left"
+        >
+          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-100/30 rounded-full blur-3xl -z-0 pointer-events-none group-hover:bg-emerald-200/40 transition-colors" />
+          <div className="relative z-10">
+            <div className="size-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-sm">
+              <Palmtree className="size-5 text-emerald-600" />
+            </div>
+            <h4 className="text-sm font-black text-slate-900 tracking-tight mb-1">Leave Request</h4>
+            <p className="text-[11px] font-medium text-slate-400 leading-snug">Apply for annual, sick, or personal leave and track your balance.</p>
+          </div>
+        </button>
+      </div>
+
       {/* Main Grid: Projects */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-12 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden hover:shadow-xl transition-all duration-700">
@@ -322,6 +403,108 @@ export default function TechnicalDashboardPage() {
         onSuccess={() => toast.success("Record updated successfully.")}
       />
 
+      {/* Deadline Extension Modal */}
+      {showExtensionModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/50 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-white rounded-[2rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500">
+            {/* Ambient glow */}
+            <div className="absolute top-0 right-0 w-48 h-48 bg-blue-200/30 rounded-full blur-3xl -z-10 pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-violet-200/20 rounded-full blur-3xl -z-10 pointer-events-none" />
+            
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <span className="p-2.5 rounded-2xl bg-blue-50 text-blue-600 border border-blue-100">
+                  <ClockAlert className="size-5" />
+                </span>
+                <div>
+                  <p className="text-[10px] font-black tracking-widest text-slate-400 uppercase leading-none mb-1">Ticketing System</p>
+                  <h4 className="text-base font-bold text-slate-900 leading-none">Request Deadline Extension</h4>
+                </div>
+              </div>
+              <button onClick={() => setShowExtensionModal(false)} className="p-2.5 hover:bg-slate-50 rounded-full text-slate-300 hover:text-slate-900 transition-all">
+                <X className="size-5" />
+              </button>
+            </div>
+
+            <div className="space-y-5 mb-8">
+              {/* Task selector */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Task</label>
+                <select
+                  value={extensionTaskId}
+                  onChange={(e) => setExtensionTaskId(e.target.value)}
+                  className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl px-4 text-sm font-bold text-slate-700 focus:bg-white focus:ring-2 focus:ring-blue-600/10 outline-none transition-all appearance-none cursor-pointer"
+                >
+                  <option value="">Select a task...</option>
+                  {personalTasks.map((t: any) => (
+                    <option key={t.id} value={t.id}>{t.title} {t.due_date ? `(due ${t.due_date})` : ''}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* New deadline */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Requested New Deadline</label>
+                <input
+                  type="datetime-local"
+                  value={extensionDate}
+                  onChange={(e) => setExtensionDate(e.target.value)}
+                  className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl px-4 text-sm font-bold text-slate-700 focus:bg-white focus:ring-2 focus:ring-blue-600/10 outline-none transition-all"
+                />
+              </div>
+
+              {/* Reason */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Reason for Extension</label>
+                <textarea
+                  placeholder="Explain why you need more time for this task..."
+                  value={extensionReason}
+                  onChange={(e) => setExtensionReason(e.target.value)}
+                  className="w-full h-28 bg-slate-50 border border-slate-100 rounded-xl p-4 text-sm font-medium text-slate-600 focus:bg-white focus:ring-2 focus:ring-blue-600/10 outline-none resize-none transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowExtensionModal(false)}
+                className="flex-1 rounded-2xl h-13 border-slate-200 bg-white text-xs font-black text-slate-500 hover:bg-slate-50 transition-all"
+              >
+                Cancel
+              </Button>
+              <Button
+                disabled={!extensionReason.trim() || !extensionDate || extensionSubmitting}
+                onClick={async () => {
+                  try {
+                    setExtensionSubmitting(true);
+                    const selectedTask = personalTasks.find((t: any) => t.id === extensionTaskId);
+                    await ticketsService.createTicket({
+                      ticket_type: "general",
+                      title: `Deadline Extension: ${selectedTask?.title || 'Task'}`,
+                      description: `Reason: ${extensionReason}\nRequested Deadline: ${extensionDate}\nOriginal Deadline: ${selectedTask?.due_date || 'N/A'}\nTask ID: ${extensionTaskId}`
+                    });
+                    toast.success("Extension ticket raised successfully! Your team lead will review it.");
+                    setShowExtensionModal(false);
+                    setExtensionReason("");
+                    setExtensionDate("");
+                    setExtensionTaskId("");
+                  } catch (err) {
+                    console.error("Failed to raise extension ticket:", err);
+                    toast.error("Failed to submit extension request. Please try again.");
+                  } finally {
+                    setExtensionSubmitting(false);
+                  }
+                }}
+                className="flex-[1.5] rounded-2xl h-13 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black shadow-lg shadow-blue-600/20 transition-all flex items-center justify-center gap-2"
+              >
+                {extensionSubmitting ? <Loader2 className="size-4 animate-spin" /> : <><Send className="size-4" /> Raise Ticket</>}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <TaskDetailModal
         isOpen={isTaskModalOpen}
         onClose={() => setIsTaskModalOpen(false)}
@@ -424,6 +607,91 @@ export default function TechnicalDashboardPage() {
                   Now I am starting this work
                 </Button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Leave Status Notification Popup */}
+      {showLeaveNotification && leaveNotification && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-slate-900/50 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500">
+            {/* Ambient glow based on status */}
+            {leaveNotification.status === 'approved' ? (
+              <>
+                <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-200/40 rounded-full blur-3xl -z-10 pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-green-200/30 rounded-full blur-3xl -z-10 pointer-events-none" />
+              </>
+            ) : (
+              <>
+                <div className="absolute top-0 right-0 w-48 h-48 bg-red-200/40 rounded-full blur-3xl -z-10 pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-orange-200/30 rounded-full blur-3xl -z-10 pointer-events-none" />
+              </>
+            )}
+
+            <div className="flex flex-col items-center text-center space-y-5">
+              {/* Status Icon */}
+              <div className={`size-20 rounded-full flex items-center justify-center ${
+                leaveNotification.status === 'approved' 
+                  ? 'bg-emerald-50 border-2 border-emerald-100' 
+                  : 'bg-red-50 border-2 border-red-100'
+              }`}>
+                {leaveNotification.status === 'approved' 
+                  ? <CheckCircle2 className="size-10 text-emerald-500" />
+                  : <Circle className="size-10 text-red-500" />
+                }
+              </div>
+
+              {/* Title */}
+              <div>
+                <p className="text-[10px] font-black tracking-widest text-slate-400 uppercase mb-2">Leave Request Update</p>
+                <h3 className={`text-2xl font-black tracking-tight ${
+                  leaveNotification.status === 'approved' ? 'text-emerald-600' : 'text-red-600'
+                }`}>
+                  {leaveNotification.status === 'approved' ? 'Leave Approved!' : 'Leave Rejected'}
+                </h3>
+              </div>
+
+              {/* Details Card */}
+              <div className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 text-left space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Type</span>
+                  <span className="text-sm font-bold text-slate-900">{leaveNotification.leave_type_display || leaveNotification.leave_type}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Duration</span>
+                  <span className="text-sm font-bold text-slate-900">
+                    {leaveNotification.start_date} — {leaveNotification.end_date}
+                  </span>
+                </div>
+                {leaveNotification.reason && (
+                  <div className="pt-2 border-t border-slate-100">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Reason</span>
+                    <p className="text-xs font-medium text-slate-600 leading-relaxed">{leaveNotification.reason}</p>
+                  </div>
+                )}
+              </div>
+
+              <p className="text-xs font-medium text-slate-500 leading-relaxed max-w-xs">
+                {leaveNotification.status === 'approved' 
+                  ? 'Your leave has been approved by HR. Your calendar has been updated accordingly.' 
+                  : 'Unfortunately your leave request was not approved. Please contact HR for more details.'}
+              </p>
+
+              {/* Acknowledge Button */}
+              <Button
+                onClick={() => {
+                  localStorage.setItem(`avanzo_leave_seen_${leaveNotification.id}_${leaveNotification.status}`, 'true');
+                  setShowLeaveNotification(false);
+                }}
+                className={`w-full rounded-2xl h-14 text-xs font-black uppercase tracking-widest shadow-lg transition-all ${
+                  leaveNotification.status === 'approved'
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
+                    : 'bg-red-600 hover:bg-red-700 text-white shadow-red-600/20'
+                }`}
+              >
+                Got it
+              </Button>
             </div>
           </div>
         </div>
