@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
-import { Building2, Plus, Loader2, Building, Trash2, Edit3, Globe, Shield, Calendar, Search } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import { Building2, Plus, Loader2, Building, Trash2, Edit3, Globe, Shield, Calendar, Search, UserPlus } from "lucide-react"
 import { OrganizationAdminChrome } from "@/components/portal/organizationadmin/OrganizationAdminChrome"
 import { api } from "@/lib/axios"
 import { toast } from "sonner"
@@ -14,6 +15,7 @@ interface Firm {
 }
 
 export default function FirmsPage() {
+  const navigate = useNavigate()
   const [firms, setFirms] = useState<Firm[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
@@ -240,19 +242,33 @@ export default function FirmsPage() {
                     </div>
                   </div>
 
-                  <div className="mt-6 pt-4 border-t border-slate-50 flex justify-between items-center">
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-500">
-                      <Building className="size-3" /> Tenant
+                  <div className="mt-6 pt-4 border-t border-slate-50 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                        <Building className="size-3" /> Tenant
+                      </div>
+                      {firm.is_active !== false ? (
+                        <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100">
+                          <Shield className="size-3" /> Active
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
+                          <Shield className="size-3" /> Inactive
+                        </span>
+                      )}
                     </div>
-                    {firm.is_active !== false ? (
-                      <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100">
-                        <Shield className="size-3" /> Active
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
-                        <Shield className="size-3" /> Inactive
-                      </span>
-                    )}
+                    <button 
+                      onClick={() => {
+                        localStorage.setItem("preselected_registration_firm", firm.id);
+                        localStorage.removeItem("registration_step");
+                        localStorage.removeItem("registration_form_data");
+                        navigate("/admin/register-employee");
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 border border-violet-700 text-[10px] font-black uppercase tracking-widest text-white transition-all shadow-md shadow-violet-600/10 active:scale-95"
+                      title={`Add employee directly to ${firm.name}`}
+                    >
+                      <UserPlus className="size-3" /> Add Employee
+                    </button>
                   </div>
                 </div>
               )) : (

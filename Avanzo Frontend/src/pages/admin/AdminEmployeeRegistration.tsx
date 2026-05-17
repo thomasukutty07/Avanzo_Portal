@@ -128,6 +128,14 @@ export default function AdminEmployeeRegistrationPage() {
     }
   }
 
+  useEffect(() => {
+    const preselected = localStorage.getItem("preselected_registration_firm");
+    if (preselected) {
+      setFormData(prev => ({ ...prev, firm: preselected }));
+      localStorage.removeItem("preselected_registration_firm");
+    }
+  }, []);
+
   const validateStep = (currentStep: Step) => {
     const newErrors: Record<string, string> = {}
 
