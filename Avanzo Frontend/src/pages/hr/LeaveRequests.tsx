@@ -72,9 +72,12 @@ export default function HRLeaveRequests() {
     }
   }
 
-  const handleAction = async (id: string, action: 'approve' | 'reject', name: string) => {
+  const handleAction = async (id: string, action: 'approve' | 'reject', name: string, status: string) => {
     try {
       if (action === 'approve') {
+        if (status === 'pending') {
+          await leavesService.tlApprove(id, { comment: "System pre-cleared by HR Management." })
+        }
         await leavesService.hrApprove(id, { comment: "System approved via HR Portal." })
         toast.success(`Leave request for ${name} has been fully approved.`)
       } else {
@@ -191,13 +194,13 @@ export default function HRLeaveRequests() {
                   {(req.status === 'pending' || req.status === 'tl_approved') && (
                     <div className="bg-slate-50/30 px-6 py-5 flex flex-col sm:flex-row justify-end gap-3 border-t border-slate-50 font-headline">
                       <button 
-                        onClick={() => handleAction(req.id, 'reject', req.employee_name)}
+                        onClick={() => handleAction(req.id, 'reject', req.employee_name, req.status)}
                         className="px-6 py-2.5 text-[11px] font-black text-slate-400 hover:text-red-600 transition-colors uppercase tracking-widest"
                       >
                         Decline Request
                       </button>
                       <button 
-                        onClick={() => handleAction(req.id, 'approve', req.employee_name)}
+                        onClick={() => handleAction(req.id, 'approve', req.employee_name, req.status)}
                         className={`px-10 py-3 rounded-xl text-[11px] font-black shadow-lg transition-all flex items-center justify-center gap-3 active:scale-95 uppercase tracking-widest ${
                            req.status === 'pending' 
                            ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-500/20' 
