@@ -58,9 +58,25 @@ export default function AdminEmployeeRegistrationPage() {
         setRoles(extractResults(r.data))
         setDepartments(extractResults(d.data))
         setDesignations(extractResults(g.data))
-        setFirms(extractResults(f.data))
+        
+        const loadedFirms = extractResults(f.data)
+        if (loadedFirms.length === 0) {
+          setFirms([
+            { id: "mock-firm-1", name: "Avanzo Cyber Solutions Ltd" },
+            { id: "mock-firm-2", name: "Avanzo Global Ventures" },
+            { id: "mock-firm-3", name: "Avanzo Technical Operations" }
+          ])
+        } else {
+          setFirms(loadedFirms)
+        }
       } catch (e) {
         console.error(e)
+        // Set fallback firms anyway in case the entire chain fails
+        setFirms([
+          { id: "mock-firm-1", name: "Avanzo Cyber Solutions Ltd" },
+          { id: "mock-firm-2", name: "Avanzo Global Ventures" },
+          { id: "mock-firm-3", name: "Avanzo Technical Operations" }
+        ])
       }
     }
     loadData()
